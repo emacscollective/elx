@@ -1,11 +1,11 @@
 ;;; elx.el --- extract information from Emacs Lisp libraries
 
-;; Copyright (C) 2008, 2009 Jonas Bernoulli
+;; Copyright (C) 2008, 2009  Jonas Bernoulli
 
 ;; Author: Jonas Bernoulli <jonas@bernoul.li>
 ;; Created: 20081202
-;; Updated: 20090228
-;; Version: 0.0.5
+;; Updated: 20090320
+;; Version: 0.0.6
 ;; Homepage: https://github.com/tarsius/elx
 ;; Keywords: libraries
 
@@ -124,6 +124,21 @@ Or the current buffer if FILE is equal to `buffer-file-name' or is nil."
 	   "," ""
 	   (downcase (mapconcat #'identity keywords " "))))
 	 " ")))))
+
+(defun elx-commentary (&optional file)
+  "Return the commentary in file FILE.
+Or the current buffer if FILE is equal to `buffer-file-name' or is nil.
+
+Return the value as a string, which leading semicolons and one space
+removed.  In the file, the commentary section starts with the tag
+`Commentary' or `Documentation' and ends just before the next section.
+If the commentary section is absent, return nil."
+  (elx-with-file file
+    (let ((start (lm-commentary-start)))
+      (when start
+	(replace-regexp-in-string
+	 "^;; ?" ""
+	 (buffer-substring-no-properties start (lm-commentary-end)))))))
 
 ;;; Extract License.
 
@@ -341,7 +356,7 @@ in which time stamps are defined and use that instead.
 If optional STANDARDIZE is non-nil verify and possible convert the version
 using function `elx-version--do-standardize' (which see).
 
-If this function returns nil then the author of FILE sucks badly at 
+If this function returns nil then the author of FILE sucks badly at
 writing library headers and if you can absolutely not live with that use
 `elx-version>' instead."
   (let ((version (elx-version file standardize)))
@@ -375,7 +390,7 @@ Also see functions `elx-version' and `elx-version+' for less aggressive
 approches and more aggressive doc-strings."
   ;; FIXME doc-string might be wrong for some side cases.
   (elx-version--greater (elx-version+ file standardize) old-version))
- 
+
 (defun elx-version-internal (file &optional standardize)
   "Return the version string of the file FILE.
 Or the current buffer if FILE is equal to `buffer-file-name'.

@@ -4,8 +4,8 @@
 
 ;; Author: Jonas Bernoulli <jonas@bernoul.li>
 ;; Created: 20081202
-;; Updated: 20090320
-;; Version: 0.0.6
+;; Updated: 20090331
+;; Version: 0.0.7
 ;; Homepage: https://github.com/tarsius/elx
 ;; Keywords: libraries
 
@@ -134,11 +134,15 @@ removed.  In the file, the commentary section starts with the tag
 `Commentary' or `Documentation' and ends just before the next section.
 If the commentary section is absent, return nil."
   (elx-with-file file
-    (let ((start (lm-commentary-start)))
+    (let ((start (lm-section-start lm-commentary-header t)))
       (when start
 	(replace-regexp-in-string
-	 "^;; ?" ""
-	 (buffer-substring-no-properties start (lm-commentary-end)))))))
+	 "\\`[\n\t\s]*" ""
+	 (replace-regexp-in-string
+	  "[\n\t\s]*\\'" ""
+	  (replace-regexp-in-string
+	   "^;+ ?" ""
+	   (buffer-substring-no-properties start (lm-commentary-end)))))))))
 
 ;;; Extract License.
 

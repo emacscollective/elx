@@ -4,8 +4,8 @@
 
 ;; Author: Jonas Bernoulli <jonas@bernoul.li>
 ;; Created: 20081202
-;; Updated: 20090331
-;; Version: 0.0.7
+;; Updated: 20090402
+;; Version: 0.0.7.1
 ;; Homepage: https://github.com/tarsius/elx
 ;; Keywords: libraries
 
@@ -136,13 +136,16 @@ If the commentary section is absent, return nil."
   (elx-with-file file
     (let ((start (lm-section-start lm-commentary-header t)))
       (when start
-	(replace-regexp-in-string
-	 "\\`[\n\t\s]*" ""
-	 (replace-regexp-in-string
-	  "[\n\t\s]*\\'" ""
-	  (replace-regexp-in-string
-	   "^;+ ?" ""
-	   (buffer-substring-no-properties start (lm-commentary-end)))))))))
+	(let ((string (replace-regexp-in-string
+		       "\\`[\n\t\s]*" ""
+		       (replace-regexp-in-string
+			"[\n\t\s]*\\'" ""
+			(replace-regexp-in-string
+			 "^;+ ?" ""
+			 (buffer-substring-no-properties
+			  start (lm-commentary-end)))))))
+	  (when (string-match "[^\s\t\n]" string)
+	    string))))))
 
 ;;; Extract License.
 

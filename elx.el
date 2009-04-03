@@ -4,8 +4,8 @@
 
 ;; Author: Jonas Bernoulli <jonas@bernoul.li>
 ;; Created: 20081202
-;; Updated: 20090402
-;; Version: 0.0.7.1
+;; Updated: 20090403
+;; Version: 0.0.7.2
 ;; Homepage: https://github.com/tarsius/elx
 ;; Keywords: libraries
 
@@ -94,14 +94,14 @@ Or the current buffer if FILE is equal to `buffer-file-name' or is nil.
 If STANDARDIZE is non-nil remove trailing period and upcase first word."
   (let ((summary
 	 (elx-with-file file
-	   (if (and (looking-at lm-header-prefix)
-		    (progn (goto-char (match-end 0))
-			   (looking-at "[^ ]+[ \t]+--+[ \t]+\\(.*\\)")))
-	       (let ((summary (match-string-no-properties 1)))
-		 (if (string-match "[ \t]*-\\*-.*-\\*-" summary)
-		     (substring summary 0 (match-beginning 0))
-		   summary))))))
-    (unless (equal summary "")
+	   (when (and (looking-at lm-header-prefix)
+		      (progn (goto-char (match-end 0))
+			     (looking-at "[^ ]+[ \t]+--+[ \t]+\\(.*\\)")))
+	     (let ((summary (match-string-no-properties 1)))
+	       (if (string-match "[ \t]*-\\*-.*-\\*-" summary)
+		   (substring summary 0 (match-beginning 0))
+		 summary))))))
+    (unless (member summary '(nil ""))
       (when standardize
 	(when (string-match "\\.$" summary)
 	  (setq summary (substring summary 0 -1)))

@@ -4,8 +4,8 @@
 
 ;; Author: Jonas Bernoulli <jonas@bernoul.li>
 ;; Created: 20081202
-;; Updated: 20090403
-;; Version: 0.0.7.2
+;; Updated: 20090409
+;; Version: 0.0.7.3
 ;; Homepage: https://github.com/tarsius/elx
 ;; Keywords: libraries
 
@@ -357,8 +357,7 @@ Or the current buffer if FILE is equal to `buffer-file-name'.
 
 If the file properly defines a version extract it using `elx-version'.
 Otherwise try several known ways in which people have defined the version
-in Emacs Lisp libraries.  If none of them succeeds try several known ways
-in which time stamps are defined and use that instead.
+in Emacs Lisp libraries.
 
 If optional STANDARDIZE is non-nil verify and possible convert the version
 using function `elx-version--do-standardize' (which see).
@@ -370,10 +369,9 @@ writing library headers and if you can absolutely not live with that use
     (if version
 	version
       (elx-with-file file
-	(setq version (or (elx-version--id-header)
-			  (elx-version--revision-header)
-			  (elx-version--variable file)
-			  (elx-updated file))))
+	(setq version (or (elx-version--variable file)
+			  (elx-version--id-header)
+			  (elx-version--revision-header))))
       (elx-version--do-verify
        (if (and version standardize)
 	   (elx-version--do-standardize version)
@@ -396,7 +394,9 @@ using function `elx-version--do-standardize' (which see).
 Also see functions `elx-version' and `elx-version+' for less aggressive
 approches and more aggressive doc-strings."
   ;; FIXME doc-string might be wrong for some side cases.
-  (elx-version--greater (elx-version+ file standardize) old-version))
+  (elx-version--greater (or (elx-version+ file standardize)
+			    (elx-updated file))
+			old-version))
 
 (defun elx-version-internal (file &optional standardize)
   "Return the version string of the file FILE.

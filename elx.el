@@ -4,7 +4,7 @@
 
 ;; Author: Jonas Bernoulli <jonas@bernoul.li>
 ;; Created: 20081202
-;; Updated: 20090409
+;; Updated: 20090416
 ;; Version: 0.0.7.3
 ;; Homepage: https://github.com/tarsius/elx
 ;; Keywords: libraries
@@ -465,8 +465,10 @@ The return value has the form (NAME . ADDRESS)."
 
 ;;; Extract Features.
 
-(defconst elx-provided-regexp
-  "(provide[\s\t\n]'\\([^(),\s\t\n]+\\)\\(?:[\s\t\n]+'(\\([^(),]+\\))\\)?)")
+(defconst elx-provided-regexp "\
+\(\\(?:cc-\\)?provide[\s\t\n]'\
+\\([^(),\s\t\n]+\\)\\(?:[\s\t\n]+'\
+\(\\([^(),]+\\))\\)?)")
 
 (defun elx-buffer-provided (buffer)
   (let (features)
@@ -509,9 +511,10 @@ This will only find features required exactly like:
 	 #'string<)
    :test #'equal))
 
-(defconst elx-required-regexp
-  "(require[\s\t\n]'\
-\\([^(),\s\t\n]+\\)\\(?:\\(?:[\s\t\n]+\\(?:nil\\|\".*\"\\)\\)\
+(defconst elx-required-regexp "\
+\(\\(?:cc-\\)?require[\s\t\n]'\
+\\([^(),\s\t\n]+\\)\
+\\(?:\\(?:[\s\t\n]+\\(?:nil\\|\".*\"\\)\\)\
 \\(?:[\s\t\n]+\\(?:nil\\|\\(t\\)\\)\\)?\\)?)")
 
 (defun elx-buffer-required (buffer &optional provided)

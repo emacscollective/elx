@@ -5,7 +5,7 @@
 ;; Author: Jonas Bernoulli <jonas@bernoul.li>
 ;; Created: 20081202
 ;; Updated: 20090416
-;; Version: 0.0.7.3
+;; Version: 0.0.8
 ;; Homepage: https://github.com/tarsius/elx
 ;; Keywords: libraries
 
@@ -476,8 +476,9 @@ The return value has the form (NAME . ADDRESS)."
       (save-excursion
 	(goto-char (point-min))
 	(while (re-search-forward elx-provided-regexp nil t)
-	  (unless (or (nth 3 (syntax-ppss))  ; in string
-		      (nth 4 (syntax-ppss))) ; in comment
+	  (unless (save-match-data
+		    (or (nth 3 (syntax-ppss))   ; in string
+			(nth 4 (syntax-ppss)))) ; in comment
 	    (dolist (feature (cons (match-string 1)
 				   (when (match-string 2)
 				     (split-string (match-string 2) " " t))))
@@ -525,8 +526,9 @@ This will only find features required exactly like:
 	(goto-char (point-min))
 	(while (re-search-forward elx-required-regexp nil t)
 	  (let ((feature (intern (match-string 1))))
-	    (cond ((or (nth 3 (syntax-ppss))   ; in string
-		       (nth 4 (syntax-ppss)))) ; in comment
+	    (cond ((save-match-data
+		      (or (nth 3 (syntax-ppss))    ; in string
+			  (nth 4 (syntax-ppss))))) ; in comment
 		  ((match-string 2)
 		   (unless (or (member feature required-hard)
 			       (member feature required-soft))

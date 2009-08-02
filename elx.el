@@ -4,8 +4,8 @@
 
 ;; Author: Jonas Bernoulli <jonas@bernoul.li>
 ;; Created: 20081202
-;; Updated: 20090416
-;; Version: 0.0.8
+;; Updated: 20090802
+;; Version: 0.0.9
 ;; Homepage: https://github.com/tarsius/elx
 ;; Keywords: libraries
 
@@ -64,7 +64,7 @@
 If FILE is nil or equal to `buffer-file-name' execute BODY in the
 current buffer.  Move to beginning of buffer before executing BODY."
   (declare (indent 1) (debug t))
-  (let ((filesym (make-symbol "file")))
+  (let ((filesym (gensym "file")))
     `(let ((,filesym ,file))
        (if (and ,filesym (not (equal ,filesym buffer-file-name)))
 	   (with-temp-buffer

@@ -143,22 +143,45 @@ the leading semicolons and exactly one space are removed, likewise
 leading \"\(\" is replaced with just \"(\".  Lines only consisting only of
 whitespace are converted to empty lines."
   (elx-with-file file
-    (let ((start (lm-section-start lm-commentary-header t)))
+    (let ((start (lm-commentary-start)))
       (when start
-	(let ((string (replace-regexp-in-string
-		       "\\`[\n\t\s]*" ""
-		       (replace-regexp-in-string
-			"[\n\t\s]*\\'" ""
-			(replace-regexp-in-string
-			 "^\\\\(" "("
-			 (replace-regexp-in-string
-			  "^;+ ?" ""
-			  (replace-regexp-in-string
-			   "^[\n\t\s]\n$" "\n"
-			   (buffer-substring-no-properties
-			    start (lm-commentary-end)))))))))
-	  (when (string-match "[^\s\t\n]" string)
-	    (concat string "\n")))))))
+	(let ((commentary (buffer-substring-no-properties
+			   start (lm-commentary-end))))
+	  (mapc (lambda (elt)
+		  (setq commentary (replace-regexp-in-string
+				    (car elt) (cdr elt) commentary)))
+		'(("^;+ ?"        . "")
+		  ("^\\\\("       . "(")
+		  ("^[\n\t\s]\n$" . "\n")
+		  ("\\`[\n\t\s]*" . "")
+		  ("[\n\t\s]*\\'" . "")))
+	  (when (string-match "[^\s\t\n]" commentary)
+	    (concat commentary "\n")))))))
+
+;;; Extract Pages.
+
+(defun elx-wikipage (file pages &optional urlp)
+  "Extract the page on the Emacswiki for the specified package.
+FILE is the the main file of the package.  PAGES is either a list of
+existing pages or a directory containing the pages.  If URLP is non-nil
+return the url of the page otherwise only the name."
+  (or (elx-with-file file
+	(elx-header "\\(?:x-\\)?\\(?:emacs\\)?wiki-?page"))
+      (let ((page (upcase-initials
+		   (replace-regexp-in-string "\\+$" "Plus"
+		    (replace-regexp-in-string "-."
+		     (lambda (str)
+		       (upcase (substring str 1)))
+		     (file-name-sans-extension
+		      (file-name-nondirectory file)))))))
+	(when (member page (if (listp pages) pages
+			     (directory-files pages nil "^[^.]" t)))
+	  (concat (when urlp "http://www.emacswiki.org/emacs/") page)))))
+
+(defun elx-homepage (file)
+  "Extract the homepage of the specified package."
+  (elx-with-file file
+    (elx-header "\\(?:x-\\)?\\(?:homepage\\|?url\\)")))
 
 ;;; Extract License.
 

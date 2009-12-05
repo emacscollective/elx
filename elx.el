@@ -187,13 +187,17 @@ return the url of the page otherwise only the name."
 
 (defcustom elx-license-search
   (let ((r "[\s\t\n;]+")
-	(c " General Public License as published by the Free Software Foundation.? \\(either \\)?version"))
+	(c " General Public License as published by the Free Software Foundation.? \\(either \\)?version")
+	(d "Documentation"))
     `(("GPL-3"    . ,(replace-regexp-in-string " " r (concat "GNU" c " 3")))
       ("GPL-2"    . ,(replace-regexp-in-string " " r (concat "GNU" c " 2")))
       ("GPL-1"    . ,(replace-regexp-in-string " " r (concat "GNU" c " 1")))
-      ("LGPL-3"   . ,(replace-regexp-in-string " " r (concat "GNU Lesser" c " 3")))
-      ("LGPL-2.1" . ,(replace-regexp-in-string " " r (concat "GNU Lesser" c " 2.1")))
-      ("AGPL-3"   . ,(replace-regexp-in-string " " r (concat "GNU Affero" c " 3")))
+      ("LGPL-3"   . ,(replace-regexp-in-string " " r (concat "GNU Lesser"  c " 3")))
+      ("LGPL-2.1" . ,(replace-regexp-in-string " " r (concat "GNU Lesser"  c " 2.1")))
+      ("LGPL-2"   . ,(replace-regexp-in-string " " r (concat "GNU Library" c " 2")))
+      ("AGPL-3"   . ,(replace-regexp-in-string " " r (concat "GNU Affero"  c " 3")))
+      ("FDL-2.1"  . ,(replace-regexp-in-string " " r (concat "GNU Free " d c " 1.2")))
+      ("FDL-1.1"  . ,(replace-regexp-in-string " " r (concat "GNU Free " d c " 1.1")))
       ("MIT"           . "^;\\{2,4\\}.* mit license")
       ("as-is"         . "^;\\{2,4\\}.* provided \"as[- ]is")
       ("public-domain" . "^;\\{2,4\\}.* in the public[- ]domain")))
@@ -211,8 +215,10 @@ Used by function `elx-license'.  Each entry has the form
     ("LGPL-3"   . "lgpl-?v?3")
     ("LGPL-2.1" . "lgpl-?v?2.1")
     ("AGPL-3"   . "agpl-?v?3")
-    ("MIT"      . "mit")
-    ("as-is"    . "as-?is")
+    ("FDL-2.1"  .  "fdl-?v?2.1")
+    ("FDL-2.1"  .  "fdl-?v?2.1")
+    ("MIT"      .  "mit")
+    ("as-is"    .  "as-?is")
     ("public-domain" . "public[- ]domain"))
   "List of string to common license string mappings.
 Used by function `elx-license'.  Each entry has the form
@@ -221,7 +227,27 @@ Used by function `elx-license'.  Each entry has the form
   :type '(repeat (cons (string :tag "use")
 		       (regexp :tag "for regexp"))))
 
-(defun elx-license (&optional file)
+(defcustom elx-license-url
+  '(("GPL-3"    . "http://www.fsf.org/licensing/licenses/gpl.html")
+    ("GPL-2"    . "http://www.gnu.org/licenses/old-licenses/gpl-2.0.html")
+    ("GPL-1"    . "http://www.gnu.org/licenses/old-licenses/gpl-1.0.html")
+    ("LGPL-3"   . "http://www.fsf.org/licensing/licenses/lgpl.html")
+    ("LGPL-2.1" . "http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html")
+    ("LGPL-2.0" . "http://www.gnu.org/licenses/old-licenses/lgpl-2.0.html")
+    ("AGPL-3"   . "http://www.fsf.org/licensing/licenses/agpl.html")
+    ("FDL-1.2"  . "http://www.gnu.org/licenses/old-licenses/fdl-1.2.html")
+    ("FDL-1.1"  . "http://www.gnu.org/licenses/old-licenses/fdl-1.1.html")
+    ("MIT"      . "http://www.emacsmirror.org/licenses/MIT.html)")
+    ("as-is"    . "http://www.emacsmirror.org/licenses/as-is.html)")
+    ("public-domain" . "http://www.emacsmirror.org/licenses/public-domain.html)"))
+  "List of license to canonical license url mappings.
+Each entry has the form (LICENSE . URL) where LICENSE is a license string
+and URL the canonial url to the license."
+  :group 'elx
+  :type '(repeat (cons (string :tag "License")
+		       (url    :tag "URL"))))
+
+(defun elx-license (&optional file urlp)
   "Return the license of file FILE.
 Or the current buffer if FILE is equal to `buffer-file-name' or is nil.
 
@@ -230,7 +256,12 @@ by searching the file header for text matching entries in `elx-license-regexps'.
 
 The extracted license string might be modified using `elx-license-mappings'
 before it is returned ensuring that each known license is always represented
-the same."
+the same.  If the extracted license does not match \"^[-_.a-zA-Z0-9]+$\"
+return nil.
+
+If URLP is non-nil return the url to the license otherwise return a string
+identifying the license.  Even when URLP is non-nil the license string is
+returned if the license is unknown."
   (elx-with-file file
     (let ((license (elx-header "License")))
       (unless license
@@ -532,7 +563,8 @@ inside SOURCE and recursively all subdirectories.  Files not ending in
 explicetly passed to this function.
 
 This will only find features required exactly like:
-\(require 'FEATURE [nil|\"PATH\" [nil|t]])."
+\([cc-]require 'FEATURE [nil|\"PATH\" [nil|t]]).
+The regexp being used is stored in variable `elx-provided-regexp'."
   (delete-duplicates
    (sort (cond ((listp source)
 		(mapcan #'elx-provided source))
@@ -591,7 +623,8 @@ that are not members of PROVIDED.  If PROVIDED is t then it is expanded to
 the features provided by SOURCE.
 
 This will only find features provided exactly like:
-\(provide 'FEATURE '(SUBFEATURE...))."
+\([cc-]provide 'FEATURE '(SUBFEATURE...)).
+The regexp being used is stored in variable `elx-required-regexp'."
   (when (eq provided t)
     (setq provided (elx-provided source)))
   (delete-duplicates

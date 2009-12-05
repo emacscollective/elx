@@ -4,8 +4,8 @@
 
 ;; Author: Jonas Bernoulli <jonas@bernoul.li>
 ;; Created: 20081202
-;; Updated: 20090802
-;; Version: 0.0.9
+;; Updated: 20091205
+;; Version: 0.0.9+
 ;; Homepage: https://github.com/tarsius/elx
 ;; Keywords: libraries
 
@@ -54,9 +54,9 @@
 (require 'vcomp)
 (require 'lisp-mnt)
 
-(defgroup lib-info nil
+(defgroup elx nil
   "Extract information from Emacs Lisp libraries."
-  :group 'emacs
+  :group 'maint
   :link '(url-link :tag "Homepage" "https://github.com/tarsius/elx"))
 
 (defmacro elx-with-file (file &rest body)

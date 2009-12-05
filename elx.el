@@ -170,7 +170,7 @@ If the commentary section is absent, return nil."
   "List of regexp to common license string mappings.
 Used by function `elx-license'.  Each entry has the form
 \(LICENSE . REGEXP) where LICENSE is used instead of matches of REGEXP."
-  :group 'lib-info
+  :group 'elx
   :type '(repeat (cons (string :tag "use")
 		       (regexp :tag "for regexp"))))
 
@@ -187,7 +187,7 @@ Used by function `elx-license'.  Each entry has the form
   "List of string to common license string mappings.
 Used by function `elx-license'.  Each entry has the form
 \(LICENSE . REGEXP) where LICENSE is used instead of matches of REGEXP."
-  :group 'lib-info
+  :group 'elx
   :type '(repeat (cons (string :tag "use")
 		       (regexp :tag "for regexp"))))
 

@@ -135,10 +135,13 @@ Or the current buffer if FILE is equal to `buffer-file-name' or is nil."
   "Return the commentary in file FILE.
 Or the current buffer if FILE is equal to `buffer-file-name' or is nil.
 
-Return the value as a string, which leading semicolons and one space
-removed.  In the file, the commentary section starts with the tag
-`Commentary' or `Documentation' and ends just before the next section.
-If the commentary section is absent, return nil."
+Return the commentary as a normalized string.  The commentary section
+starts with the tag `Commentary' or `Documentation' and ends just before
+the next section.  Leading and trailing whitespace is removed from the
+returned value but it always ends with exactly one newline. On each line
+the leading semicolons and exactly one space are removed, likewise
+leading \"\(\" is replaced with just \"(\".  Lines only consisting only of
+whitespace are converted to empty lines."
   (elx-with-file file
     (let ((start (lm-section-start lm-commentary-header t)))
       (when start
@@ -147,11 +150,15 @@ If the commentary section is absent, return nil."
 		       (replace-regexp-in-string
 			"[\n\t\s]*\\'" ""
 			(replace-regexp-in-string
-			 "^;+ ?" ""
-			 (buffer-substring-no-properties
-			  start (lm-commentary-end)))))))
+			 "^\\\\(" "("
+			 (replace-regexp-in-string
+			  "^;+ ?" ""
+			  (replace-regexp-in-string
+			   "^[\n\t\s]\n$" "\n"
+			   (buffer-substring-no-properties
+			    start (lm-commentary-end)))))))))
 	  (when (string-match "[^\s\t\n]" string)
-	    string))))))
+	    (concat string "\n")))))))
 
 ;;; Extract License.
 

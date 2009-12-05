@@ -5,7 +5,7 @@
 ;; Author: Jonas Bernoulli <jonas@bernoul.li>
 ;; Created: 20081202
 ;; Updated: 20091205
-;; Version: 0.0.9+
+;; Version: 0.1
 ;; Homepage: https://github.com/tarsius/elx
 ;; Keywords: libraries
 
@@ -532,12 +532,19 @@ The return value has the form (NAME . ADDRESS)."
 
 ;;; Extract Features.
 
+(defvar elx-known-features nil
+  "Hash table of available features.
+The keys are feature symbols and the values are package strings.")
+
+(defvar elx-missing-features nil
+  "List of missing features.")
+
 (defconst elx-provided-regexp "\
 \(\\(?:cc-\\)?provide[\s\t\n]'\
 \\([^(),\s\t\n]+\\)\\(?:[\s\t\n]+'\
 \(\\([^(),]+\\))\\)?)")
 
-(defun elx-buffer-provided (buffer)
+(defun elx--buffer-provided (buffer)
   (let (features)
     (with-current-buffer buffer
       (save-excursion
@@ -576,7 +583,7 @@ The regexp being used is stored in variable `elx-provided-regexp'."
 			(directory-files source t "^[^\\.]" t)))
 	       (t
 		(elx-with-file source
-		  (elx-buffer-provided (current-buffer)))))
+		  (elx--buffer-provided (current-buffer)))))
 	 #'string<)
    :test #'equal))
 
@@ -586,7 +593,44 @@ The regexp being used is stored in variable `elx-provided-regexp'."
 \\(?:\\(?:[\s\t\n]+\\(?:nil\\|\".*\"\\)\\)\
 \\(?:[\s\t\n]+\\(?:nil\\|\\(t\\)\\)\\)?\\)?)")
 
-(defun elx-buffer-required (buffer &optional provided)
+(defun elx--format-required (required &optional sort-fn unique-p)
+  (let ((hard (nth 0 required))
+	(soft (nth 1 required)))
+    (when sort-fn
+      (setq hard (sort hard sort-fn)
+	    soft (sort soft sort-fn)))
+    (when unique-p
+      (setq hard (delete-duplicates hard :test #'equal)
+	    soft (delete-duplicates soft :test #'equal)))
+    (if soft
+	(list hard soft)
+      (when hard
+	(list hard)))))
+
+(defun elx--lookup-required (provided known required include exclude)
+  (unless known
+    (setq known elx-known-features))
+  (let (packages)
+    (dolist (requ (nconc (copy-list required) include))
+      (unless (memq requ exclude)
+	(let* ((package (if (hash-table-p known)
+			    (gethash requ known)
+			  (cdr (assoc requ known))))
+	       (elt (car (member* package packages :test 'equal :key 'car))))
+	  (unless package
+	    (add-to-list 'elx-missing-features requ))
+	  (if elt
+	      (unless (memq requ (cdr elt))
+		(setcdr elt (sort (cons requ (cdr elt)) 'string<)))
+	    (push (list package requ) packages)))))
+    (sort* packages
+	   (lambda (a b)
+	     (cond ((null a) nil)
+		   ((null b) t)
+		   (t (string< a b))))
+	   :key 'car)))
+
+(defun elx--buffer-required (buffer &optional provided)
   (let (required-hard
 	required-soft)
     (with-current-buffer buffer
@@ -604,12 +648,18 @@ The regexp being used is stored in variable `elx-provided-regexp'."
 		  ((not (member feature required-hard))
 		   (setq required-soft (remove feature required-soft))
 		   (push feature required-hard))))))
-      (list (sort required-hard #'string<)
-	    (sort required-soft #'string<)))))
+      (elx--format-required (list required-hard required-soft)
+			    #'string<))))
 
 (defun elx-required (source &optional provided)
   "Return the features required by SOURCE.
-The returned value has the form ((HARD-REQUIRED...) (SOFT-REQUIRED...)).
+The returned value has the form:
+
+  ((HARD-REQUIRED...)
+   [(SOFT-REQUIRED...)])
+
+Where HARD-REQUIREDs and SOFT-REQUIREDs are symbols.  If no features are
+required nil is returned.
 
 SOURCE has to be a file, directory or list of files and/or directories.
 
@@ -618,31 +668,98 @@ inside SOURCE and recursively all subdirectories.  Files not ending in
 \".el\" and directories starting with a period are ignored, except when
 explicetly passed to this function.
 
-If optional PROVIDED is a list of features only return required features
-that are not members of PROVIDED.  If PROVIDED is t then it is expanded to
-the features provided by SOURCE.
+If optional PROVIDED is provided and non-nil is has to be a list of
+features, t or a function.  If it is t call `elx-provided' with SOURCE as
+only argument and use the returned list of features.  Members of this list
+of features are not included in the return value.
 
-This will only find features provided exactly like:
-\([cc-]provide 'FEATURE '(SUBFEATURE...)).
+This function will only find features provided exactly like:
+\(provide 'FEATURE '(SUBFEATURE...)).
 The regexp being used is stored in variable `elx-required-regexp'."
   (when (eq provided t)
     (setq provided (elx-provided source)))
-  (delete-duplicates
-   (sort (cond ((listp source)
-		(mapcan (lambda (elt)
-			  (elx-required elt provided))
-			source))
-	       ((file-directory-p source)
-		(mapcan (lambda (source)
-			  (when (or (file-directory-p source)
-				    (string-match "\\.el$" source))
-			    (elx-required source provided)))
-			(directory-files source t "^[^\\.]" t)))
-	       (t
-		(elx-with-file source
-		  (elx-buffer-required (current-buffer) provided))))
-	 #'string<)
-   :test #'equal))
+  (elx--format-required
+   (cond ((listp source)
+	  (mapcan (lambda (elt)
+		    (elx-required elt provided))
+		  source))
+	 ((file-directory-p source)
+	  (mapcan (lambda (source)
+		    (when (or (file-directory-p source)
+			      (string-match "\\.el$" source))
+		      (elx-required source provided)))
+		  (directory-files source t "^[^\\.]" t)))
+	 (t
+	  (elx-with-file source
+	    (elx--buffer-required (current-buffer) provided))))
+   #'string< t))
+
+(defun elx-required-packages (source &optional provided known include exclude)
+  "Return the packages packages required by SOURCE.
+The returned value has the form:
+
+  (((HARD-REQUIRED-PACKAGE FEATURE...)...)
+   [((SOFT-REQUIRED-PACKAGE FEATURE...)...)])
+
+Where HARD-REQUIRED-PACKAGE and SOFT-REQUIRED-PACKAGE are strings and
+FEATURE is a symbol.  If no features/packages are required nil is
+returned.
+
+SOURCE has to be a file, directory, list of files and/or directories or
+a function.
+
+If SOURCE is a function use it instead of `elx-required' to extract the
+list of required *features*.  It will be called with two arguments
+PROVIDED and KNOWN.
+
+If SOURCE is a directory return all features required by Emacs lisp files
+inside SOURCE and recursively all subdirectories.  Files not ending in
+\".el\" and directories starting with a period are ignored, except when
+explicetly passed to this function.
+
+If optional PROVIDED is provided and non-nil is has to be a list of
+features, t or a function.  If it is a function call it with SOURCE as
+only argument and use the returned list of features.  Likewise if it is t
+call `elx-provided'.  Members of this list of features are not included
+in the return value.
+
+If optional KNOWN is provided and non-nil it has to be an alist or
+hash table mapping features to packages.  If it is omitted or nil the
+value of variable `elx-known-features' is used, however you have to setup
+the value of its your self.
+
+INCLUDE and EXCLUDE are useful when you know that the value returned by
+the function (usually `elx-required') used to extract the list of required
+*features* is not absolutely correct.
+
+If optional INCLUDE is provided and non-nil it has to be a list of
+features.  These features will be treated as if they were returned by the
+function used to extract the list of provided *features*.
+
+If optional EXCLUDE is provided and non-nil it has to be a list of
+features.  These features and the corresponding packages won't be part of
+the returned value.
+
+This function will only find features provided exactly like:
+\(provide 'FEATURE '(SUBFEATURE...)).
+The regexp being used is stored in variable `elx-required-regexp'."
+  (unless (listp provided)
+    (setq provided (apply (if (functionp provided)
+			      provided
+			    'elx-provided)
+			  source)))
+  (let ((required (if (functionp source)
+		      (apply source provided known)
+		    (elx-required source provided))))
+    (elx--format-required
+     (elx--lookup-required provided known
+			   (nth 0 required)
+			   (nth 0 include)
+			   (nth 0 exclude))
+     (elx--lookup-required provided known
+			   (nth 1 required)
+			   (nth 1 include)
+			   (nth 1 exclude)))))
 
 (provide 'elx)
 ;;; elx.el ends here

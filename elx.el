@@ -47,6 +47,12 @@
 ;; features can't be loaded (because the providing libraries are not
 ;; available) or when one doesn't want to load them for security reasons.
 
+;; Some of the features implemented here will hopefully be merged into
+;; `lisp-mnt.el' once I find the time to create patches.  Likewise code
+;; from `elm.el' is likely to be moved to this library.  The important
+;; thing to note here is that this library is going to change a lot over
+;; the next month or so.
+
 ;;; Code:
 
 (require 'cl)

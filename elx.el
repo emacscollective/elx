@@ -4,8 +4,8 @@
 
 ;; Author: Jonas Bernoulli <jonas@bernoul.li>
 ;; Created: 20081202
-;; Updated: 20091205
-;; Version: 0.1
+;; Updated: 20091208
+;; Version: 0.1.1
 ;; Homepage: https://github.com/tarsius/elx
 ;; Keywords: libraries
 
@@ -752,14 +752,15 @@ The regexp being used is stored in variable `elx-required-regexp'."
 		      (apply source provided known)
 		    (elx-required source provided))))
     (elx--format-required
-     (elx--lookup-required provided known
-			   (nth 0 required)
-			   (nth 0 include)
-			   (nth 0 exclude))
-     (elx--lookup-required provided known
-			   (nth 1 required)
-			   (nth 1 include)
-			   (nth 1 exclude)))))
+     (list
+      (elx--lookup-required provided known
+			    (nth 0 required)
+			    (nth 0 include)
+			    (nth 0 exclude))
+      (elx--lookup-required provided known
+			    (nth 1 required)
+			    (nth 1 include)
+			    (nth 1 exclude))))))
 
 (provide 'elx)
 ;;; elx.el ends here

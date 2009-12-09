@@ -762,5 +762,100 @@ The regexp being used is stored in variable `elx-required-regexp'."
 			    (nth 1 include)
 			    (nth 1 exclude))))))
 
+;;; Extract Complete Metadata.
+
+(defun elx--lisp-files (tree)
+  (let (files)
+    (dolist (file (directory-files tree t "^[^.]" t))
+      (cond ((file-directory-p file)
+	     (setq files (nconc (elx--lisp-files file) files)))
+	    ((string-match "\\.el$" file)
+	     (setq files (cons file files)))))
+    files))
+
+(defun elx-package-mainfile (directory)
+  "Return the mainfile of the package inside DIRECTORY.
+The returned path is relative to DIRECTORY.
+
+If the package has only one file ending in \".el\" return that file
+unconditionally.  Otherwise return the file which provides the feature
+matching the basename of DIRECTORY, or if no such file exists the file
+that provides the feature matching the basename of DIRECTORY with \"-mode\"
+added to or removed from the end, whatever makes sense."
+  (let ((files (elx--lisp-files directory))
+	(name (file-name-nondirectory (directory-file-name directory))))
+    (if (= 1 (length files))
+	(car files)
+      (flet ((match (feature)
+		    (car (member* (format "^\\([^/]+/\\)*?%s\\.el$" feature)
+				  files :test 'string-match))))
+	(cond ((match name))
+	      ((match (if (string-match "-mode$" name)
+			  (substring name 0 -5)
+			(concat name "-mode")))))))))
+
+(defun elx-package-metadata (arg &optional mainfile commentary)
+  "Extract and return the metadata of an Emacs Lisp package.
+
+FILE-OR-DIRECTORY has to be the path to an Emacs Lisp library (a single
+file) or the path to a directory containing a package consisting of
+several Emacs Lisp files and/or auxiliary files.
+
+If FILE-OR-DIRECTORY is a directory this function needs to know which
+file is the package's \"mainfile\"; that is the file from which most
+information is extracted (everything but the required and provided
+features which are extracted from all Emacs Lisp files in the directory
+collectivly).
+
+Optional MAINFILE can be used to specify the \"mainfile\" explicitly.
+Otherwise function `elx-package-mainfile' (which see) is used to guess it.
+
+\(fn file-or-directory)"
+  (if (file-directory-p file)
+      (setq mainfile (elx-package-mainfile arg)
+	    arg (elx-tree-lisp-files arg))
+    (setq mainfile arg))
+  (unless mainfile
+    (error "The mainfile can not be determined"))
+  (let* ((provided (elx-provided arg))
+	 (required (elx-required-packages arg provided)))
+    (elx-with-file mainfile
+      (list :summary (elx-summary nil t)
+	    :created (elx-created mainfile)
+	    :updated (elx-updated mainfile)
+	    :license (elx-license)
+	    :authors (elx-authors)
+	    :maintainer (elx-maintainer)
+	    :adapted-by (elx-adapted-by)
+	    :provided provided
+	    :required required
+	    :keywords (elx-keywords mainfile)
+	    :homepage (elx-homepage mainfile))
+	    :wikipage (elx-wikipage mainfile elm-wiki-repo t))))
+
+(defun elx-pp-metadata (metadata)
+  "Return the pretty-printed representation of METADATA.
+METADATA should be a list as returned by `elx-package-metadata'."
+  (with-temp-buffer
+    (let ((standard-output (current-buffer)))
+      (princ "(")
+      (while metadata
+	(let ((key (pop metadata))
+	      (val (pop metadata)))
+	  (when val
+	    (unless (looking-back "(")
+	      (princ "\n "))
+	    (princ (format "%-11s " key))
+	    (if (eq key :commentary)
+		(prin1 val)
+	      (let ((lines (split-string (pp-to-string val) "\n" t)))
+		(princ (pop lines))
+		(while (car lines)
+		  (princ "\n")
+		  (indent-to 13)
+		  (princ (pop lines))))))))
+      (princ ")\n"))
+    (buffer-string)))
+
 (provide 'elx)
 ;;; elx.el ends here

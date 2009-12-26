@@ -233,39 +233,66 @@ package, even if it exists.  False-positives might also occur."
 ;;; Extract License.
 
 (defcustom elx-license-search
-  (let ((r "[\s\t\n;]+")
-	(c " General Public License as published by the Free Software Foundation.? \\(either \\)?version")
-	(d "Documentation"))
-    `(("GPL-3"    . ,(replace-regexp-in-string " " r (concat "GNU" c " 3")))
-      ("GPL-2"    . ,(replace-regexp-in-string " " r (concat "GNU" c " 2")))
-      ("GPL-1"    . ,(replace-regexp-in-string " " r (concat "GNU" c " 1")))
-      ("LGPL-3"   . ,(replace-regexp-in-string " " r (concat "GNU Lesser"  c " 3")))
-      ("LGPL-2.1" . ,(replace-regexp-in-string " " r (concat "GNU Lesser"  c " 2.1")))
-      ("LGPL-2"   . ,(replace-regexp-in-string " " r (concat "GNU Library" c " 2")))
-      ("AGPL-3"   . ,(replace-regexp-in-string " " r (concat "GNU Affero"  c " 3")))
-      ("FDL-2.1"  . ,(replace-regexp-in-string " " r (concat "GNU Free " d c " 1.2")))
-      ("FDL-1.1"  . ,(replace-regexp-in-string " " r (concat "GNU Free " d c " 1.1")))
-      ("MIT"           . "^;\\{2,4\\}.* mit license")
-      ("as-is"         . "^;\\{2,4\\}.* provided \"as[- ]is")
-      ("public-domain" . "^;\\{2,4\\}.* in the public[- ]domain")))
+  (let* ((r "[\s\t\n;]+")
+	 (l "^;\\{1,4\\} ")
+	 (g (concat " General Public Licen[sc]e"
+		    "\\( as published by the Free Software Foundation\\)?.?"))
+	 (c (concat g " \\(either \\)?version"))
+	 (d "Documentation"))
+    `(("GPL-3"      . ,(replace-regexp-in-string " " r (concat "GNU" c " 3")))
+      ("GPL-2"      . ,(replace-regexp-in-string " " r (concat "GNU" c " 2")))
+      ("GPL-1"      . ,(replace-regexp-in-string " " r (concat "GNU" c " 1")))
+      ("GPL"        . ,(replace-regexp-in-string " " r (concat "GNU" g)))
+      ("LGPL-3"     . ,(replace-regexp-in-string " " r (concat "GNU Lesser"  c " 3")))
+      ("LGPL-2.1"   . ,(replace-regexp-in-string " " r (concat "GNU Lesser"  c " 2.1")))
+      ("LGPL-2"     . ,(replace-regexp-in-string " " r (concat "GNU Library" c " 2")))
+      ("AGPL-3"     . ,(replace-regexp-in-string " " r (concat "GNU Affero"  c " 3")))
+      ("FDL-2.1"    . ,(replace-regexp-in-string " " r (concat "GNU Free " d c " 1.2")))
+      ("FDL-1.1"    . ,(replace-regexp-in-string " " r (concat "GNU Free " d c " 1.1")))
+      ("EPL-1.1"    . ,(replace-regexp-in-string " " r
+			"Erlang Public License,? Version 1.1"))
+      ("Apache-2.0" . ,(replace-regexp-in-string " " r
+			"Apache License, Version 2.0"))
+      ("GPL"        . ,(replace-regexp-in-string " " r (concat
+		        "Everyone is granted permission to copy, modify and redistribute "
+                        ".*, but only under the conditions described in the "
+                        "GNU Emacs General Public License.")))
+      ("GPL"        . ,(concat l "GPL'ed as under the GNU license"))
+      ("GPL"        . ,(concat l "GPL'ed under GNU's public license"))
+      ("GPL-2"      . ,(concat l ".* GPL v2 applies."))
+      ("GPL-2"      . ,(concat l "The same license/disclaimer for "
+			         "XEmacs also applies to this package."))
+      ("GPL-3"      . ,(concat l "Licensed under the same terms as Emacs."))
+      ("MIT"        . ,(concat l ".* mit license"))
+      ("as-is"      . ,(concat l ".* \\(provided\\|distributed\\) "
+			         "\\(by the author \\)?"
+			         "[\"`']\\{0,2\\}as[- ]is[\"`']\\{0,2\\}"))
+      ("public-domain" . ,(concat l ".*in\\(to\\)? the public[- ]domain"))
+      ("public-domain" . "^;; Public domain.")))
   "List of regexp to common license string mappings.
 Used by function `elx-license'.  Each entry has the form
-\(LICENSE . REGEXP) where LICENSE is used instead of matches of REGEXP."
+\(LICENSE . REGEXP) where LICENSE is used instead of matches of REGEXP.
+Unambitious expressions should come first and those that might produce
+false positives last."
   :group 'elx
   :type '(repeat (cons (string :tag "use")
 		       (regexp :tag "for regexp"))))
 
 (defcustom elx-license-replace
-  '(("GPL-3"    .  "gpl-?v?3")
-    ("GPL-2"    .  "gpl-?v?2")
-    ("GPL-1"    .  "gpl-?v?1")
-    ("LGPL-3"   . "lgpl-?v?3")
-    ("LGPL-2.1" . "lgpl-?v?2.1")
-    ("AGPL-3"   . "agpl-?v?3")
-    ("FDL-2.1"  .  "fdl-?v?2.1")
-    ("FDL-2.1"  .  "fdl-?v?2.1")
-    ("MIT"      .  "mit")
-    ("as-is"    .  "as-?is")
+  '(("GPL-3"      .  "gpl[- ]?v?3")
+    ("GPL-2"      .  "gpl[- ]?v?2")
+    ("GPL-1"      .  "gpl[- ]?v?1")
+    ("GPL"        .  "gpl")
+    ("LGPL-3"     . "lgpl[- ]?v?3")
+    ("LGPL-2.1"   . "lgpl[- ]?v?2.1")
+    ("AGPL-3"     . "agpl[- ]?v?3")
+    ("FDL-2.1"    .  "fdl[- ]?v?2.1")
+    ("FDL-2.1"    .  "fdl[- ]?v?2.1")
+    ("EPL-1.1"    .  "epl[- ]?v?1.1")
+    ("EPL-1.1"    .  "erlang-1.1")
+    ("Apache-2.0" .  "apache-2.0")
+    ("MIT"        .  "mit")
+    ("as-is"      .  "as-?is")
     ("public-domain" . "public[- ]domain"))
   "List of string to common license string mappings.
 Used by function `elx-license'.  Each entry has the form

@@ -301,27 +301,7 @@ Used by function `elx-license'.  Each entry has the form
   :type '(repeat (cons (string :tag "use")
 		       (regexp :tag "for regexp"))))
 
-(defcustom elx-license-url
-  '(("GPL-3"    . "http://www.fsf.org/licensing/licenses/gpl.html")
-    ("GPL-2"    . "http://www.gnu.org/licenses/old-licenses/gpl-2.0.html")
-    ("GPL-1"    . "http://www.gnu.org/licenses/old-licenses/gpl-1.0.html")
-    ("LGPL-3"   . "http://www.fsf.org/licensing/licenses/lgpl.html")
-    ("LGPL-2.1" . "http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html")
-    ("LGPL-2.0" . "http://www.gnu.org/licenses/old-licenses/lgpl-2.0.html")
-    ("AGPL-3"   . "http://www.fsf.org/licensing/licenses/agpl.html")
-    ("FDL-1.2"  . "http://www.gnu.org/licenses/old-licenses/fdl-1.2.html")
-    ("FDL-1.1"  . "http://www.gnu.org/licenses/old-licenses/fdl-1.1.html")
-    ("MIT"      . "http://www.emacsmirror.org/licenses/MIT.html)")
-    ("as-is"    . "http://www.emacsmirror.org/licenses/as-is.html)")
-    ("public-domain" . "http://www.emacsmirror.org/licenses/public-domain.html)"))
-  "List of license to canonical license url mappings.
-Each entry has the form (LICENSE . URL) where LICENSE is a license string
-and URL the canonial url to the license."
-  :group 'elx
-  :type '(repeat (cons (string :tag "License")
-		       (url    :tag "URL"))))
-
-(defun elx-license (&optional file urlp)
+(defun elx-license (&optional file)
   "Return the license of file FILE.
 Or the current buffer if FILE is equal to `buffer-file-name' or is nil.
 
@@ -331,11 +311,7 @@ by searching the file header for text matching entries in `elx-license-regexps'.
 The extracted license string might be modified using `elx-license-mappings'
 before it is returned ensuring that each known license is always represented
 the same.  If the extracted license does not match \"^[-_.a-zA-Z0-9]+$\"
-return nil.
-
-If URLP is non-nil return the url to the license otherwise return a string
-identifying the license.  Even when URLP is non-nil the license string is
-returned if the license is unknown."
+return nil."
   (elx-with-file file
     (let ((license (elx-header "License")))
       (unless license
@@ -355,6 +331,35 @@ returned if the license is unknown."
 		    mappings nil))))
 	(when (string-match "^[-_.a-zA-Z0-9]+$" license)
 	  license)))))
+
+(defcustom elx-license-url
+  '(("GPL-3"         . "http://www.fsf.org/licensing/licenses/gpl.html")
+    ("GPL-2"         . "http://www.gnu.org/licenses/old-licenses/gpl-2.0.html")
+    ("GPL-1"         . "http://www.gnu.org/licenses/old-licenses/gpl-1.0.html")
+    ("LGPL-3"        . "http://www.fsf.org/licensing/licenses/lgpl.html")
+    ("LGPL-2.1"      . "http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html")
+    ("LGPL-2.0"      . "http://www.gnu.org/licenses/old-licenses/lgpl-2.0.html")
+    ("AGPL-3"        . "http://www.fsf.org/licensing/licenses/agpl.html")
+    ("FDL-1.2"       . "http://www.gnu.org/licenses/old-licenses/fdl-1.2.html")
+    ("FDL-1.1"       . "http://www.gnu.org/licenses/old-licenses/fdl-1.1.html")
+    ("Apache-2.0"    . "http://www.apache.org/licenses/LICENSE-2.0.html")
+    ("EPL-1.1"       . "http://www.erlang.org/EPLICENSE")
+    ("MIT"           . "http://www.emacsmirror.org/licenses/MIT.html)")
+    ("as-is"         . "http://www.emacsmirror.org/licenses/as-is.html)")
+    ("public-domain" . "http://www.emacsmirror.org/licenses/public-domain.html)"))
+  "List of license to canonical license url mappings.
+Each entry has the form (LICENSE . URL) where LICENSE is a license string
+and URL the canonial url to the license.
+Where no caonconical url is known use a page on the Emacsmirror instead."
+  :group 'elx
+  :type '(repeat (cons (string :tag "License")
+		       (url    :tag "URL"))))
+
+(defun elx-license-url (license)
+  "Return the canonical url to LICENSE.
+The license is looked up in the variable `elx-license-url'.
+If no matching entry exists return nil."
+  (cdar (member* license elx-license-url :key 'car :test 'equal)))
 
 ;;; Extract Dates.
 

@@ -175,11 +175,33 @@ whitespace are converted to empty lines."
 
 ;;; Extract Pages.
 
-(defun elx-wikipage (file pages &optional urlp)
+(defcustom elx-wiki-directory
+  (convert-standard-filename "~/.emacs.d/wikipages/")
+  "The directory containing the Emacswiki pages.
+
+This variable is used by function `elx-wikipage' when determining the page
+on the Emacswiki about a given package.
+
+It's value should be a directory containing all or a subset of pages from
+the Emacswiki all at the top-level.  You can create such a directory by
+cloning eigher the svn or git repository described at
+http://www.emacswiki.org/emacs/SVN_repository and
+http://www.emacswiki.org/emacs/Git_repository respectively."
+  :group 'elx
+  :type 'directory)
+
+(defun elx-wikipage (file &optional pages urlp)
   "Extract the page on the Emacswiki for the specified package.
-FILE is the the main file of the package.  PAGES is either a list of
-existing pages or a directory containing the pages.  If URLP is non-nil
-return the url of the page otherwise only the name."
+
+FILE is the the main file of the package.  Optional PAGES if non-nil
+should be either a list of existing pages or a directory containing
+the pages.  If it is not specified or nil the value of function
+`elx-wiki-directory' is used.  If optional URLP is specified and
+non-nil return the url of the page otherwise only the name.
+
+The page is determined by comparing the name of FILE with existing pages.
+So their is no garanty that this will always return the page about a
+package, even if it exists.  False-positives might also occur."
   (or (elx-with-file file
 	(elx-header "\\(?:x-\\)?\\(?:emacs\\)?wiki-?page"))
       (let ((page (upcase-initials
@@ -189,8 +211,10 @@ return the url of the page otherwise only the name."
 		       (upcase (substring str 1)))
 		     (file-name-sans-extension
 		      (file-name-nondirectory file)))))))
-	(when (member page (if (listp pages) pages
-			     (directory-files pages nil "^[^.]" t)))
+	(when (member page (if (consp pages)
+			       pages
+			     (directory-files (or pages elx-wiki-directory)
+					      nil "^[^.]" t)))
 	  (concat (when urlp "http://www.emacswiki.org/emacs/") page)))))
 
 (defun elx-homepage (file)
@@ -847,8 +871,8 @@ Otherwise function `elx-package-mainfile' (which see) is used to guess it.
 	    :provided provided
 	    :required required
 	    :keywords (elx-keywords mainfile)
-	    :homepage (elx-homepage mainfile))
-	    :wikipage (elx-wikipage mainfile elm-wiki-repo t))))
+	    :homepage (elx-homepage mainfile)
+	    :wikipage (elx-wikipage mainfile nil t)))))
 
 (defun elx-pp-metadata (metadata)
   "Return the pretty-printed representation of METADATA.

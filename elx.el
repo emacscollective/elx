@@ -906,25 +906,30 @@ The regexp being used is stored in variable `elx-required-regexp'."
 
 ;;; Extract Complete Metadata.
 
-(defun elx--lisp-files (tree)
+(defun elx--lisp-files (directory &optional full)
   (let (files)
-    (dolist (file (directory-files tree t "^[^.]" t))
+    (dolist (file (directory-files directory t "^[^.]" t))
       (cond ((file-directory-p file)
-	     (setq files (nconc (elx--lisp-files file) files)))
+	     (setq files (nconc (elx--lisp-files file t) files)))
 	    ((string-match "\\.el$" file)
 	     (setq files (cons file files)))))
-    files))
+    (if full
+	files
+      (let ((default-directory directory))
+	(mapcar 'file-relative-name files)))))
 
-(defun elx-package-mainfile (directory)
+(defun elx-package-mainfile (directory &optional full)
   "Return the mainfile of the package inside DIRECTORY.
-The returned path is relative to DIRECTORY.
+
+If optional FULL is non-nil return an absolute path, otherwise return the
+path relative to DIRECTORY.
 
 If the package has only one file ending in \".el\" return that file
 unconditionally.  Otherwise return the file which provides the feature
 matching the basename of DIRECTORY, or if no such file exists the file
 that provides the feature matching the basename of DIRECTORY with \"-mode\"
 added to or removed from the end, whatever makes sense."
-  (let ((files (elx--lisp-files directory))
+  (let ((files (elx--lisp-files directory full))
 	(name (regexp-quote (file-name-nondirectory
 			     (directory-file-name directory)))))
     (if (= 1 (length files))
@@ -952,14 +957,17 @@ collectivly).
 
 Optional MAINFILE can be used to specify the \"mainfile\" explicitly.
 Otherwise function `elx-package-mainfile' (which see) is used to guess it.
+MAINFILE has to be relative to the package directory or an absolute path.
 
 \(fn FILE-OR-DIRECTORY [MAINFILE])"
   (unless mainfile
     (setq mainfile
 	  (if (file-directory-p arg)
-	      (elx-package-mainfile arg)
+	      (elx-package-mainfile arg t)
 	    arg)))
-  (unless mainfile
+  (if mainfile
+      (unless (file-name-absolute-p mainfile)
+	(setq mainfile (concat arg mainfile)))
     (error "The mainfile can not be determined"))
   (let* ((provided (elx-provided arg))
 	 (required (elx-required-packages arg provided)))

@@ -154,13 +154,18 @@ Or the current buffer if FILE is equal to `buffer-file-name' or is nil."
   (elx-with-file file
     (let ((keywords (elx-header "keywords" t)))
       (when keywords
-	(split-string
-	 (replace-regexp-in-string
-	  "\\(\t\\|\s\\)+" "\s"
+	(mapcan
+	 ;; Filter some nonsense.
+	 (lambda (str)
+	   (when (string-match "^[-a-z]+$" str)
+	     (list str)))
+	 (split-string
 	  (replace-regexp-in-string
-	   "," ""
-	   (downcase (mapconcat #'identity keywords " "))))
-	 " ")))))
+	   "\\(\t\\|\s\\)+" "\s"
+	   (replace-regexp-in-string
+	    "," ""
+	    (downcase (mapconcat #'identity keywords " "))))
+	  " "))))))
 
 (defsubst elx-commentary-start (&optional afterp)
   "Return the buffer location of the `Commentary' start marker.

@@ -947,7 +947,8 @@ Otherwise function `elx-package-mainfile' (which see) is used to guess it.
 	    :required required
 	    :keywords (elx-keywords mainfile)
 	    :homepage (elx-homepage mainfile)
-	    :wikipage (elx-wikipage mainfile nil t)))))
+	    :wikipage (elx-wikipage mainfile nil t)
+	    :commentary (elx-commentary mainfile)))))
 
 (defun elx-pp-metadata (metadata)
   "Return the pretty-printed representation of METADATA.

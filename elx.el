@@ -675,11 +675,16 @@ The return value has the form (NAME . ADDRESS)."
 ;;; Extract Features.
 
 (defvar elx-known-features nil
-  "Hash table of available features.
-The keys are feature symbols and the values are package strings.")
+  "List of known features.
+Each element is a cons cell whose car is a feature symbol and whose cdr is
+the providing package, a string.  You are responsible to setup the value
+yourself.  This variable may be used in function `elx-required-packages'.")
 
 (defvar elx-missing-features nil
-  "List of missing features.")
+  "List of missing features.
+Each element is a feature symbol.  Function `elx-required-packages'
+populates this variable with features it can not find in variable
+`elx-known-features'.")
 
 (defconst elx-provided-regexp "\
 \(\\(?:cc-\\)?provide[\s\t\n]'\

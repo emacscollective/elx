@@ -131,6 +131,21 @@ Or the current buffer if FILE is equal to `buffer-file-name' or is nil."
 	   (downcase (mapconcat #'identity keywords " "))))
 	 " ")))))
 
+(defsubst elx-commentary-start (&optional afterp)
+  "Return the buffer location of the `Commentary' start marker.
+If optional AFTERP is non-nil return the locations after the
+commentary header itself."
+  (lm-section-start lm-commentary-header t))
+(defalias 'lm-commentary-mark 'lm-commentary-start)
+
+(defsubst elx-commentary-end ()
+  "Return the buffer location of the `Commentary' section end.
+This even works when no other section follows the commentary section
+like when the actual code is not prefixed with the \"Code\" seciton tag."
+  (goto-char (elx-commentary-start t))
+  (min (lm-section-end lm-commentary-header)
+       (1- (or (re-search-forward "^[\s\t]*[^;\n]" nil t) (point-max)))))
+
 (defun elx-commentary (&optional file)
   "Return the commentary in file FILE.
 Or the current buffer if FILE is equal to `buffer-file-name' or is nil.
@@ -143,10 +158,10 @@ the leading semicolons and exactly one space are removed, likewise
 leading \"\(\" is replaced with just \"(\".  Lines only consisting only of
 whitespace are converted to empty lines."
   (elx-with-file file
-    (let ((start (lm-commentary-start)))
+    (let ((start (elx-commentary-start t)))
       (when start
 	(let ((commentary (buffer-substring-no-properties
-			   start (lm-commentary-end))))
+			   start (elx-commentary-end))))
 	  (mapc (lambda (elt)
 		  (setq commentary (replace-regexp-in-string
 				    (car elt) (cdr elt) commentary)))

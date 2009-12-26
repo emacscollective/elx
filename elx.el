@@ -83,14 +83,22 @@ current buffer.  Move to beginning of buffer before executing BODY."
 	     (goto-char (point-min))
 	     ,@body))))))
 
-(defun elx-header (header &optional multiline)
+(defun elx-header (header &optional multiline seperator)
   "Return the contents of the header named HEADER, a string.
-Or if MULTILINE is non-nil return a list of strings, one per
-continuation line."
-  (if multiline
-      (lm-header-multiline header)
-    (save-excursion
-      (lm-header header))))
+Or if MULTILINE and/or SEPERATOR is non-nil return a list of strings,
+one per continuation line and/or substring split by SEPERATOR."
+  (let ((value (if multiline
+		   (lm-header-multiline header)
+		 (save-excursion
+		   (list (lm-header header))))))
+    (when seperator
+      (setq value (mapcan (lambda (string)
+			    (when string
+			      (split-string string seperator t)))
+			  value)))
+    (if (or seperator multiline)
+	value
+      (car value))))
 
 ;;; Extract Various.
 

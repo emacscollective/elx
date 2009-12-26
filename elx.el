@@ -555,27 +555,27 @@ Or the current buffer if FILE is equal to `buffer-file-name' or is nil.
 Each element of the list is a cons; the car is the full name,
 the cdr is an email address."
   (elx-with-file file
-    (let ((authorlist (elx-header "authors?" t)))
-      (mapcar 'elx-crack-address authorlist))))
+    (let ((authors (elx-header "authors?" t ", +")))
+      (mapcar 'elx-crack-address authors))))
 
 (defun elx-maintainer (&optional file)
   "Return the maintainer of file FILE.
 Or the current buffer if FILE is equal to `buffer-file-name' or is nil.
 The return value has the form (NAME . ADDRESS)."
   (elx-with-file file
-    (let ((maint (elx-header "maintainer")))
+    (let ((maint (elx-header "maintainer" nil ", +")))
       (if maint
-	  (elx-crack-address maint)
-	(car (lm-authors))))))
+	  (elx-crack-address (car maint))
+	(car (elx-authors))))))
 
 (defun elx-adapted-by (&optional file)
   "Return the person how adapted file FILE.
 Or the current buffer if FILE is equal to `buffer-file-name' or is nil.
 The return value has the form (NAME . ADDRESS)."
   (elx-with-file file
-    (let ((adapter (elx-header "adapted-by")))
+    (let ((adapter (elx-header "adapted-by" nil ", +")))
       (when adapter
-	(elx-crack-address adapter)))))
+	(car (elx-crack-address adapter))))))
 
 ;;; Extract Features.
 

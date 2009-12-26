@@ -541,13 +541,48 @@ the value of variable `emacs-version'."
 (defun elx-crack-address (x)
   "Split up an email address X into full name and real email address.
 The value is a cons of the form (FULLNAME . ADDRESS)."
-  (cond ((string-match "\\(.+\\) [(<]\\(.*\\)[>)]" x)
-	 (cons (match-string 1 x)
-	       (match-string 2 x)))
-	((string-match "\\S-+@\\S-+" x)
-	 (cons nil x))
-	(t
-	 (cons x nil))))
+  (let (name mail)
+    (cond ((string-match (concat "\\(.+\\) "
+				 "?[(<]\\(\\S-+@\\S-+\\)[>)]") x)
+	   (setq name (match-string 1 x)
+		 mail (match-string 2 x)))
+	  ((string-match (concat "\\(.+\\) "
+				 "[(<]\\(?:\\(\\S-+\\) "
+				 "\\(?:\\*?\\(?:AT\\|[.*]\\)\\*?\\) "
+				 "\\(\\S-+\\) "
+				 "\\(?:\\*?\\(?:DOT\\|[.*]\\)\\*? \\)?"
+				 "\\(\\S-+\\)\\)[>)]") x)
+	   (setq name (match-string 1 x)
+		 mail (concat (match-string 2 x) "@"
+			      (match-string 3 x) "."
+			      (match-string 4 x))))
+	  ((string-match (concat "\\(.+\\) "
+				 "[(<]\\(?:\\(\\S-+\\) "
+				 "\\(?:\\*?\\(?:AT\\|[.*]\\)\\*?\\) "
+				 "\\(\\S-+\\)[>)]\\)") x)
+	   (setq name (match-string 1 x)
+		 mail (concat (match-string 2 x) "@"
+			      (match-string 3 x))))
+	  ((string-match (concat "\\(\\S-+@\\S-+\\) "
+				 "[(<]\\(.*\\)[>)]") x)
+	   (setq name (match-string 2 x)
+		 mail (match-string 1 x)))
+	  ((string-match "\\S-+@\\S-+" x)
+	   (setq mail x))
+	  (t
+	   (setq name x)))
+    (cons (and (stringp name)
+	       (string-match "^ *\\([^:0-9<@>]+?\\) *$" name)
+	       (match-string 1 name))
+	  (and (stringp mail)
+	       (string-match
+		(concat "^\\s-*\\("
+			"[a-z0-9!#$%&'*+/=?^_`{|}~-]+"
+			"\\(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+\\)*@"
+			"\\(?:[a-z0-9]\\(?:[a-z0-9-]*[a-z0-9]\\)?\.\\)+"
+			"[a-z0-9]\\(?:[a-z0-9-]*[a-z0-9]\\)?"
+			"\\)\\s-*$") mail)
+	       (downcase (match-string 1 mail))))))
 
 (defun elx-authors (&optional file)
   "Return the author list of file FILE.

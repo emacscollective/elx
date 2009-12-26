@@ -4,8 +4,8 @@
 
 ;; Author: Jonas Bernoulli <jonas@bernoul.li>
 ;; Created: 20081202
-;; Updated: 20091208
-;; Version: 0.1.1
+;; Updated: 20091226
+;; Version: 0.1.1+
 ;; Homepage: https://github.com/tarsius/elx
 ;; Keywords: libraries
 
@@ -794,7 +794,7 @@ added to or removed from the end, whatever makes sense."
 			  (substring name 0 -5)
 			(concat name "-mode")))))))))
 
-(defun elx-package-metadata (arg &optional mainfile commentary)
+(defun elx-package-metadata (arg &optional mainfile)
   "Extract and return the metadata of an Emacs Lisp package.
 
 FILE-OR-DIRECTORY has to be the path to an Emacs Lisp library (a single
@@ -810,11 +810,12 @@ collectivly).
 Optional MAINFILE can be used to specify the \"mainfile\" explicitly.
 Otherwise function `elx-package-mainfile' (which see) is used to guess it.
 
-\(fn file-or-directory)"
-  (if (file-directory-p file)
-      (setq mainfile (elx-package-mainfile arg)
-	    arg (elx-tree-lisp-files arg))
-    (setq mainfile arg))
+\(fn FILE-OR-DIRECTORY [MAINFILE])"
+  (unless mainfile
+    (setq mainfile
+	  (if (file-directory-p arg)
+	      (elx-package-mainfile arg)
+	    arg)))
   (unless mainfile
     (error "The mainfile can not be determined"))
   (let* ((provided (elx-provided arg))

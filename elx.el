@@ -5,9 +5,9 @@
 ;; Author: Jonas Bernoulli <jonas@bernoul.li>
 ;; Created: 20081202
 ;; Updated: 20091226
-;; Version: 0.1.1+
+;; Version: 0.2
 ;; Homepage: https://github.com/tarsius/elx
-;; Keywords: libraries
+;; Keywords: docs, libraries, packages
 
 ;; This file is not part of GNU Emacs.
 

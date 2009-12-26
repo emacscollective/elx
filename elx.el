@@ -783,11 +783,12 @@ matching the basename of DIRECTORY, or if no such file exists the file
 that provides the feature matching the basename of DIRECTORY with \"-mode\"
 added to or removed from the end, whatever makes sense."
   (let ((files (elx--lisp-files directory))
-	(name (file-name-nondirectory (directory-file-name directory))))
+	(name (regexp-quote (file-name-nondirectory
+			     (directory-file-name directory)))))
     (if (= 1 (length files))
 	(car files)
       (flet ((match (feature)
-		    (car (member* (format "^\\([^/]+/\\)*?%s\\.el$" feature)
+		    (car (member* (format "%s\\.el$" feature)
 				  files :test 'string-match))))
 	(cond ((match name))
 	      ((match (if (string-match "-mode$" name)

@@ -671,7 +671,7 @@ The return value has the form (NAME . ADDRESS)."
   (elx-with-file file
     (let ((adapter (elx-header "adapted-by" nil ", +")))
       (when adapter
-	(car (elx-crack-address adapter))))))
+	(elx-crack-address (car adapter))))))
 
 ;;; Extract Features.
 

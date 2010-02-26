@@ -5,7 +5,7 @@
 ;; Author: Jonas Bernoulli <jonas@bernoul.li>
 ;; Created: 20081202
 ;; Updated: 20100226
-;; Version: 0.2+
+;; Version: 0.3
 ;; Homepage: https://github.com/tarsius/elx
 ;; Keywords: docs, libraries, packages
 
@@ -795,9 +795,11 @@ The regexp being used is stored in variable `elx-provided-regexp'."
 			  (nth 4 (syntax-ppss))))) ; in comment
 		  ((match-string 2)
 		   (unless (or (member feature required-hard)
-			       (member feature required-soft))
+			       (member feature required-soft)
+			       (member feature provided))
 		     (push feature required-soft)))
-		  ((not (member feature required-hard))
+		  ((not (or (member feature required-hard)
+			    (member feature provided)))
 		   (setq required-soft (remove feature required-soft))
 		   (push feature required-hard))))))
       (elx--format-required (list required-hard required-soft)
@@ -830,21 +832,27 @@ This function will only find features provided exactly like:
 The regexp being used is stored in variable `elx-required-regexp'."
   (when (eq provided t)
     (setq provided (elx-provided source)))
-  (elx--format-required
-   (cond ((listp source)
-	  (mapcan (lambda (elt)
-		    (elx-required elt provided))
+  (let (required hard soft)
+    (elx--format-required
+     (cond ((listp source)
+	    (mapc (lambda (elt)
+		    (setq required (elx-required elt provided)
+			  hard (nconc (nth 0 required) hard)
+			  soft (nconc (nth 1 required) soft)))
 		  source))
-	 ((file-directory-p source)
-	  (mapcan (lambda (source)
-		    (when (or (file-directory-p source)
-			      (string-match "\\.el$" source))
-		      (elx-required source provided)))
-		  (directory-files source t "^[^\\.]" t)))
-	 (t
-	  (elx-with-file source
-	    (elx--buffer-required (current-buffer) provided))))
-   #'string< t))
+	   ((file-directory-p source)
+	    (mapc (lambda (file)
+		    (when (or (file-directory-p file)
+			      (string-match "\\.el$" file))
+		      (setq required (elx-required file provided)
+			    hard (nconc (nth 0 required) hard)
+			    soft (nconc (nth 1 required) soft))))
+		  (directory-files source t "^[^\\.]" t))
+	    (list hard soft))
+	   (t
+	    (elx-with-file source
+	      (elx--buffer-required (current-buffer) provided))))
+    #'string< t)))
 
 (defun elx-required-packages (source &optional provided known include exclude)
   "Return the packages packages required by SOURCE.

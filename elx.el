@@ -630,18 +630,20 @@ The value is a cons of the form (FULLNAME . ADDRESS)."
 	   (setq mail x))
 	  (t
 	   (setq name x)))
-    (cons (and (stringp name)
-	       (string-match "^ *\\([^:0-9<@>]+?\\) *$" name)
-	       (match-string 1 name))
-	  (and (stringp mail)
-	       (string-match
-		(concat "^\\s-*\\("
-			"[a-z0-9!#$%&'*+/=?^_`{|}~-]+"
-			"\\(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+\\)*@"
-			"\\(?:[a-z0-9]\\(?:[a-z0-9-]*[a-z0-9]\\)?\.\\)+"
-			"[a-z0-9]\\(?:[a-z0-9-]*[a-z0-9]\\)?"
-			"\\)\\s-*$") mail)
-	       (downcase (match-string 1 mail))))))
+    (setq name (and (stringp name)
+		    (string-match "^ *\\([^:0-9<@>]+?\\) *$" name)
+		    (match-string 1 name)))
+    (setq mail (and (stringp mail)
+		    (string-match
+		     (concat "^\\s-*\\("
+			     "[a-z0-9!#$%&'*+/=?^_`{|}~-]+"
+			     "\\(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+\\)*@"
+			     "\\(?:[a-z0-9]\\(?:[a-z0-9-]*[a-z0-9]\\)?\.\\)+"
+			     "[a-z0-9]\\(?:[a-z0-9-]*[a-z0-9]\\)?"
+			     "\\)\\s-*$") mail)
+		    (downcase (match-string 1 mail))))
+    (when (or name mail)
+      (cons name mail))))
 
 (defun elx-authors (&optional file)
   "Return the author list of file FILE.

@@ -651,8 +651,12 @@ Or the current buffer if FILE is equal to `buffer-file-name' or is nil.
 Each element of the list is a cons; the car is the full name,
 the cdr is an email address."
   (elx-with-file file
-    (let ((authors (elx-header "authors?" t ", +")))
-      (mapcar 'elx-crack-address authors))))
+    (mapcan (lambda (elt)
+	      (when elt
+		(setq elt (elx-crack-address elt))
+		(when elt
+		  (list elt))))
+	    (elx-header "authors?" t ", +"))))
 
 (defun elx-maintainer (&optional file)
   "Return the maintainer of file FILE.

@@ -1,11 +1,11 @@
 ;;; elx.el --- extract information from Emacs Lisp libraries
 
-;; Copyright (C) 2008, 2009  Jonas Bernoulli
+;; Copyright (C) 2008, 2009, 2010  Jonas Bernoulli
 
 ;; Author: Jonas Bernoulli <jonas@bernoul.li>
 ;; Created: 20081202
-;; Updated: 20091226
-;; Version: 0.2
+;; Updated: 20100226
+;; Version: 0.2+
 ;; Homepage: https://github.com/tarsius/elx
 ;; Keywords: docs, libraries, packages
 
@@ -172,7 +172,6 @@ Or the current buffer if FILE is equal to `buffer-file-name' or is nil."
 If optional AFTERP is non-nil return the locations after the
 commentary header itself."
   (lm-section-start lm-commentary-header t))
-(defalias 'lm-commentary-mark 'lm-commentary-start)
 
 (defsubst elx-commentary-end ()
   "Return the buffer location of the `Commentary' section end.

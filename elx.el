@@ -734,11 +734,16 @@ This will only find features required exactly like:
 The regexp being used is stored in variable `elx-provided-regexp'."
   (delete-duplicates
    (sort (cond ((listp source)
-		(mapcan #'elx-provided source))
+                (mapcan #'elx-provided source))
+               ;; TODO: This is a basic hack to avoid symlink loops, a more
+               ;; sophisticated version would use `file-truename' and keep track
+               ;; of previously-visited files and directories.
+               ((file-symlink-p source)
+                nil)
 	       ((file-directory-p source)
 		(mapcan (lambda (elt)
 			  (when (or (file-directory-p elt)
-				    (string-match "\\.el$" elt))
+				    (string-match "\\.el\\(.gz\\)?$" elt))
 			    (elx-provided elt)))
 			(directory-files source t "^[^\\.]" t)))
 	       (t

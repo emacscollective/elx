@@ -1038,14 +1038,14 @@ added to or removed from the end, whatever makes sense."
 			  (substring name 0 -5)
 			(concat name "-mode")))))))))
 
-(defun elx-package-metadata (arg &optional mainfile)
+(defun elx-package-metadata (source &optional mainfile)
   "Extract and return the metadata of an Emacs Lisp package.
 
-FILE-OR-DIRECTORY has to be the path to an Emacs Lisp library (a single
+SOURCE has to be the path to an Emacs Lisp library (a single
 file) or the path to a directory containing a package consisting of
 several Emacs Lisp files and/or auxiliary files.
 
-If FILE-OR-DIRECTORY is a directory this function needs to know which
+If SOURCE is a directory this function needs to know which
 file is the package's \"mainfile\"; that is the file from which most
 information is extracted (everything but the required and provided
 features which are extracted from all Emacs Lisp files in the directory
@@ -1055,32 +1055,36 @@ Optional MAINFILE can be used to specify the \"mainfile\" explicitly.
 Otherwise function `elx-package-mainfile' (which see) is used to guess it.
 MAINFILE has to be relative to the package directory or an absolute path.
 
-\(fn FILE-OR-DIRECTORY [MAINFILE])"
+\(fn SOURCE [MAINFILE])"
   (unless mainfile
     (setq mainfile
-	  (if (file-directory-p arg)
-	      (elx-package-mainfile arg t)
-	    arg)))
+	  (if (file-directory-p source)
+	      (elx-package-mainfile source t)
+	    source)))
   (if mainfile
       (unless (file-name-absolute-p mainfile)
-	(setq mainfile (concat arg mainfile)))
+	(setq mainfile (concat source mainfile)))
     (error "The mainfile can not be determined"))
-  (let* ((provided (elx-provided arg))
-	 (required (elx-required-packages arg provided)))
+  (let* ((provided (elx-provided source))
+         (required (elx-required-packages source provided))
+         (version-raw (elx-version source))
+         (version (version-to-list version-raw)))
     (elx-with-file mainfile
-      (list :summary (elx-summary nil t)
-	    :created (elx-created mainfile)
-	    :updated (elx-updated mainfile)
-	    :license (elx-license)
-	    :authors (elx-authors)
-	    :maintainer (elx-maintainer)
-	    :adapted-by (elx-adapted-by)
-	    :provided provided
-	    :required required
-	    :keywords (elx-keywords mainfile)
-	    :homepage (elx-homepage mainfile)
-	    :wikipage (elx-wikipage mainfile nil t)
-	    :commentary (elx-commentary mainfile)))))
+      (make-elx-pkg :version version
+                    :version-raw version-raw
+                    :summary (elx-summary nil t)
+                    :created (elx-created mainfile)
+                    :updated (elx-updated mainfile)
+                    :license (elx-license)
+                    :authors (elx-authors)
+                    :maintainer (elx-maintainer)
+                    :provides provided
+                    :requires-hard (nth 0 required)
+                    :requires-soft (nth 1 required)
+                    :keywords (elx-keywords mainfile)
+                    :homepage (elx-homepage mainfile)
+                    :wikipage (elx-wikipage mainfile nil t)
+                    :commentary (elx-commentary mainfile)))))
 
 (defun elx-pp-metadata (metadata)
   "Return the pretty-printed representation of METADATA.

@@ -65,6 +65,59 @@
   :group 'maint
   :link '(url-link :tag "Homepage" "https://github.com/tarsius/elx"))
 
+(defstruct elx-pkg
+  "A structure containing info about a single package.
+
+This contains all of the information that can be pulled from the
+package's source tree (which excludes things like the package
+name, elpa archive, and archive type).
+
+ - VERSION: The parsed version of the package.
+
+ - VERSION-RAW: The unsanitized string version of the package version.
+
+ - SUMMARY: The brief description of the package.
+
+ - CREATED: The date this package was created.
+
+ - UPDATED: The date the current version was published.
+
+ - LICENSE: The license of this package (as a symbol).
+
+ - AUTHORS: Alist of author names to email addresses.
+
+ - MAINTAINER: Cons cell of maintainer name and email address.
+
+ - PROVIDES: Features provided by this package.
+
+ - REQUIRES-HARD: The packages hard-required by this package, as
+   a list of ((REQ-NAME . REQ-VERSION) features...) lists, where
+   REQ-NAME is a symbol and REQ-VERSION is a parsed version
+   string.
+
+ - REQUIRES-SOFT: The packages soft-required by this package.
+   Format is the same as REQUIRES-HARD.
+
+ - KEYWORDS: The keywords which describe this package.
+
+ - HOMEPAGE: The upstream homepage of this package.
+
+ - WIKIPAGE: The page on EmacsWiki about this package."
+  version
+  version-raw
+  summary
+  created
+  updated
+  license
+  authors
+  maintainer
+  provides
+  requires-hard
+  requires-soft
+  keywords
+  homepage
+  wikipage)
+
 (defmacro elx-with-file (file &rest body)
   "Execute BODY in a buffer containing the contents of FILE.
 If FILE is nil or equal to `buffer-file-name' execute BODY in the

@@ -444,7 +444,7 @@ If no matching entry exists return nil."
 
 (defun elx-version--id-header (&optional file)
   (elx-with-file file
-    (when (re-search-forward "\\$[I]d: [^ ]+ \\([^ ]+\\) "
+    (when (re-search-forward "\\$[Ii]d: [^ ]+ \\([^ ]+\\) "
 			     (lm-code-mark) t)
       (match-string-no-properties 1))))
 

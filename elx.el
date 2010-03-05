@@ -296,7 +296,7 @@ package, even if it exists.  False-positives might also occur."
 			         "\\(by the author \\)?"
 			         "[\"`']\\{0,2\\}as[- ]is[\"`']\\{0,2\\}"))
       ("public-domain" . ,(concat l ".*in\\(to\\)? the public[- ]domain"))
-      ("public-domain" . "^;; Public domain.")))
+      ("public-domain" . "^;+ +Public domain.")))
   "List of regexp to common license string mappings.
 Used by function `elx-license'.  Each entry has the form
 \(LICENSE . REGEXP) where LICENSE is used instead of matches of REGEXP.

@@ -248,9 +248,13 @@ package, even if it exists.  False-positives might also occur."
 		     (file-name-sans-extension
 		      (file-name-nondirectory file)))))))
 	(when (member page (if (consp pages)
-			       pages
-			     (directory-files (or pages elx-wiki-directory)
-					      nil "^[^.]" t)))
+                           pages
+                         (let ((dirname (or pages elx-wiki-directory)))
+                           (unless (and (file-exists-p dirname)
+                                        (eq t (car (file-attributes dirname))))
+                             (mkdir dirname))
+                           (directory-files dirname
+                                            nil "^[^.]" t))))
 	  (concat (when urlp "http://www.emacswiki.org/emacs/") page)))))
 
 (defun elx-homepage (file)

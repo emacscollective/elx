@@ -727,7 +727,7 @@ SOURCE has to be a file, directory or list of files and/or directories.
 If SOURCE is a directory return all features provided by Emacs lisp files
 inside SOURCE and recursively all subdirectories.  Files not ending in
 \".el\" and directories starting with a period are ignored, except when
-explicetly passed to this function.
+explicitly passed to this function.
 
 This will only find features required exactly like:
 \([cc-]require 'FEATURE [nil|\"PATH\" [nil|t]]).
@@ -971,7 +971,7 @@ If FILE-OR-DIRECTORY is a directory this function needs to know which
 file is the package's \"mainfile\"; that is the file from which most
 information is extracted (everything but the required and provided
 features which are extracted from all Emacs Lisp files in the directory
-collectivly).
+collectively).
 
 Optional MAINFILE can be used to specify the \"mainfile\" explicitly.
 Otherwise function `elx-package-mainfile' (which see) is used to guess it.

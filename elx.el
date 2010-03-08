@@ -56,6 +56,7 @@
 ;;; Code:
 
 (require 'cl)
+(require 'cl-merge)
 (require 'dconv)
 (require 'vcomp)
 (require 'lisp-mnt)
@@ -120,18 +121,6 @@ name, elpa archive, and archive type).
   homepage
   wikipage
   commentary)
-
-(defun elx-pkg-merge (pkg1 pkg2)
-  "Destructively updates fields in PKG1 with non-nil fields of PKG2."
-  (mapc '(lambda (slot)
-           (let* ((slot-func (intern (concat "elx-pkg-" (symbol-name slot))))
-                  (newval (funcall slot-func pkg2)))
-             (when newval
-               ;; Needs to be `eval'ed because setf is a macro, so it would see
-               ;; `slot-func' the symbol, not the value of it.
-               (eval `(setf (,slot-func pkg1) newval)))))
-        (cdr (mapcar 'car (get 'elx-pkg 'cl-struct-slots))))
-  pkg1)
 
 (defmacro elx-with-file (file &rest body)
   "Execute BODY in a buffer containing the contents of FILE.
@@ -1053,7 +1042,7 @@ added to or removed from the end, whatever makes sense."
 			  (substring name 0 -5)
 			(concat name "-mode")))))))))
 
-(defun elx-package-metadata (source &optional mainfile)
+(defun elx-package-metadata (source &optional mainfile prev)
   "Extract and return the metadata of an Emacs Lisp package.
 
 SOURCE has to be the path to an Emacs Lisp library (a single
@@ -1070,6 +1059,10 @@ Optional MAINFILE can be used to specify the \"mainfile\" explicitly.
 Otherwise function `elx-package-mainfile' (which see) is used to guess it.
 MAINFILE has to be relative to the package directory or an absolute path.
 
+If PREV is non-nil, then treat it as the previous version of this
+package and overwrite its fields with those found by looking
+through SOURCE.
+
 \(fn SOURCE [MAINFILE])"
   (unless mainfile
     (setq mainfile
@@ -1083,23 +1076,27 @@ MAINFILE has to be relative to the package directory or an absolute path.
   (let* ((provided (elx-provided source))
          (required (elx-required-packages source provided))
          (version-raw (elx-version source))
-         (version (version-to-list version-raw)))
+         (version (version-to-list version-raw))
+         (prev (or prev (make-elx-pkg)))
+         meta)
     (elx-with-file mainfile
-      (make-elx-pkg :version version
-                    :version-raw version-raw
-                    :summary (elx-summary nil t)
-                    :created (elx-created mainfile)
-                    :updated (elx-updated mainfile)
-                    :license (elx-license)
-                    :authors (elx-authors)
-                    :maintainer (elx-maintainer)
-                    :provides provided
-                    :requires-hard (nth 0 required)
-                    :requires-soft (nth 1 required)
-                    :keywords (elx-keywords mainfile)
-                    :homepage (elx-homepage mainfile)
-                    :wikipage (elx-wikipage mainfile nil t)
-                    :commentary (elx-commentary mainfile)))))
+      (setq meta
+            (make-elx-pkg :version version
+                          :version-raw version-raw
+                          :summary (elx-summary nil t)
+                          :created (elx-created mainfile)
+                          :updated (elx-updated mainfile)
+                          :license (elx-license)
+                          :authors (elx-authors)
+                          :maintainer (elx-maintainer)
+                          :provides provided
+                          :requires-hard (nth 0 required)
+                          :requires-soft (nth 1 required)
+                          :keywords (elx-keywords mainfile)
+                          :homepage (elx-homepage mainfile)
+                          :wikipage (elx-wikipage mainfile nil t)
+                          :commentary (elx-commentary mainfile)))
+      (cl-merge-struct 'elx-pkg prev meta))))
 
 (defun elx-pp-metadata (metadata)
   "Return the pretty-printed representation of METADATA.

@@ -511,6 +511,17 @@ Some examples of the conversion are:
 	 (number-to-string (1+ (string-to-number old-version)))
        "0001"))))
 
+(defun elx-version-sanitize (version)
+  "Clean up a VERSION, stripping extraneous text."
+  ;; TODO: Make this into a list of regexps against which to match.
+  (cond ((not version))
+	    ((string-match "\\$[I]d: [^ ]+ \\([^ ]+\\) " version)
+	     (match-string-no-properties 1 version))
+	    ((string-match "\\$Revision: +\\([^ ]+\\) "  version)
+	     (match-string-no-properties 1 version))
+	    ((string-match "\\([-_.0-9a-z]+\\)[\s\t].+"  version)
+	     (match-string-no-properties 1 version))))
+
 (defun elx-version (file &optional standardize)
   "Return the version of file FILE.
 Or the current buffer if FILE is equal to `buffer-file-name'.
@@ -529,13 +540,7 @@ and complain to the respective author."
     (let ((version (or (elx-header "version")
 		       (elx-version--no-colon)))
 	  (update (elx-header "update\\( #\\)?")))
-      (cond ((not version))
-	    ((string-match "\\$[I]d: [^ ]+ \\([^ ]+\\) " version)
-	     (setq version (match-string-no-properties 1 version)))
-	    ((string-match "\\$Revision: +\\([^ ]+\\) "  version)
-	     (setq version (match-string-no-properties 1 version)))
-	    ((string-match "\\([-_.0-9a-z]+\\)[\s\t].+"  version)
-	     (setq version (match-string-no-properties 1 version))))
+      (setq version (elx-version-sanitize version))
       (when update
 	(setq version (concat (or version "0") "." update)))
       (elx-version--do-verify (if (and version standardize)

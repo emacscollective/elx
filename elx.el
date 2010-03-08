@@ -102,7 +102,9 @@ name, elpa archive, and archive type).
 
  - HOMEPAGE: The upstream homepage of this package.
 
- - WIKIPAGE: The page on EmacsWiki about this package."
+ - WIKIPAGE: The page on EmacsWiki about this package.
+
+ - COMMENTARY: The package commentary."
   version
   version-raw
   summary
@@ -116,7 +118,8 @@ name, elpa archive, and archive type).
   requires-soft
   keywords
   homepage
-  wikipage)
+  wikipage
+  commentary)
 
 (defmacro elx-with-file (file &rest body)
   "Execute BODY in a buffer containing the contents of FILE.

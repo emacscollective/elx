@@ -121,6 +121,18 @@ name, elpa archive, and archive type).
   wikipage
   commentary)
 
+(defun elx-pkg-merge (pkg1 pkg2)
+  "Destructively updates fields in PKG1 with non-nil fields of PKG2."
+  (mapc '(lambda (slot)
+           (let* ((slot-func (intern (concat "elx-pkg-" (symbol-name slot))))
+                  (newval (funcall slot-func pkg2)))
+             (when newval
+               ;; Needs to be `eval'ed because setf is a macro, so it would see
+               ;; `slot-func' the symbol, not the value of it.
+               (eval `(setf (,slot-func pkg1) newval)))))
+        (cdr (mapcar 'car (get 'elx-pkg 'cl-struct-slots))))
+  pkg1)
+
 (defmacro elx-with-file (file &rest body)
   "Execute BODY in a buffer containing the contents of FILE.
 If FILE is nil or equal to `buffer-file-name' execute BODY in the

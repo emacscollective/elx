@@ -4,8 +4,8 @@
 
 ;; Author: Jonas Bernoulli <jonas@bernoul.li>
 ;; Created: 20081202
-;; Updated: 20100226
-;; Version: 0.3
+;; Updated: 20100307
+;; Version: 0.3+
 ;; Homepage: https://github.com/tarsius/elx
 ;; Keywords: docs, libraries, packages
 
@@ -228,7 +228,7 @@ http://www.emacswiki.org/emacs/Git_repository respectively."
 (defun elx-wikipage (file &optional pages urlp)
   "Extract the page on the Emacswiki for the specified package.
 
-FILE is the the main file of the package.  Optional PAGES if non-nil
+FILE is the the mainfile of the package.  Optional PAGES if non-nil
 should be either a list of existing pages or a directory containing
 the pages.  If it is not specified or nil the value of function
 `elx-wiki-directory' is used.  If optional URLP is specified and

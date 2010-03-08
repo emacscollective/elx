@@ -924,32 +924,32 @@ The regexp being used is stored in variable `elx-required-regexp'."
 
 ;;; Extract Complete Metadata.
 
-(defun elx--lisp-files (directory &optional full)
+(defun elx--lisp-files (source &optional full)
   (let (files)
-    (dolist (file (directory-files directory t "^[^.]" t))
+    (dolist (file (directory-files source t "^[^.]" t))
       (cond ((file-directory-p file)
 	     (setq files (nconc (elx--lisp-files file t) files)))
 	    ((string-match "\\.el$" file)
 	     (setq files (cons file files)))))
     (if full
 	files
-      (let ((default-directory directory))
+      (let ((default-directory source))
 	(mapcar 'file-relative-name files)))))
 
-(defun elx-package-mainfile (directory &optional full)
-  "Return the mainfile of the package inside DIRECTORY.
+(defun elx-package-mainfile (source &optional full)
+  "Return the mainfile of the package inside SOURCE.
 
 If optional FULL is non-nil return an absolute path, otherwise return the
-path relative to DIRECTORY.
+path relative to SOURCE.
 
 If the package has only one file ending in \".el\" return that file
 unconditionally.  Otherwise return the file which provides the feature
-matching the basename of DIRECTORY, or if no such file exists the file
-that provides the feature matching the basename of DIRECTORY with \"-mode\"
+matching the basename of SOURCE, or if no such file exists the file
+that provides the feature matching the basename of SOURCE with \"-mode\"
 added to or removed from the end, whatever makes sense."
-  (let ((files (elx--lisp-files directory full))
+  (let ((files (elx--lisp-files source full))
 	(name (regexp-quote (file-name-nondirectory
-			     (directory-file-name directory)))))
+			     (directory-file-name source)))))
     (if (= 1 (length files))
 	(car files)
       (flet ((match (feature)
@@ -960,35 +960,32 @@ added to or removed from the end, whatever makes sense."
 			  (substring name 0 -5)
 			(concat name "-mode")))))))))
 
-(defun elx-package-metadata (arg &optional mainfile)
+(defun elx-package-metadata (source &optional mainfile)
   "Extract and return the metadata of an Emacs Lisp package.
 
-FILE-OR-DIRECTORY has to be the path to an Emacs Lisp library (a single
-file) or the path to a directory containing a package consisting of
-several Emacs Lisp files and/or auxiliary files.
+SOURCE has to be the path to an Emacs Lisp library (a single file) or the
+path to a directory containing a package consisting of several Emacs Lisp
+files and/or auxiliary files.
 
-If FILE-OR-DIRECTORY is a directory this function needs to know which
-file is the package's \"mainfile\"; that is the file from which most
-information is extracted (everything but the required and provided
-features which are extracted from all Emacs Lisp files in the directory
-collectivly).
+If SOURCE is a directory this function needs to know which file is the
+package's \"mainfile\"; that is the file from which most information is
+extracted (everything but the required and provided features which are
+extracted from all Emacs Lisp files in the directory collectivly).
 
 Optional MAINFILE can be used to specify the \"mainfile\" explicitly.
 Otherwise function `elx-package-mainfile' (which see) is used to guess it.
-MAINFILE has to be relative to the package directory or an absolute path.
-
-\(fn FILE-OR-DIRECTORY [MAINFILE])"
+MAINFILE has to be relative to the package directory or an absolute path."
   (unless mainfile
     (setq mainfile
-	  (if (file-directory-p arg)
-	      (elx-package-mainfile arg t)
-	    arg)))
+	  (if (file-directory-p source)
+	      (elx-package-mainfile source t)
+	    source)))
   (if mainfile
       (unless (file-name-absolute-p mainfile)
-	(setq mainfile (concat arg mainfile)))
+	(setq mainfile (concat source mainfile)))
     (error "The mainfile can not be determined"))
-  (let* ((provided (elx-provided arg))
-	 (required (elx-required-packages arg provided)))
+  (let* ((provided (elx-provided source))
+	 (required (elx-required-packages source provided)))
     (elx-with-file mainfile
       (list :summary (elx-summary nil t)
 	    :created (elx-created mainfile)

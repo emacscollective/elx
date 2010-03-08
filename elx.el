@@ -1004,29 +1004,5 @@ MAINFILE has to be relative to the package directory or an absolute path.
 	    :wikipage (elx-wikipage mainfile nil t)
 	    :commentary (elx-commentary mainfile)))))
 
-(defun elx-pp-metadata (metadata)
-  "Return the pretty-printed representation of METADATA.
-METADATA should be a list as returned by `elx-package-metadata'."
-  (with-temp-buffer
-    (let ((standard-output (current-buffer)))
-      (princ "(")
-      (while metadata
-	(let ((key (pop metadata))
-	      (val (pop metadata)))
-	  (when val
-	    (unless (looking-back "(")
-	      (princ "\n "))
-	    (princ (format "%-11s " key))
-	    (if (eq key :commentary)
-		(prin1 val)
-	      (let ((lines (split-string (pp-to-string val) "\n" t)))
-		(princ (pop lines))
-		(while (car lines)
-		  (princ "\n")
-		  (indent-to 13)
-		  (princ (pop lines))))))))
-      (princ ")\n"))
-    (buffer-string)))
-
 (provide 'elx)
 ;;; elx.el ends here

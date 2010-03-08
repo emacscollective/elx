@@ -71,7 +71,9 @@
 
 This contains all of the information that can be pulled from the
 package's source tree (which excludes things like the package
-name, elpa archive, and archive type).
+elpa archive, and archive type).
+
+ - NAME: The name of the package, as a symbol.
 
  - VERSION: The parsed version of the package.
 
@@ -106,6 +108,7 @@ name, elpa archive, and archive type).
  - WIKIPAGE: The page on EmacsWiki about this package.
 
  - COMMENTARY: The package commentary."
+  name
   version
   version-raw
   summary

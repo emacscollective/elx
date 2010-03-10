@@ -681,15 +681,11 @@ The return value has the form (NAME . ADDRESS)."
 
 (defvar elx-known-features nil
   "List of known features.
-Each element is a cons cell whose car is a feature symbol and whose cdr is
-the providing package, a string.  You are responsible to setup the value
-yourself.  This variable may be used in function `elx-required-packages'.")
 
-(defvar elx-missing-features nil
-  "List of missing features.
-Each element is a feature symbol.  Function `elx-required-packages'
-populates this variable with features it can not find in variable
-`elx-known-features'.")
+Each element is a cons cell whose car is a feature symbol and whose cdr is
+the providing package, a string.  This variable has to be set for function
+`elx-required-packages' to work correctly; you are responsible to do that
+yourself.")
 
 (defconst elx-provided-regexp "\
 \(\\(?:cc-\\)?provide[\s\t\n]'\
@@ -759,22 +755,15 @@ The regexp being used is stored in variable `elx-provided-regexp'."
       (when hard
 	(list hard)))))
 
-(defun elx--lookup-required (provided known required include exclude)
-  (unless known
-    (setq known elx-known-features))
+(defun elx--lookup-required (required)
   (let (packages)
-    (dolist (requ (nconc (copy-list required) include))
-      (unless (memq requ exclude)
-	(let* ((package (if (hash-table-p known)
-			    (gethash requ known)
-			  (cdr (assoc requ known))))
-	       (elt (car (member* package packages :test 'equal :key 'car))))
-	  (unless package
-	    (add-to-list 'elx-missing-features requ))
-	  (if elt
-	      (unless (memq requ (cdr elt))
-		(setcdr elt (sort (cons requ (cdr elt)) 'string<)))
-	    (push (list package requ) packages)))))
+    (dolist (feature required)
+      (let* ((package (cdr (assoc feature elx-known-features)))
+	     (entry (assoc package packages)))
+	(if entry
+	    (unless (memq feature (cdr entry))
+	      (setcdr entry (sort (cons feature (cdr entry)) 'string<)))
+	  (push (list package feature) packages))))
     (sort* packages
 	   (lambda (a b)
 	     (cond ((null a) nil)
@@ -830,7 +819,7 @@ of features are not included in the return value.
 This function will only find features provided exactly like:
 \(provide 'FEATURE '(SUBFEATURE...)).
 The regexp being used is stored in variable `elx-required-regexp'."
-  (when (eq provided t)
+  (unless provided
     (setq provided (elx-provided source)))
   (let (required hard soft)
     (elx--format-required
@@ -854,73 +843,41 @@ The regexp being used is stored in variable `elx-required-regexp'."
 	      (elx--buffer-required (current-buffer) provided))))
     #'string< t)))
 
-(defun elx-required-packages (source &optional provided known include exclude)
+(defun elx-required-packages (source &optional provided)
   "Return the packages packages required by SOURCE.
+
 The returned value has the form:
 
   (((HARD-REQUIRED-PACKAGE FEATURE...)...)
    [((SOFT-REQUIRED-PACKAGE FEATURE...)...)])
 
 Where HARD-REQUIRED-PACKAGE and SOFT-REQUIRED-PACKAGE are strings and
-FEATURE is a symbol.  If no features/packages are required nil is
-returned.
+FEATURE is a symbol.  If SOURCE has no external dependencies required nil.
 
-SOURCE has to be a file, directory, list of files and/or directories or
-a function.
+SOURCE has to be a file, directory, list of files and/or directories.
 
-If SOURCE is a function use it instead of `elx-required' to extract the
-list of required *features*.  It will be called with two arguments
-PROVIDED and KNOWN.
-
-If SOURCE is a directory return all features required by Emacs lisp files
+If SOURCE is a directory return all packages required by Emacs lisp files
 inside SOURCE and recursively all subdirectories.  Files not ending in
 \".el\" and directories starting with a period are ignored, except when
 explicetly passed to this function.
 
-If optional PROVIDED is provided and non-nil is has to be a list of
-features, t or a function.  If it is a function call it with SOURCE as
-only argument and use the returned list of features.  Likewise if it is t
-call `elx-provided'.  Members of this list of features are not included
-in the return value.
+The return value does not include features provided by SOURCE.  If
+optional PROVIDED is not provided or nil the features provided by SOURCE
+are determined using `elx-provided'.  Otherwise PROVIDED has to be a list
+of features which are assumed to be the features provided by SOURCE.
 
-If optional KNOWN is provided and non-nil it has to be an alist or
-hash table mapping features to packages.  If it is omitted or nil the
-value of variable `elx-known-features' is used, however you have to setup
-the value of its your self.
-
-INCLUDE and EXCLUDE are useful when you know that the value returned by
-the function (usually `elx-required') used to extract the list of required
-*features* is not absolutely correct.
-
-If optional INCLUDE is provided and non-nil it has to be a list of
-features.  These features will be treated as if they were returned by the
-function used to extract the list of provided *features*.
-
-If optional EXCLUDE is provided and non-nil it has to be a list of
-features.  These features and the corresponding packages won't be part of
-the returned value.
+Note that this function uses the value of variable `elx-known-features'
+to determine what package provides a feature.  You are responsible to
+setup that variable yourself.
 
 This function will only find features provided exactly like:
 \(provide 'FEATURE '(SUBFEATURE...)).
 The regexp being used is stored in variable `elx-required-regexp'."
-  (unless (listp provided)
-    (setq provided (apply (if (functionp provided)
-			      provided
-			    'elx-provided)
-			  source)))
-  (let ((required (if (functionp source)
-		      (apply source provided known)
-		    (elx-required source provided))))
+  (let ((required
+	 (elx-required source (or provided (elx-provided source)))))
     (elx--format-required
-     (list
-      (elx--lookup-required provided known
-			    (nth 0 required)
-			    (nth 0 include)
-			    (nth 0 exclude))
-      (elx--lookup-required provided known
-			    (nth 1 required)
-			    (nth 1 include)
-			    (nth 1 exclude))))))
+     (list (elx--lookup-required (nth 0 required))
+	   (elx--lookup-required (nth 1 required))))))
 
 ;;; Extract Complete Metadata.
 

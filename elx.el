@@ -717,9 +717,7 @@ inside SOURCE and recursively all subdirectories.  Files not ending in
 \".el\" and directories starting with a period are ignored, except when
 explicetly passed to this function.
 
-This will only find features required exactly like:
-\([cc-]require 'FEATURE [nil|\"PATH\" [nil|t]]).
-The regexp being used is stored in variable `elx-provided-regexp'."
+This function finds provided features using `elx-provided-regexp'."
   (delete-duplicates
    (sort (cond ((listp source)
 		(mapcan #'elx-provided source))
@@ -796,6 +794,7 @@ The regexp being used is stored in variable `elx-provided-regexp'."
 
 (defun elx-required (source &optional provided)
   "Return the features required by SOURCE.
+
 The returned value has the form:
 
   ((HARD-REQUIRED...)
@@ -816,9 +815,7 @@ features, t or a function.  If it is t call `elx-provided' with SOURCE as
 only argument and use the returned list of features.  Members of this list
 of features are not included in the return value.
 
-This function will only find features provided exactly like:
-\(provide 'FEATURE '(SUBFEATURE...)).
-The regexp being used is stored in variable `elx-required-regexp'."
+This function finds required features using `elx-required-regexp'."
   (unless provided
     (setq provided (elx-provided source)))
   (let (required hard soft)
@@ -870,9 +867,7 @@ Note that this function uses the value of variable `elx-known-features'
 to determine what package provides a feature.  You are responsible to
 setup that variable yourself.
 
-This function will only find features provided exactly like:
-\(provide 'FEATURE '(SUBFEATURE...)).
-The regexp being used is stored in variable `elx-required-regexp'."
+This function finds required features using `elx-required-regexp'."
   (let ((required
 	 (elx-required source (or provided (elx-provided source)))))
     (elx--format-required

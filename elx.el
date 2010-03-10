@@ -59,6 +59,7 @@
 (require 'dconv)
 (require 'vcomp)
 (require 'lisp-mnt)
+(require 'lgit nil t)
 
 (defgroup elx nil
   "Extract information from Emacs Lisp libraries."
@@ -717,19 +718,24 @@ inside SOURCE and recursively all subdirectories.  Files not ending in
 \".el\" and directories starting with a period are ignored, except when
 explicetly passed to this function.
 
+If library `lgit' is loaded SOURCE can also be a cons cell whose car is
+the path to a git repository (which may be bare) and whose cdr has to be
+an existing revision in that repository.
+
 This function finds provided features using `elx-provided-regexp'."
   (delete-duplicates
-   (sort (cond ((listp source)
-		(mapcan #'elx-provided source))
-	       ((file-directory-p source)
+   (sort (cond ((atom source)
+		(if (file-directory-p source)
+		    (mapcan #'elx-provided (elx-elisp-files source t))
+		  (elx-with-file source
+		    (elx--buffer-provided (current-buffer)))))
+	       ((atom (cdr source))
 		(mapcan (lambda (elt)
-			  (when (or (file-directory-p elt)
-				    (string-match "\\.el$" elt))
-			    (elx-provided elt)))
-			(directory-files source t "^[^\\.]" t)))
+			  (lgit-with-file (car source) (cdr source) elt
+			    (elx--buffer-provided (current-buffer))))
+			(elx-elisp-files source)))
 	       (t
-		(elx-with-file source
-		  (elx--buffer-provided (current-buffer)))))
+		(mapcan #'elx-provided source)))
 	 #'string<)
    :test #'equal))
 
@@ -805,6 +811,10 @@ inside SOURCE and recursively all subdirectories.  Files not ending in
 \".el\" and directories starting with a period are ignored, except when
 explicetly passed to this function.
 
+If library `lgit' is loaded SOURCE can also be a cons cell whose car is
+the path to a git repository (which may be bare) and whose cdr has to be
+an existing revision in that repository.
+
 If optional PROVIDED is provided and non-nil is has to be a list of
 features, t or a function.  If it is t call `elx-provided' with SOURCE as
 only argument and use the returned list of features.  Members of this list
@@ -813,26 +823,27 @@ of features are not included in the return value.
 This function finds required features using `elx-required-regexp'."
   (unless provided
     (setq provided (elx-provided source)))
-  (let (required hard soft)
-    (elx--format-required
-     (cond ((listp source)
-	    (mapc (lambda (elt)
-		    (setq required (elx-required elt provided)
-			  hard (nconc (nth 0 required) hard)
-			  soft (nconc (nth 1 required) soft)))
-		  source))
-	   ((file-directory-p source)
-	    (mapc (lambda (file)
-		    (when (or (file-directory-p file)
-			      (string-match "\\.el$" file))
-		      (setq required (elx-required file provided)
-			    hard (nconc (nth 0 required) hard)
-			    soft (nconc (nth 1 required) soft))))
-		  (directory-files source t "^[^\\.]" t))
-	    (list hard soft))
-	   (t
-	    (elx-with-file source
-	      (elx--buffer-required (current-buffer) provided)))))))
+  (let (hard soft)
+    (flet ((split (required)
+		  (setq hard (nconc (nth 0 required) hard)
+			soft (nconc (nth 1 required) soft))))
+      (cond ((atom source)
+	     (if (file-directory-p source)
+		 (mapc (lambda (elt)
+			 (split (elx-required elt provided)))
+		       (elx-elisp-files source t))
+	       (elx-with-file source
+		 (split (elx--buffer-required (current-buffer) provided)))))
+	    ((atom (cdr source))
+	     (mapc (lambda (elt)
+		     (lgit-with-file (car source) (cdr source) elt
+		       (split (elx--buffer-required (current-buffer)))))
+		   (elx-elisp-files source)))
+	    (t
+	     (mapc (lambda (elt)
+		     (split (elx-required elt provided)))
+		   (elx-elisp-files source t)))))
+    (elx--format-required (list hard soft))))
 
 (defun elx-required-packages (source &optional provided)
   "Return the packages packages required by SOURCE.
@@ -851,6 +862,10 @@ If SOURCE is a directory return all packages required by Emacs lisp files
 inside SOURCE and recursively all subdirectories.  Files not ending in
 \".el\" and directories starting with a period are ignored, except when
 explicetly passed to this function.
+
+If library `lgit' is loaded SOURCE can also be a cons cell whose car is
+the path to a git repository (which may be bare) and whose cdr has to be
+an existing revision in that repository.
 
 The return value does not include features provided by SOURCE.  If
 optional PROVIDED is not provided or nil the features provided by SOURCE
@@ -873,23 +888,49 @@ This function finds required features using `elx-required-regexp'."
 
 ;;; Extract Complete Metadata.
 
+(defcustom elx-git-config-section "elm"
+  "Section in git config files from which information might be used."
+  :group 'elm
+  :type 'string)
+
 (defun elx-elisp-files (source &optional full)
+  "Return a list of Emacs lisp files inside directory SOURCE.
+
+If optional FULL is non-nil return full paths, otherwise relative to
+SOURCE.
+
+If library `lgit' is loaded SOURCE can also be a cons cell whose car is
+the path to a git repository (which may be bare) and whose cdr has to be
+an existing revision in that repository.  In this case the returned paths
+are always relative to the repository."
+  ;; FIXME When extracting from fs files from hidden folders
+  ;; are excluded but when extracting from git they are not.
   (let (files)
-    (dolist (file (directory-files source t "^[^.]" t))
-      (cond ((file-directory-p file)
-	     (setq files (nconc (elx-elisp-files file t) files)))
-	    ((string-match "\\.el$" file)
-	     (setq files (cons file files)))))
-    (if full
-	files
-      (let ((default-directory source))
-	(mapcar 'file-relative-name files)))))
+    (if (consp source)
+	(mapcan (lambda (elt)
+		  (when (string-match "[^./][^/]+?.el$" elt)
+		    (list elt)))
+		(lgit (car source) "ls-tree -r --name-only %s" (cdr source)))
+      (dolist (file (directory-files source t "^[^.]" t))
+	(cond ((file-directory-p file)
+	       (setq files (nconc (elx-elisp-files file t) files)))
+	      ((string-match "\\.el$" file)
+	       (setq files (cons file files)))))
+      (if full
+	  files
+	(let ((default-directory source))
+	  (mapcar 'file-relative-name files))))))
 
 (defun elx-package-mainfile (source &optional full)
   "Return the mainfile of the package inside SOURCE.
 
-If optional FULL is non-nil return an absolute path, otherwise return the
-path relative to SOURCE.
+SOURCE has to be a directory containing all libraries belonging to some
+package.  If optional FULL is non-nil return an absolute path, otherwise
+return the path relative to SOURCE.
+
+If library `lgit' is loaded SOURCE can also be a cons cell whose car is
+the path to a git repository (which may be bare) and whose cdr has to be
+an existing revision in that repository.
 
 If the package has only one file ending in \".el\" return that file
 unconditionally.  Otherwise return the file which provides the feature
@@ -897,8 +938,13 @@ matching the basename of SOURCE, or if no such file exists the file
 that provides the feature matching the basename of SOURCE with \"-mode\"
 added to or removed from the end, whatever makes sense."
   (let ((files (elx-elisp-files source full))
-	(name (regexp-quote (file-name-nondirectory
-			     (directory-file-name source)))))
+	(name (regexp-quote
+	       (file-name-nondirectory
+		(directory-file-name
+		 (if (atom source)
+		     source
+		   (replace-regexp-in-string
+		    "\\.git/?$" "" (car source))))))))
     (if (= 1 (length files))
 	(car files)
       (flet ((match (feature)
@@ -907,48 +953,62 @@ added to or removed from the end, whatever makes sense."
 	(cond ((match name))
 	      ((match (if (string-match "-mode$" name)
 			  (substring name 0 -5)
-			(concat name "-mode")))))))))
+			(concat name "-mode"))))
+	      ((consp source)
+	       (cadr (lgit (car source) 1 "config %s.mainfile"
+			   elx-git-config-section))))))))
+
+(defun elx--collect-metadata (mainfile provided required)
+  (list :summary (elx-summary nil t)
+	:created (elx-created mainfile)
+	:updated (elx-updated mainfile)
+	:license (elx-license)
+	:authors (elx-authors)
+	:maintainer (elx-maintainer)
+	:adapted-by (elx-adapted-by)
+	:provided provided
+	:required required
+	:keywords (elx-keywords mainfile)
+	:homepage (elx-homepage mainfile)
+	:wikipage (elx-wikipage mainfile nil t)
+	:commentary (elx-commentary mainfile)))
 
 (defun elx-package-metadata (source &optional mainfile)
   "Extract and return the metadata of an Emacs Lisp package.
 
 SOURCE has to be the path to an Emacs Lisp library (a single file) or the
-path to a directory containing a package consisting of several Emacs Lisp
-files and/or auxiliary files.
+path to a directory containing all libraries belonging to some package.
 
 If SOURCE is a directory this function needs to know which file is the
 package's \"mainfile\"; that is the file from which most information is
 extracted (everything but the required and provided features which are
 extracted from all Emacs Lisp files in the directory collectivly).
 
+If library `lgit' is loaded SOURCE can also be a cons cell whose car is
+the path to a git repository (which may be bare) and whose cdr has to be
+an existing revision in that repository.
+
 Optional MAINFILE can be used to specify the \"mainfile\" explicitly.
-Otherwise function `elx-package-mainfile' (which see) is used to guess it.
-MAINFILE has to be relative to the package directory or an absolute path."
+Otherwise function `elx-package-mainfile' (which see) is used to determine
+which file is the mainfile.  MAINFILE has to be relative to the package
+directory or an absolute path."
   (unless mainfile
     (setq mainfile
-	  (if (file-directory-p source)
+	  (if (file-directory-p (if (consp source) (car source) source))
 	      (elx-package-mainfile source t)
 	    source)))
   (if mainfile
-      (unless (file-name-absolute-p mainfile)
+      (unless (or (consp source)
+		  (file-name-absolute-p mainfile))
 	(setq mainfile (concat source mainfile)))
     (error "The mainfile can not be determined"))
   (let* ((provided (elx-provided source))
 	 (required (elx-required-packages source provided)))
-    (elx-with-file mainfile
-      (list :summary (elx-summary nil t)
-	    :created (elx-created mainfile)
-	    :updated (elx-updated mainfile)
-	    :license (elx-license)
-	    :authors (elx-authors)
-	    :maintainer (elx-maintainer)
-	    :adapted-by (elx-adapted-by)
-	    :provided provided
-	    :required required
-	    :keywords (elx-keywords mainfile)
-	    :homepage (elx-homepage mainfile)
-	    :wikipage (elx-wikipage mainfile nil t)
-	    :commentary (elx-commentary mainfile)))))
+    (if (consp source)
+	(lgit-with-file (car source) (cdr source) mainfile
+	  (elx--collect-metadata mainfile provided required))
+      (elx-with-file mainfile
+	(elx--collect-metadata mainfile provided required)))))
 
 (provide 'elx)
 ;;; elx.el ends here

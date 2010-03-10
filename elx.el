@@ -739,15 +739,11 @@ This function finds provided features using `elx-provided-regexp'."
 \\(?:\\(?:[\s\t\n]+\\(?:nil\\|\".*\"\\)\\)\
 \\(?:[\s\t\n]+\\(?:nil\\|\\(t\\)\\)\\)?\\)?)")
 
-(defun elx--format-required (required &optional sort-fn unique-p)
-  (let ((hard (nth 0 required))
-	(soft (nth 1 required)))
-    (when sort-fn
-      (setq hard (sort hard sort-fn)
-	    soft (sort soft sort-fn)))
-    (when unique-p
-      (setq hard (delete-duplicates hard :test #'equal)
-	    soft (delete-duplicates soft :test #'equal)))
+(defun elx--format-required (required)
+  (let ((hard (delete-duplicates (sort (nth 0 required) #'string<)
+				 :test #'equal))
+	(soft (delete-duplicates (sort (nth 1 required) #'string<)
+				 :test #'equal)))
     (if soft
 	(list hard soft)
       (when hard
@@ -789,8 +785,7 @@ This function finds provided features using `elx-provided-regexp'."
 			    (member feature provided)))
 		   (setq required-soft (remove feature required-soft))
 		   (push feature required-hard))))))
-      (elx--format-required (list required-hard required-soft)
-			    #'string<))))
+      (elx--format-required (list required-hard required-soft)))))
 
 (defun elx-required (source &optional provided)
   "Return the features required by SOURCE.
@@ -837,8 +832,7 @@ This function finds required features using `elx-required-regexp'."
 	    (list hard soft))
 	   (t
 	    (elx-with-file source
-	      (elx--buffer-required (current-buffer) provided))))
-    #'string< t)))
+	      (elx--buffer-required (current-buffer) provided)))))))
 
 (defun elx-required-packages (source &optional provided)
   "Return the packages packages required by SOURCE.
@@ -868,11 +862,14 @@ to determine what package provides a feature.  You are responsible to
 setup that variable yourself.
 
 This function finds required features using `elx-required-regexp'."
-  (let ((required
-	 (elx-required source (or provided (elx-provided source)))))
-    (elx--format-required
-     (list (elx--lookup-required (nth 0 required))
-	   (elx--lookup-required (nth 1 required))))))
+  (let* ((required (elx-required source (or provided
+					    (elx-provided source))))
+	 (hard (elx--lookup-required (nth 0 required)))
+	 (soft (elx--lookup-required (nth 1 required))))
+    (if soft
+	(list hard soft)
+      (when hard
+	(list hard)))))
 
 ;;; Extract Complete Metadata.
 

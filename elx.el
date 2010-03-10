@@ -4,7 +4,7 @@
 
 ;; Author: Jonas Bernoulli <jonas@bernoul.li>
 ;; Created: 20081202
-;; Updated: 20100307
+;; Updated: 20100310
 ;; Version: 0.3+
 ;; Homepage: https://github.com/tarsius/elx
 ;; Keywords: docs, libraries, packages
@@ -924,11 +924,11 @@ The regexp being used is stored in variable `elx-required-regexp'."
 
 ;;; Extract Complete Metadata.
 
-(defun elx--lisp-files (source &optional full)
+(defun elx-elisp-files (source &optional full)
   (let (files)
     (dolist (file (directory-files source t "^[^.]" t))
       (cond ((file-directory-p file)
-	     (setq files (nconc (elx--lisp-files file t) files)))
+	     (setq files (nconc (elx-elisp-files file t) files)))
 	    ((string-match "\\.el$" file)
 	     (setq files (cons file files)))))
     (if full
@@ -947,7 +947,7 @@ unconditionally.  Otherwise return the file which provides the feature
 matching the basename of SOURCE, or if no such file exists the file
 that provides the feature matching the basename of SOURCE with \"-mode\"
 added to or removed from the end, whatever makes sense."
-  (let ((files (elx--lisp-files source full))
+  (let ((files (elx-elisp-files source full))
 	(name (regexp-quote (file-name-nondirectory
 			     (directory-file-name source)))))
     (if (= 1 (length files))

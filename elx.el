@@ -1120,5 +1120,19 @@ PKG must be a `elx-pkg' structure."
     (indent-region (1+ (point-min)) (point-max) 1)
     (buffer-string)))
 
+(defun elx-read-file (source)
+  "Read `elx-pkg' data, as output by `elx-pp-pkg'.
+
+SOURCE is the file to read. Returns a `elx-pkg' structure if
+successful."
+  (let (str data)
+    (when (file-regular-p source)
+      (with-temp-buffer
+        (insert-file-contents source)
+        (setq str (buffer-string)))
+      (when str
+        (setq data (read str))))
+    (apply 'make-elx-pkg data)))
+
 (provide 'elx)
 ;;; elx.el ends here

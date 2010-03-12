@@ -1078,7 +1078,7 @@ through SOURCE.
     (error "The mainfile can not be determined"))
   (let* ((provided (elx-provided source))
          (required (elx-required-packages source provided))
-         (version-raw (elx-version source))
+         (version-raw (elx-version mainfile))
          (version (version-to-list version-raw))
          (prev (or prev (make-elx-pkg)))
          meta)

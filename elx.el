@@ -1066,7 +1066,7 @@ If PREV is non-nil, then treat it as the previous version of this
 package and overwrite its fields with those found by looking
 through SOURCE.
 
-\(fn SOURCE [MAINFILE])"
+\(fn SOURCE [MAINFILE] [PREV])"
   (unless mainfile
     (setq mainfile
 	  (if (file-directory-p source)

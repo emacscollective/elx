@@ -1115,7 +1115,7 @@ PKG must be a `elx-pkg' structure."
                                                           (list (concat ":" (symbol-name slot))
                                                                 val)))
                                                      'elx-pkg
-                                                     dog)) "\n"))
+                                                     pkg)) "\n"))
       (princ ")\n"))
     (indent-region (1+ (point-min)) (point-max) 1)
     (buffer-string)))

@@ -511,8 +511,8 @@ Some examples of the conversion are:
 	 (number-to-string (1+ (string-to-number old-version)))
        "0001"))))
 
-(defvar elx-version-sanitize-regexps '(("\\$[I]d: [^ ]+ \\([^ ]+\\) " . "\\1")
-                                       ("\\$Revision: +\\([^ ]+\\) " . "\\1")
+(defvar elx-version-sanitize-regexps '(("\\$[Ii]d: [^ ]+ \\([^ ]+\\) " . "\\1")
+                                       ("\\$[Rr]evision: +\\([^ ]+\\) " . "\\1")
                                        ("\\([-_.0-9a-z]+\\)[\s\t].+" . "\\1")
                                        ("[^[:digit:]]+\\([[:alnum]_.-]+\\)" . "\\1"))
   "List of regexps to use to sanitize a version string.

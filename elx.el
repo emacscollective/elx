@@ -1101,28 +1101,23 @@ through SOURCE.
                           :commentary (elx-commentary mainfile)))
       (cl-merge-struct 'elx-pkg prev meta))))
 
-(defun elx-pp-metadata (metadata)
-  "Return the pretty-printed representation of METADATA.
-METADATA should be a list as returned by `elx-package-metadata'."
+(defun elx-pp-pkg (pkg)
+  "Return the pretty-printed representation of PKG.
+
+PKG must be a `elx-pkg' structure."
   (with-temp-buffer
     (let ((standard-output (current-buffer)))
       (princ "(")
-      (while metadata
-	(let ((key (pop metadata))
-	      (val (pop metadata)))
-	  (when val
-	    (unless (looking-back "(")
-	      (princ "\n "))
-	    (princ (format "%-11s " key))
-	    (if (eq key :commentary)
-		(prin1 val)
-	      (let ((lines (split-string (pp-to-string val) "\n" t)))
-		(princ (pop lines))
-		(while (car lines)
-		  (princ "\n")
-		  (indent-to 13)
-		  (princ (pop lines))))))))
+      (princ (mapconcat '(lambda (item)
+                           (concat (car item) " " (prin1-to-string (cadr item))))
+                        (delq nil (cl-merge-mapslots '(lambda (slot slot-func val)
+                                                        (when val
+                                                          (list (concat ":" (symbol-name slot))
+                                                                val)))
+                                                     'elx-pkg
+                                                     dog)) "\n"))
       (princ ")\n"))
+    (indent-region (1+ (point-min)) (point-max) 1)
     (buffer-string)))
 
 (provide 'elx)

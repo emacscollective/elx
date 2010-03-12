@@ -511,16 +511,27 @@ Some examples of the conversion are:
 	 (number-to-string (1+ (string-to-number old-version)))
        "0001"))))
 
+(defvar elx-version-sanitize-regexps '(("\\$[I]d: [^ ]+ \\([^ ]+\\) " . "\\1")
+                                       ("\\$Revision: +\\([^ ]+\\) " . "\\1")
+                                       ("\\([-_.0-9a-z]+\\)[\s\t].+" . "\\1")
+                                       ("[^[:digit:]]+\\([[:alnum]_.-]+\\)" . "\\1"))
+  "List of regexps to use to sanitize a version string.
+
+This is a list of (REGEXP . REP), to be passed to
+`replace-regexp-in-string'.")
+
 (defun elx-version-sanitize (version)
-  "Clean up a VERSION, stripping extraneous text."
+  "Clean up a VERSION, stripping extraneous text.
+
+If VERSION passes all of the checks, return it unmodified."
   ;; TODO: Make this into a list of regexps against which to match.
-  (cond ((not version))
-	    ((string-match "\\$[I]d: [^ ]+ \\([^ ]+\\) " version)
-	     (match-string-no-properties 1 version))
-	    ((string-match "\\$Revision: +\\([^ ]+\\) "  version)
-	     (match-string-no-properties 1 version))
-	    ((string-match "\\([-_.0-9a-z]+\\)[\s\t].+"  version)
-	     (match-string-no-properties 1 version))))
+  (mapc '(lambda (filter)
+             (setq version (replace-regexp-in-string
+                            (car filter)
+                            (cdr filter)
+                            version)))
+        elx-version-sanitize-regexps)
+  version)
 
 (defun elx-version (file &optional standardize)
   "Return the version of file FILE.

@@ -886,7 +886,7 @@ This function finds required features using `elx-required-regexp'."
       (when hard
 	(list hard)))))
 
-;;; Extract Complete Metadata.
+;;; Extract Package Metadata.
 
 (defcustom elx-git-config-section "elm"
   "Section in git config files from which information might be used."

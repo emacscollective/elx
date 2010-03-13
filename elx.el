@@ -1027,7 +1027,7 @@ an existing revision in that repository."
   "Extract and return the metadata of an Emacs Lisp package.
 
 SOURCE has to be the path to an Emacs Lisp library (a single file) or the
-path to a directory containing a package consisting of one or more  Emacs
+path to a directory containing a package consisting of one or more Emacs
 Lisp files.  This directory may also contain auxiliary files.
 
 If SOURCE is a directory this function needs to know which file is the
@@ -1043,37 +1043,26 @@ Optional MAINFILE can be used to specify the \"mainfile\" explicitly.
 Otherwise function `elx-package-mainfile' (which see) is used to determine
 which file is the mainfile.  MAINFILE has to be relative to the package
 directory or be an absolute path."
-  (unless mainfile
-    (setq mainfile
-	  (if (file-directory-p (if (consp source) (car source) source))
-	      (elx-package-mainfile source t)
-	    source)))
-  (if mainfile
-      (unless (or (consp source)
-		  (file-name-absolute-p mainfile))
-	(setq mainfile (concat source mainfile)))
-    (error "The mainfile can not be determined"))
   (let* ((provided (elx-provided source))
-         (required (elx-required-packages source provided))
-         (version-raw (elx-version mainfile))
-         (version (version-to-list version-raw)))
-    ;; TODO support extracting from git repository again
-    (elx-with-file mainfile
-      (make-elx-pkg :version version
-		    :version-raw version-raw
-		    :summary (elx-summary nil t)
-		    :created (elx-created mainfile)
-		    :updated (elx-updated mainfile)
-		    :license (elx-license)
-		    :authors (elx-authors)
-		    :maintainer (elx-maintainer)
-		    :provides provided
-		    :requires-hard (nth 0 required)
-		    :requires-soft (nth 1 required)
-		    :keywords (elx-keywords mainfile)
-		    :homepage (elx-homepage mainfile)
-		    :wikipage (elx-wikipage mainfile nil t)
-		    :commentary (elx-commentary mainfile)))))
+         (required (elx-required-packages source provided)))
+    (elx-with-mainfile source mainfile
+      (let* ((version-raw (elx-version mainfile))
+	     (version (version-to-list version-raw)))
+	(make-elx-pkg :version version
+		      :version-raw version-raw
+		      :summary (elx-summary nil t)
+		      :created (elx-created mainfile)
+		      :updated (elx-updated mainfile)
+		      :license (elx-license)
+		      :authors (elx-authors)
+		      :maintainer (elx-maintainer)
+		      :provides provided
+		      :requires-hard (nth 0 required)
+		      :requires-soft (nth 1 required)
+		      :keywords (elx-keywords mainfile)
+		      :homepage (elx-homepage mainfile)
+		      :wikipage (elx-wikipage mainfile nil t)
+		      :commentary (elx-commentary mainfile))))))
 
 (provide 'elx)
 ;;; elx.el ends here

@@ -1005,23 +1005,23 @@ If library `lgit' is loaded SOURCE can also be a cons cell whose car is
 the path to a git repository (which may be bare) and whose cdr has to be
 an existing revision in that repository."
   (declare (indent 2) (debug t))
-  (let ((srcsym (gensym "src"))
-	(mainsym (gensym "main")))
-    `(let ((,srcsym ,source)
-	   (,mainsym ,mainfile))
-       (unless ,mainsym
-	 (setq ,mainsym
-	       (if (file-directory-p (if (consp ,srcsym)
-					 (car ,srcsym)
-				       ,srcsym))
-		   (elx-package-mainfile ,srcsym t)
-		 ,srcsym)))
-       (if ,mainsym
-	   (unless (or (consp ,srcsym)
-		       (file-name-absolute-p ,mainsym))
-	     (setq mainfile (concat source ,mainsym)))
-	 (error "The mainfile can not be determined"))
-       (elx-with-file ,mainsym ,@body))))
+  `(let ((source ,source)
+	 (mainfile ,mainfile))
+     (unless mainfile
+       (setq mainfile
+	     (if (file-directory-p (if (consp source)
+				       (car source)
+				     source))
+		 (elx-package-mainfile source t)
+	       source)))
+     (if mainfile
+	 (unless (or (consp source)
+		     (file-name-absolute-p mainfile))
+	   (setq mainfile (concat source mainfile)))
+       (error "The mainfile can not be determined"))
+     (if (consp source)
+	 (lgit-with-file (car source) (cdr source) mainfile ,@body)
+       (elx-with-file mainfile ,@body))))
 
 (defun elx-package-metadata (source &optional mainfile)
   "Extract and return the metadata of an Emacs Lisp package.

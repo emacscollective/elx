@@ -67,67 +67,6 @@
   :group 'maint
   :link '(url-link :tag "Homepage" "https://github.com/tarsius/elx"))
 
-;; TODO move this to `epkg.el' and name it `epkg'.
-
-(defstruct elx-pkg
-  "A structure containing information about a single package.
-
-This contains all of the information that can be pulled from the package's
-source tree (which excludes things like the package elpa archive, and
-archive type).
-
- - NAME: The name of the package, as a symbol.
-
- - VERSION: The parsed version of the package.
-
- - VERSION-RAW: The unsanitized string version of the package version.
-
- - SUMMARY: The brief description of the package.
-
- - CREATED: The date this package was created.
-
- - UPDATED: The date the current version was published.
-
- - LICENSE: The license of this package (as a symbol).
-
- - AUTHORS: Alist of author names to email addresses.
-
- - MAINTAINER: Cons cell of maintainer name and email address.
-
- - PROVIDES: Features provided by this package.
-
- - REQUIRES-HARD: The packages hard-required by this package, as
-   a list of ((REQ-NAME . REQ-VERSION) features...) lists, where
-   REQ-NAME is a symbol and REQ-VERSION is a parsed version
-   string.
-
- - REQUIRES-SOFT: The packages soft-required by this package.
-   Format is the same as REQUIRES-HARD.
-
- - KEYWORDS: The keywords which describe this package.
-
- - HOMEPAGE: The upstream homepage of this package.
-
- - WIKIPAGE: The page on EmacsWiki about this package.
-
- - COMMENTARY: The package commentary."
-  name
-  version
-  version-raw
-  summary
-  created
-  updated
-  license
-  authors
-  maintainer
-  provides
-  requires-hard
-  requires-soft
-  keywords
-  homepage
-  wikipage
-  commentary)
-
 (defmacro elx-with-file (file &rest body)
   "Execute BODY in a buffer containing the contents of FILE.
 If FILE is nil or equal to `buffer-file-name' execute BODY in the
@@ -1110,43 +1049,6 @@ and overwrite its fields with those found by looking through SOURCE."
                           :wikipage (elx-wikipage mainfile nil t)
                           :commentary (elx-commentary mainfile)))
       (cl-merge-struct 'elx-pkg prev meta))))
-
-;; TODO remove these two functions here and merge them with the
-;; respective functions in `epkg.el'.
-
-(defun elx-pp-pkg (pkg)
-  "Return the pretty-printed representation of PKG.
-
-PKG must be a `elx-pkg' structure."
-  (with-temp-buffer
-    (let ((standard-output (current-buffer)))
-      (princ "(")
-      (princ (mapconcat (lambda (item)
-			  (concat (car item) " " (prin1-to-string (cadr item))))
-                        (delq nil (cl-merge-mapslots
-				   (lambda (slot slot-func val)
-				     (when val
-				       (list (concat ":" (symbol-name slot))
-					     val)))
-				   'elx-pkg
-				   pkg)) "\n"))
-      (princ ")\n"))
-    (indent-region (1+ (point-min)) (point-max) 1)
-    (buffer-string)))
-
-(defun elx-read-file (source)
-  "Read `elx-pkg' data, as output by `elx-pp-pkg'.
-
-SOURCE is the file to read. Returns a `elx-pkg' structure if
-successful."
-  (let (str data)
-    (when (file-regular-p source)
-      (with-temp-buffer
-        (insert-file-contents source)
-        (setq str (buffer-string)))
-      (when str
-        (setq data (read str))))
-    (apply 'make-elx-pkg data)))
 
 (provide 'elx)
 ;;; elx.el ends here

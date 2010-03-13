@@ -990,26 +990,45 @@ added to or removed from the end, whatever makes sense."
 	       (cadr (lgit (car source) 1 "config %s.mainfile"
 			   elx-git-config-section))))))))
 
-(defun elx--collect-metadata (mainfile provided required)
-  (list :summary (elx-summary nil t)
-	:created (elx-created mainfile)
-	:updated (elx-updated mainfile)
-	:license (elx-license)
-	:authors (elx-authors)
-	:maintainer (elx-maintainer)
-	:adapted-by (elx-adapted-by)
-	:provided provided
-	:required required
-	:keywords (elx-keywords mainfile)
-	:homepage (elx-homepage mainfile)
-	:wikipage (elx-wikipage mainfile nil t)
-	:commentary (elx-commentary mainfile)))
+(defmacro elx-with-mainfile (source mainfile &rest body)
+  "Execute BODY in a buffer containing the contents of SOURCE's mainfile.
+
+If MAINFILE is non-nil use that as mainfile otherwise determine the
+mainfile by applying `elx-package-mainfile' to SOURCE.
+
+SOURCE has to be the mainfile itself (in which case it doesn't make much
+sense to specify MAINFILE also) or a directory containing a package
+consisting of one or more Emacs Lisp files.  This directory may also
+contain auxiliary files.
+
+If library `lgit' is loaded SOURCE can also be a cons cell whose car is
+the path to a git repository (which may be bare) and whose cdr has to be
+an existing revision in that repository."
+  (declare (indent 2) (debug t))
+  (let ((srcsym (gensym "src"))
+	(mainsym (gensym "main")))
+    `(let ((,srcsym ,source)
+	   (,mainsym ,mainfile))
+       (unless ,mainsym
+	 (setq ,mainsym
+	       (if (file-directory-p (if (consp ,srcsym)
+					 (car ,srcsym)
+				       ,srcsym))
+		   (elx-package-mainfile ,srcsym t)
+		 ,srcsym)))
+       (if ,mainsym
+	   (unless (or (consp ,srcsym)
+		       (file-name-absolute-p ,mainsym))
+	     (setq mainfile (concat source ,mainsym)))
+	 (error "The mainfile can not be determined"))
+       (elx-with-file ,mainsym ,@body))))
 
 (defun elx-package-metadata (source &optional mainfile)
   "Extract and return the metadata of an Emacs Lisp package.
 
 SOURCE has to be the path to an Emacs Lisp library (a single file) or the
-path to a directory containing all libraries belonging to some package.
+path to a directory containing a package consisting of one or more Emacs
+Lisp files.  This directory may also contain auxiliary files.
 
 If SOURCE is a directory this function needs to know which file is the
 package's \"mainfile\"; that is the file from which most information is
@@ -1023,24 +1042,23 @@ an existing revision in that repository.
 Optional MAINFILE can be used to specify the \"mainfile\" explicitly.
 Otherwise function `elx-package-mainfile' (which see) is used to determine
 which file is the mainfile.  MAINFILE has to be relative to the package
-directory or an absolute path."
-  (unless mainfile
-    (setq mainfile
-	  (if (file-directory-p (if (consp source) (car source) source))
-	      (elx-package-mainfile source t)
-	    source)))
-  (if mainfile
-      (unless (or (consp source)
-		  (file-name-absolute-p mainfile))
-	(setq mainfile (concat source mainfile)))
-    (error "The mainfile can not be determined"))
+directory or be an absolute path."
   (let* ((provided (elx-provided source))
-	 (required (elx-required-packages source provided)))
-    (if (consp source)
-	(lgit-with-file (car source) (cdr source) mainfile
-	  (elx--collect-metadata mainfile provided required))
-      (elx-with-file mainfile
-	(elx--collect-metadata mainfile provided required)))))
+         (required (elx-required-packages source provided)))
+    (elx-with-mainfile source mainfile
+      (list :summary (elx-summary nil t)
+	    :created (elx-created mainfile)
+	    :updated (elx-updated mainfile)
+	    :license (elx-license)
+	    :authors (elx-authors)
+	    :maintainer (elx-maintainer)
+	    :adapted-by (elx-adapted-by)
+	    :provided provided
+	    :required required
+	    :keywords (elx-keywords mainfile)
+	    :homepage (elx-homepage mainfile)
+	    :wikipage (elx-wikipage mainfile nil t)
+	    :commentary (elx-commentary mainfile)))))
 
 (provide 'elx)
 ;;; elx.el ends here

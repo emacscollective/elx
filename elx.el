@@ -56,6 +56,7 @@
 ;;; Code:
 
 (require 'cl)
+(require 'cl-merge)
 (require 'dconv)
 (require 'vcomp)
 (require 'lisp-mnt)
@@ -65,6 +66,67 @@
   "Extract information from Emacs Lisp libraries."
   :group 'maint
   :link '(url-link :tag "Homepage" "https://github.com/tarsius/elx"))
+
+;; TODO move this to `epkg.el' and name it `epkg'.
+
+(defstruct elx-pkg
+  "A structure containing information about a single package.
+
+This contains all of the information that can be pulled from the package's
+source tree (which excludes things like the package elpa archive, and
+archive type).
+
+ - NAME: The name of the package, as a symbol.
+
+ - VERSION: The parsed version of the package.
+
+ - VERSION-RAW: The unsanitized string version of the package version.
+
+ - SUMMARY: The brief description of the package.
+
+ - CREATED: The date this package was created.
+
+ - UPDATED: The date the current version was published.
+
+ - LICENSE: The license of this package (as a symbol).
+
+ - AUTHORS: Alist of author names to email addresses.
+
+ - MAINTAINER: Cons cell of maintainer name and email address.
+
+ - PROVIDES: Features provided by this package.
+
+ - REQUIRES-HARD: The packages hard-required by this package, as
+   a list of ((REQ-NAME . REQ-VERSION) features...) lists, where
+   REQ-NAME is a symbol and REQ-VERSION is a parsed version
+   string.
+
+ - REQUIRES-SOFT: The packages soft-required by this package.
+   Format is the same as REQUIRES-HARD.
+
+ - KEYWORDS: The keywords which describe this package.
+
+ - HOMEPAGE: The upstream homepage of this package.
+
+ - WIKIPAGE: The page on EmacsWiki about this package.
+
+ - COMMENTARY: The package commentary."
+  name
+  version
+  version-raw
+  summary
+  created
+  updated
+  license
+  authors
+  maintainer
+  provides
+  requires-hard
+  requires-soft
+  keywords
+  homepage
+  wikipage
+  commentary)
 
 (defmacro elx-with-file (file &rest body)
   "Execute BODY in a buffer containing the contents of FILE.
@@ -990,26 +1052,12 @@ added to or removed from the end, whatever makes sense."
 	       (cadr (lgit (car source) 1 "config %s.mainfile"
 			   elx-git-config-section))))))))
 
-(defun elx--collect-metadata (mainfile provided required)
-  (list :summary (elx-summary nil t)
-	:created (elx-created mainfile)
-	:updated (elx-updated mainfile)
-	:license (elx-license)
-	:authors (elx-authors)
-	:maintainer (elx-maintainer)
-	:adapted-by (elx-adapted-by)
-	:provided provided
-	:required required
-	:keywords (elx-keywords mainfile)
-	:homepage (elx-homepage mainfile)
-	:wikipage (elx-wikipage mainfile nil t)
-	:commentary (elx-commentary mainfile)))
-
-(defun elx-package-metadata (source &optional mainfile)
+(defun elx-package-metadata (source &optional mainfile prev)
   "Extract and return the metadata of an Emacs Lisp package.
 
 SOURCE has to be the path to an Emacs Lisp library (a single file) or the
-path to a directory containing all libraries belonging to some package.
+path to a directory containing a package consisting of one or more  Emacs
+Lisp files.  This directory may also contain auxiliary files.
 
 If SOURCE is a directory this function needs to know which file is the
 package's \"mainfile\"; that is the file from which most information is
@@ -1023,7 +1071,10 @@ an existing revision in that repository.
 Optional MAINFILE can be used to specify the \"mainfile\" explicitly.
 Otherwise function `elx-package-mainfile' (which see) is used to determine
 which file is the mainfile.  MAINFILE has to be relative to the package
-directory or an absolute path."
+directory or be an absolute path.
+
+If PREV is non-nil, then treat it as the previous version of this package
+and overwrite its fields with those found by looking through SOURCE."
   (unless mainfile
     (setq mainfile
 	  (if (file-directory-p (if (consp source) (car source) source))
@@ -1035,12 +1086,67 @@ directory or an absolute path."
 	(setq mainfile (concat source mainfile)))
     (error "The mainfile can not be determined"))
   (let* ((provided (elx-provided source))
-	 (required (elx-required-packages source provided)))
-    (if (consp source)
-	(lgit-with-file (car source) (cdr source) mainfile
-	  (elx--collect-metadata mainfile provided required))
-      (elx-with-file mainfile
-	(elx--collect-metadata mainfile provided required)))))
+         (required (elx-required-packages source provided))
+         (version-raw (elx-version mainfile))
+         (version (version-to-list version-raw))
+         (prev (or prev (make-elx-pkg)))
+         meta)
+    ;; TODO support extracting from git repository again
+    (elx-with-file mainfile
+      (setq meta
+            (make-elx-pkg :version version
+                          :version-raw version-raw
+                          :summary (elx-summary nil t)
+                          :created (elx-created mainfile)
+                          :updated (elx-updated mainfile)
+                          :license (elx-license)
+                          :authors (elx-authors)
+                          :maintainer (elx-maintainer)
+                          :provides provided
+                          :requires-hard (nth 0 required)
+                          :requires-soft (nth 1 required)
+                          :keywords (elx-keywords mainfile)
+                          :homepage (elx-homepage mainfile)
+                          :wikipage (elx-wikipage mainfile nil t)
+                          :commentary (elx-commentary mainfile)))
+      (cl-merge-struct 'elx-pkg prev meta))))
+
+;; TODO remove these two functions here and merge them with the
+;; respective functions in `epkg.el'.
+
+(defun elx-pp-pkg (pkg)
+  "Return the pretty-printed representation of PKG.
+
+PKG must be a `elx-pkg' structure."
+  (with-temp-buffer
+    (let ((standard-output (current-buffer)))
+      (princ "(")
+      (princ (mapconcat (lambda (item)
+			  (concat (car item) " " (prin1-to-string (cadr item))))
+                        (delq nil (cl-merge-mapslots
+				   (lambda (slot slot-func val)
+				     (when val
+				       (list (concat ":" (symbol-name slot))
+					     val)))
+				   'elx-pkg
+				   pkg)) "\n"))
+      (princ ")\n"))
+    (indent-region (1+ (point-min)) (point-max) 1)
+    (buffer-string)))
+
+(defun elx-read-file (source)
+  "Read `elx-pkg' data, as output by `elx-pp-pkg'.
+
+SOURCE is the file to read. Returns a `elx-pkg' structure if
+successful."
+  (let (str data)
+    (when (file-regular-p source)
+      (with-temp-buffer
+        (insert-file-contents source)
+        (setq str (buffer-string)))
+      (when str
+        (setq data (read str))))
+    (apply 'make-elx-pkg data)))
 
 (provide 'elx)
 ;;; elx.el ends here

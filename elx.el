@@ -990,6 +990,39 @@ added to or removed from the end, whatever makes sense."
 	       (cadr (lgit (car source) 1 "config %s.mainfile"
 			   elx-git-config-section))))))))
 
+(defmacro elx-with-mainfile (source mainfile &rest body)
+  "Execute BODY in a buffer containing the contents of SOURCE's mainfile.
+
+If MAINFILE is non-nil use that as mainfile otherwise determine the
+mainfile by applying `elx-package-mainfile' to SOURCE.
+
+SOURCE has to be the mainfile itself (in which case it doesn't make much
+sense to specify MAINFILE also) or a directory containing a package
+consisting of one or more Emacs Lisp files.  This directory may also
+contain auxiliary files.
+
+If library `lgit' is loaded SOURCE can also be a cons cell whose car is
+the path to a git repository (which may be bare) and whose cdr has to be
+an existing revision in that repository."
+  (declare (indent 2) (debug t))
+  (let ((srcsym (gensym "src"))
+	(mainsym (gensym "main")))
+    `(let ((,srcsym ,source)
+	   (,mainsym ,mainfile))
+       (unless ,mainsym
+	 (setq ,mainsym
+	       (if (file-directory-p (if (consp ,srcsym)
+					 (car ,srcsym)
+				       ,srcsym))
+		   (elx-package-mainfile ,srcsym t)
+		 ,srcsym)))
+       (if ,mainsym
+	   (unless (or (consp ,srcsym)
+		       (file-name-absolute-p ,mainsym))
+	     (setq mainfile (concat source ,mainsym)))
+	 (error "The mainfile can not be determined"))
+       (elx-with-file ,mainsym ,@body))))
+
 (defun elx-package-metadata (source &optional mainfile)
   "Extract and return the metadata of an Emacs Lisp package.
 

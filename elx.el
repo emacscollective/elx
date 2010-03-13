@@ -857,12 +857,15 @@ This function finds required features using `elx-required-regexp'."
 		  (setq hard (nconc (nth 0 required) hard)
 			soft (nconc (nth 1 required) soft))))
       (cond ((atom source)
-	     (if (file-directory-p source)
-		 (mapc (lambda (elt)
-			 (split (elx-required elt provided)))
-		       (elx-elisp-files source t))
-	       (elx-with-file source
-		 (split (elx--buffer-required (current-buffer) provided)))))
+	     (cond ((file-symlink-p source))
+		   ((file-directory-p source)
+		    (mapc (lambda (elt)
+			    (split (elx-required elt provided)))
+			  (elx-elisp-files source t)))
+		   (t
+		    (elx-with-file source
+		      (split (elx--buffer-required (current-buffer)
+						   provided))))))
 	    ((atom (cdr source))
 	     (mapc (lambda (elt)
 		     (lgit-with-file (car source) (cdr source) elt

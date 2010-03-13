@@ -4,7 +4,7 @@
 
 ;; Author: Jonas Bernoulli <jonas@bernoul.li>
 ;; Created: 20081202
-;; Updated: 20100310
+;; Updated: 20100313
 ;; Version: 0.3+
 ;; Homepage: https://github.com/tarsius/elx
 ;; Keywords: docs, libraries, packages
@@ -249,6 +249,7 @@ package, even if it exists.  False-positives might also occur."
 		      (file-name-nondirectory file)))))))
 	(when (member page (if (consp pages)
 			       pages
+			     (make-directory (or pages elx-wiki-directory) t)
 			     (directory-files (or pages elx-wiki-directory)
 					      nil "^[^.]" t)))
 	  (concat (when urlp "http://www.emacswiki.org/emacs/") page)))))
@@ -296,7 +297,7 @@ package, even if it exists.  False-positives might also occur."
 			         "\\(by the author \\)?"
 			         "[\"`']\\{0,2\\}as[- ]is[\"`']\\{0,2\\}"))
       ("public-domain" . ,(concat l ".*in\\(to\\)? the public[- ]domain"))
-      ("public-domain" . "^;; Public domain.")))
+      ("public-domain" . "^;+ +Public domain.")))
   "List of regexp to common license string mappings.
 Used by function `elx-license'.  Each entry has the form
 \(LICENSE . REGEXP) where LICENSE is used instead of matches of REGEXP.
@@ -440,7 +441,7 @@ If no matching entry exists return nil."
 
 (defun elx-version--id-header (&optional file)
   (elx-with-file file
-    (when (re-search-forward "\\$[I]d: [^ ]+ \\([^ ]+\\) "
+    (when (re-search-forward "\\$[Ii]d: [^ ]+ \\([^ ]+\\) "
 			     (lm-code-mark) t)
       (match-string-no-properties 1))))
 
@@ -461,6 +462,18 @@ If no matching entry exists return nil."
       (match-string-no-properties 2))))
 
 (defun elx-version--do-standardize (version)
+  "Standardize common version names such as \"alpha\" or \"v1.0\".
+
+Changes the VERSION name to a more standard form, hopefully removing
+discrepancies between version formats. Many libraries use different
+conventions for naming their versions, and this is an attempt to
+reconcile those varying conventions.
+
+Some examples of the conversion are:
+
+  - \"0.1alpha\" => \"0.1_alpha\"
+  - \"v1.0\" => \"1.0\"
+  - \"v1.2.3rc3\" => \"1.2.3_rc3\""
   (mapc (lambda (elt)
 	  (setq version (replace-regexp-in-string
 			 (car elt) (cdr elt) version t t 1)))
@@ -494,6 +507,26 @@ If no matching entry exists return nil."
 	 (number-to-string (1+ (string-to-number old-version)))
        "0001"))))
 
+(defvar elx-version-sanitize-regexps
+  '(("\\$[Ii]d: [^ ]+ \\([^ ]+\\) " . "\\1")
+    ("\\$[Rr]evision: +\\([^ ]+\\) " . "\\1")
+    ("\\([-_.0-9a-z]+\\)[\s\t].+" . "\\1")
+    ("[^[:digit:]]+\\([[:alnum]_.-]+\\)" . "\\1"))
+  "List of regexps to use to sanitize a version string.
+
+This is a list of the form (REGEXP . REP), to be passed to
+`replace-regexp-in-string'.")
+
+(defun elx-version-sanitize (version)
+  "Clean up a VERSION, stripping extraneous text.
+
+If VERSION passes all of the checks, return it unmodified."
+  ;; TODO: Make this into a list of regexps against which to match.
+  (dolist (filter elx-version-sanitize-regexps)
+    (setq version (replace-regexp-in-string
+		   (car filter) (cdr filter) version)))
+  version)
+
 (defun elx-version (file &optional standardize)
   "Return the version of file FILE.
 Or the current buffer if FILE is equal to `buffer-file-name'.
@@ -512,13 +545,7 @@ and complain to the respective author."
     (let ((version (or (elx-header "version")
 		       (elx-version--no-colon)))
 	  (update (elx-header "update\\( #\\)?")))
-      (cond ((not version))
-	    ((string-match "\\$[I]d: [^ ]+ \\([^ ]+\\) " version)
-	     (setq version (match-string-no-properties 1 version)))
-	    ((string-match "\\$Revision: +\\([^ ]+\\) "  version)
-	     (setq version (match-string-no-properties 1 version)))
-	    ((string-match "\\([-_.0-9a-z]+\\)[\s\t].+"  version)
-	     (setq version (match-string-no-properties 1 version))))
+      (setq version (elx-version-sanitize version))
       (when update
 	(setq version (concat (or version "0") "." update)))
       (elx-version--do-verify (if (and version standardize)
@@ -716,7 +743,7 @@ SOURCE has to be a file, directory or list of files and/or directories.
 If SOURCE is a directory return all features provided by Emacs lisp files
 inside SOURCE and recursively all subdirectories.  Files not ending in
 \".el\" and directories starting with a period are ignored, except when
-explicetly passed to this function.
+explicitly passed to this function.
 
 If library `lgit' is loaded SOURCE can also be a cons cell whose car is
 the path to a git repository (which may be bare) and whose cdr has to be
@@ -725,10 +752,12 @@ an existing revision in that repository.
 This function finds provided features using `elx-provided-regexp'."
   (delete-duplicates
    (sort (cond ((atom source)
-		(if (file-directory-p source)
-		    (mapcan #'elx-provided (elx-elisp-files source t))
-		  (elx-with-file source
-		    (elx--buffer-provided (current-buffer)))))
+		(cond ((file-symlink-p source))
+		      ((file-directory-p source)
+		       (mapcan #'elx-provided (elx-elisp-files source t)))
+		      (t
+		       (elx-with-file source
+			 (elx--buffer-provided (current-buffer))))))
 	       ((atom (cdr source))
 		(mapcan (lambda (elt)
 			  (lgit-with-file (car source) (cdr source) elt
@@ -982,7 +1011,7 @@ path to a directory containing all libraries belonging to some package.
 If SOURCE is a directory this function needs to know which file is the
 package's \"mainfile\"; that is the file from which most information is
 extracted (everything but the required and provided features which are
-extracted from all Emacs Lisp files in the directory collectivly).
+extracted from all Emacs Lisp files in the directory collectively).
 
 If library `lgit' is loaded SOURCE can also be a cons cell whose car is
 the path to a git repository (which may be bare) and whose cdr has to be

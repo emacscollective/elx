@@ -378,8 +378,8 @@ return nil."
     ("public-domain" . "http://www.emacsmirror.org/licenses/public-domain.html)"))
   "List of license to canonical license url mappings.
 Each entry has the form (LICENSE . URL) where LICENSE is a license string
-and URL the canonial url to the license.
-Where no caonconical url is known use a page on the Emacsmirror instead."
+and URL the canonical url to the license.  Where no canonical url is known
+use a page on the Emacsmirror instead."
   :group 'elx
   :type '(repeat (cons (string :tag "License")
 		       (url    :tag "URL"))))

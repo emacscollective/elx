@@ -56,7 +56,6 @@
 ;;; Code:
 
 (require 'cl)
-(require 'cl-merge)
 (require 'dconv)
 (require 'vcomp)
 (require 'lisp-mnt)
@@ -991,7 +990,7 @@ added to or removed from the end, whatever makes sense."
 	       (cadr (lgit (car source) 1 "config %s.mainfile"
 			   elx-git-config-section))))))))
 
-(defun elx-package-metadata (source &optional mainfile prev)
+(defun elx-package-metadata (source &optional mainfile)
   "Extract and return the metadata of an Emacs Lisp package.
 
 SOURCE has to be the path to an Emacs Lisp library (a single file) or the
@@ -1010,10 +1009,7 @@ an existing revision in that repository.
 Optional MAINFILE can be used to specify the \"mainfile\" explicitly.
 Otherwise function `elx-package-mainfile' (which see) is used to determine
 which file is the mainfile.  MAINFILE has to be relative to the package
-directory or be an absolute path.
-
-If PREV is non-nil, then treat it as the previous version of this package
-and overwrite its fields with those found by looking through SOURCE."
+directory or be an absolute path."
   (unless mainfile
     (setq mainfile
 	  (if (file-directory-p (if (consp source) (car source) source))
@@ -1027,28 +1023,24 @@ and overwrite its fields with those found by looking through SOURCE."
   (let* ((provided (elx-provided source))
          (required (elx-required-packages source provided))
          (version-raw (elx-version mainfile))
-         (version (version-to-list version-raw))
-         (prev (or prev (make-elx-pkg)))
-         meta)
+         (version (version-to-list version-raw)))
     ;; TODO support extracting from git repository again
     (elx-with-file mainfile
-      (setq meta
-            (make-elx-pkg :version version
-                          :version-raw version-raw
-                          :summary (elx-summary nil t)
-                          :created (elx-created mainfile)
-                          :updated (elx-updated mainfile)
-                          :license (elx-license)
-                          :authors (elx-authors)
-                          :maintainer (elx-maintainer)
-                          :provides provided
-                          :requires-hard (nth 0 required)
-                          :requires-soft (nth 1 required)
-                          :keywords (elx-keywords mainfile)
-                          :homepage (elx-homepage mainfile)
-                          :wikipage (elx-wikipage mainfile nil t)
-                          :commentary (elx-commentary mainfile)))
-      (cl-merge-struct 'elx-pkg prev meta))))
+      (make-elx-pkg :version version
+		    :version-raw version-raw
+		    :summary (elx-summary nil t)
+		    :created (elx-created mainfile)
+		    :updated (elx-updated mainfile)
+		    :license (elx-license)
+		    :authors (elx-authors)
+		    :maintainer (elx-maintainer)
+		    :provides provided
+		    :requires-hard (nth 0 required)
+		    :requires-soft (nth 1 required)
+		    :keywords (elx-keywords mainfile)
+		    :homepage (elx-homepage mainfile)
+		    :wikipage (elx-wikipage mainfile nil t)
+		    :commentary (elx-commentary mainfile)))))
 
 (provide 'elx)
 ;;; elx.el ends here

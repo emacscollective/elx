@@ -4,7 +4,7 @@
 
 ;; Author: Jonas Bernoulli <jonas@bernoul.li>
 ;; Created: 20081202
-;; Updated: 20100313
+;; Updated: 20100314
 ;; Version: 0.3+
 ;; Homepage: https://github.com/tarsius/elx
 ;; Keywords: docs, libraries, packages
@@ -382,7 +382,7 @@ and URL the canonical url to the license.  Where no canonical url is known
 use a page on the Emacsmirror instead."
   :group 'elx
   :type '(repeat (cons (string :tag "License")
-		       (url    :tag "URL"))))
+		       (string :tag "URL"))))
 
 (defun elx-license-url (license)
   "Return the canonical url to LICENSE.
@@ -922,7 +922,7 @@ This function finds required features using `elx-required-regexp'."
 
 (defcustom elx-git-config-section "elm"
   "Section in git config files from which information might be used."
-  :group 'elm
+  :group 'elx
   :type 'string)
 
 (defun elx-elisp-files (source &optional full)

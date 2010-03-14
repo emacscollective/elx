@@ -869,7 +869,8 @@ This function finds required features using `elx-required-regexp'."
 	    ((atom (cdr source))
 	     (mapc (lambda (elt)
 		     (lgit-with-file (car source) (cdr source) elt
-		       (split (elx--buffer-required (current-buffer)))))
+		       (split (elx--buffer-required (current-buffer)
+						    provided))))
 		   (elx-elisp-files source)))
 	    (t
 	     (mapc (lambda (elt)

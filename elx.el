@@ -4,8 +4,8 @@
 
 ;; Author: Jonas Bernoulli <jonas@bernoul.li>
 ;; Created: 20081202
-;; Updated: 20100315
-;; Version: 0.4
+;; Updated: 20100324
+;; Version: 0.4+
 ;; Homepage: https://github.com/tarsius/elx
 ;; Keywords: docs, libraries, packages
 
@@ -784,7 +784,13 @@ This function finds provided features using `elx-provided-regexp'."
 (defun elx--lookup-required (required)
   (let (packages)
     (dolist (feature required)
-      (let* ((package (cdr (assoc feature elx-known-features)))
+      (let* ((package
+	      (or (cdr (assoc feature elx-known-features))
+		  (when (featurep 'elm)
+		    (with-no-warnings
+		      (or (cdr (assoc feature elm-external-features))
+			  (when (member feature elm-internal-features)
+			    "emacs"))))))
 	     (entry (assoc package packages)))
 	(if entry
 	    (unless (memq feature (cdr entry))

@@ -5,7 +5,7 @@
 ;; Author: Jonas Bernoulli <jonas@bernoul.li>
 ;; Created: 20081202
 ;; Updated: 20100324
-;; Version: 0.4+
+;; Version: 0.4.1
 ;; Homepage: https://github.com/tarsius/elx
 ;; Keywords: docs, libraries, packages
 
@@ -1027,7 +1027,7 @@ an existing revision in that repository."
 	 (lgit-with-file (car source) (cdr source) mainfile ,@body)
        (elx-with-file mainfile ,@body))))
 
-(defun elx-package-metadata (source &optional mainfile)
+(defun elx-package-metadata (source &optional mainfile branch)
   "Extract and return the metadata of an Emacs Lisp package.
 
 SOURCE has to be the path to an Emacs Lisp library (a single file) or the
@@ -1046,7 +1046,9 @@ an existing revision in that repository.
 Optional MAINFILE can be used to specify the \"mainfile\" explicitly.
 Otherwise function `elx-package-mainfile' (which see) is used to determine
 which file is the mainfile.  MAINFILE has to be relative to the package
-directory or be an absolute path."
+directory or be an absolute path.
+
+\(fn SOURCE &optional MAINFILE)" ; BRANCH is only useful for `elm.el'.
   (let* ((provided (elx-provided source))
          (required (elx-required-packages source provided)))
     (elx-with-mainfile source mainfile
@@ -1060,7 +1062,13 @@ directory or be an absolute path."
 	    :provided provided
 	    :required required
 	    :keywords (elx-keywords mainfile)
-	    :homepage (elx-homepage mainfile)
+	    :homepage (or (elx-homepage mainfile)
+			  (when branch
+			    (or (cadr (lgit (car source) 1
+					    "config branch.%s.elm-webpage"
+					    branch))
+				(when (equal branch "emacswiki")
+				  (elx-wikipage mainfile nil t)))))
 	    :wikipage (elx-wikipage mainfile nil t)
 	    :commentary (elx-commentary mainfile)))))
 

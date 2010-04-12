@@ -5,7 +5,7 @@
 ;; Author: Jonas Bernoulli <jonas@bernoul.li>
 ;; Created: 20081202
 ;; Updated: 20100412
-;; Version: 0.4.1+
+;; Version: 0.4.2
 ;; Homepage: https://github.com/tarsius/elx
 ;; Keywords: docs, libraries, packages
 
@@ -986,7 +986,12 @@ If the package has only one file ending in \".el\" return that file
 unconditionally.  Otherwise return the file which provides the feature
 matching the basename of SOURCE, or if no such file exists the file
 that provides the feature matching the basename of SOURCE with \"-mode\"
-added to or removed from the end, whatever makes sense."
+added to or removed from the end, whatever makes sense.
+
+If SOURCE is a cons cell and the mainfile can not be determined as
+described above the value of the git variable \"elm.mainfile\" is used.
+If this variable is defined multiple times use the first file that
+actually exists."
   (let ((files (elx-elisp-files source full))
 	(name (regexp-quote
 	       (file-name-nondirectory
@@ -998,14 +1003,24 @@ added to or removed from the end, whatever makes sense."
     (if (= 1 (length files))
 	(car files)
       (flet ((match (feature)
-		    (car (member* (format "%s\\.el$" feature)
+		    (car (member* (format "^\\(.+?/\\)?%s\\.el$" feature)
 				  files :test 'string-match))))
 	(cond ((match name))
 	      ((match (if (string-match "-mode$" name)
 			  (substring name 0 -5)
 			(concat name "-mode"))))
 	      ((consp source)
-	       (cadr (lgit (car source) 1 "config elm.mainfile"))))))))
+	       (let ((files (elx-elisp-files source))
+		     (mains (cdr (lgit (car source) 1
+				       "config --get-all elm.mainfile")))
+		     main)
+		 (if (and mains (not (string-match "\\.el$" (car mains))))
+		     (car mains)
+		   (while mains
+		     (setq main (car (member (pop mains) files)))
+		     (when main
+		       (setq mains nil)))
+		   main))))))))
 
 (defmacro elx-with-mainfile (source mainfile &rest body)
   "Execute BODY in a buffer containing the contents of SOURCE's mainfile.

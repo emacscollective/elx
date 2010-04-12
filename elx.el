@@ -4,8 +4,8 @@
 
 ;; Author: Jonas Bernoulli <jonas@bernoul.li>
 ;; Created: 20081202
-;; Updated: 20100324
-;; Version: 0.4.1
+;; Updated: 20100412
+;; Version: 0.4.1+
 ;; Homepage: https://github.com/tarsius/elx
 ;; Keywords: docs, libraries, packages
 
@@ -146,9 +146,25 @@ If STANDARDIZE is non-nil remove trailing period and upcase first word."
 			(substring summary 1)))))
       summary)))
 
-(defun elx-keywords (&optional file)
+
+(defcustom elx-remap-keywords
+  '(("emacs")
+    ("is") ("of") ("not") ("this")
+    ("file" "files"))
+  "List of keywords that should be replaced or dropped by `elx-keywords'.
+If function `elx-keywords' is called with a non-nil SANITIZE argument it
+checks this variable to determine if keywords should be dropped from the
+return value or replaced by another.  If the cdr of an entry is nil then
+the keyword is dropped; otherwise it will be replaced with the keyword in
+the cadr."
+  :group 'elx
+  :type '(repeat (list string (choice (const  :tag "drop" nil)
+				      (string :tag "replacement")))))
+
+(defun elx-keywords (&optional file sanitize)
   "Return list of keywords given in file FILE.
 Or the current buffer if FILE is equal to `buffer-file-name' or is nil."
+  ;; TODO merge changes from `lisp-maint'.
   (elx-with-file file
     (let ((keywords (elx-header "keywords" t)))
       (when keywords
@@ -156,7 +172,10 @@ Or the current buffer if FILE is equal to `buffer-file-name' or is nil."
 	 ;; Filter some nonsense.
 	 (lambda (str)
 	   (when (string-match "^[-a-z]+$" str)
-	     (list str)))
+	     (let ((elt (assoc str elx-remap-keywords)))
+	       (if elt
+		   (cdr elt)
+		 (list str)))))
 	 (split-string
 	  (replace-regexp-in-string
 	   "\\(\t\\|\s\\)+" "\s"
@@ -1027,7 +1046,7 @@ an existing revision in that repository."
 	 (lgit-with-file (car source) (cdr source) mainfile ,@body)
        (elx-with-file mainfile ,@body))))
 
-(defun elx-package-metadata (source &optional mainfile branch)
+(defun elx-package-metadata (source &optional mainfile sanitize branch)
   "Extract and return the metadata of an Emacs Lisp package.
 
 SOURCE has to be the path to an Emacs Lisp library (a single file) or the
@@ -1048,6 +1067,9 @@ Otherwise function `elx-package-mainfile' (which see) is used to determine
 which file is the mainfile.  MAINFILE has to be relative to the package
 directory or be an absolute path.
 
+If optional SANITIZE is non-nil some values are sanitized the list of
+keywords.
+
 \(fn SOURCE &optional MAINFILE)" ; BRANCH is only useful for `elm.el'.
   (let* ((provided (elx-provided source))
          (required (elx-required-packages source provided)))
@@ -1061,7 +1083,7 @@ directory or be an absolute path.
 	    :adapted-by (elx-adapted-by)
 	    :provided provided
 	    :required required
-	    :keywords (elx-keywords mainfile)
+	    :keywords (elx-keywords mainfile sanitize)
 	    :homepage (or (elx-homepage mainfile)
 			  (when branch
 			    (or (cadr (lgit (car source) 1

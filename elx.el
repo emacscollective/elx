@@ -943,11 +943,6 @@ This function finds required features using `elx-required-regexp'."
 
 ;;; Extract Package Metadata.
 
-(defcustom elx-git-config-section "elm"
-  "Section in git config files from which information might be used."
-  :group 'elx
-  :type 'string)
-
 (defun elx-elisp-files (source &optional full)
   "Return a list of Emacs lisp files inside directory SOURCE.
 
@@ -1010,8 +1005,7 @@ added to or removed from the end, whatever makes sense."
 			  (substring name 0 -5)
 			(concat name "-mode"))))
 	      ((consp source)
-	       (cadr (lgit (car source) 1 "config %s.mainfile"
-			   elx-git-config-section))))))))
+	       (cadr (lgit (car source) 1 "config elm.mainfile"))))))))
 
 (defmacro elx-with-mainfile (source mainfile &rest body)
   "Execute BODY in a buffer containing the contents of SOURCE's mainfile.

@@ -5,7 +5,7 @@
 ;; Author: Jonas Bernoulli <jonas@bernoul.li>
 ;; Created: 20081202
 ;; Updated: 20100417
-;; Version: 0.4.2+
+;; Version: 0.4.3
 ;; Homepage: https://github.com/tarsius/elx
 ;; Keywords: docs, libraries, packages
 
@@ -790,6 +790,19 @@ This function finds provided features using `elx-provided-regexp'."
 \\(?:\\(?:[\s\t\n]+\\(?:nil\\|\".*\"\\)\\)\
 \\(?:[\s\t\n]+\\(?:nil\\|\\(t\\)\\)\\)?\\)?)")
 
+(defvar elx-xemacs-specific-features
+  '(apollo auto-show behavior bg-mouse buff-menu build-report byte-optimize canna-leim cl-extra code-cmds config cus-dep cus-file devan-util devanagari dialog-gtk dragdrop egg-jpn egg-kor font-menu font-mgr fontconfig fontl-hooks gdk generic-widgets gnome gnome-widgets gpm gtk-compose gtk-extra gtk-ffi gtk-file-dialog gtk-font-menu gtk-password-dialog gutter-items hyper-apropos iso8859-1 itimer leim-canna-initialized lib-complete menubar menubar-items mode-motion mswindows-font-menu next-error obsolete package-admin package-get package-info package-ui packages rsz-minibuf slovenian symbol-syntax text-props view-less widgets-gtk x-compose x-font-menu x-menubar
+    ;; These were manually added and have to be verified:
+    atomic-extents auc-menu balloon-help func-menu un-define)
+  "List of features which are provided by XEmacs only.
+Should not contains any packages also provided by GNU Emacs or packages
+mirrored on the Emacsmirror.  Since this list is only irregularly updated
+this rule might be violated sometimes.")
+
+(defvar elx-backward-compat-features
+  '(hilit19 help+20 hfy-emacs20)
+  "List of features which are provided for backward compatibilty only.")
+
 (defun elx--format-required (required)
   (let ((hard (delete-duplicates (sort (nth 0 required) #'string<)
 				 :test #'equal))
@@ -833,7 +846,9 @@ The returned value has the form: ((PACKAGE FEATURE...)...)."
 		   (t (string< a b))))
 	   :key 'car)))
 
-(defun elx--buffer-required (buffer &optional provided)
+;; TODO document argument DROP here and in other functions
+
+(defun elx--buffer-required (buffer &optional provided drop)
   (let (required-hard
 	required-soft)
     (with-current-buffer buffer
@@ -845,17 +860,26 @@ The returned value has the form: ((PACKAGE FEATURE...)...)."
 		      (or (nth 3 (syntax-ppss))    ; in string
 			  (nth 4 (syntax-ppss))))) ; in comment
 		  ((match-string 2)
-		   (unless (or (member feature required-hard)
-			       (member feature required-soft)
-			       (member feature provided))
+		   (unless
+		       (or (member feature required-hard)
+			   (member feature required-soft)
+			   (member feature provided)
+			   (when drop
+			     (or (member feature elx-xemacs-specific-features)
+				 (member feature elx-backward-compat-features)
+				 )))
 		     (push feature required-soft)))
 		  ((not (or (member feature required-hard)
-			    (member feature provided)))
+			    (member feature provided)
+			    (when drop
+			      (or (member feature elx-xemacs-specific-features)
+				  (member feature elx-backward-compat-features)
+				  ))))
 		   (setq required-soft (remove feature required-soft))
 		   (push feature required-hard))))))
       (elx--format-required (list required-hard required-soft)))))
 
-(defun elx-required (source &optional provided)
+(defun elx-required (source &optional provided drop)
   "Return the features required by SOURCE.
 
 The returned value has the form:
@@ -898,12 +922,12 @@ This function finds required features using `elx-required-regexp'."
 		   (t
 		    (elx-with-file source
 		      (split (elx--buffer-required (current-buffer)
-						   provided))))))
+						   provided drop))))))
 	    ((atom (cdr source))
 	     (mapc (lambda (elt)
 		     (lgit-with-file (car source) (cdr source) elt
 		       (split (elx--buffer-required (current-buffer)
-						    provided))))
+						    provided drop))))
 		   (elx-elisp-files source)))
 	    (t
 	     (mapc (lambda (elt)
@@ -911,7 +935,7 @@ This function finds required features using `elx-required-regexp'."
 		   (elx-elisp-files source t)))))
     (elx--format-required (list hard soft))))
 
-(defun elx-required-packages (source &optional provided)
+(defun elx-required-packages (source &optional provided drop)
   "Return the packages required by SOURCE.
 
 The returned value has the form:
@@ -1093,7 +1117,7 @@ keywords.
 
 \(fn SOURCE &optional MAINFILE)" ; BRANCH is only useful for `elm.el'.
   (let* ((provided (elx-provided source))
-         (required (elx-required-packages source provided)))
+         (required (elx-required-packages source provided t)))
     (elx-with-mainfile source mainfile
       (list :summary (elx-summary nil t)
 	    :created (elx-created mainfile)

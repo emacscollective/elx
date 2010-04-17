@@ -800,21 +800,32 @@ This function finds provided features using `elx-provided-regexp'."
       (when hard
 	(list hard)))))
 
+(defun elx--lookup-required-1 (feature)
+  "Return a string representing the package that provides FEATURE."
+  (if (featurep 'elm)
+      (with-no-warnings
+	(or (cdr (assoc  feature elm-external-features))
+	    (and (member feature elm-internal-features) "emacs")))
+    (cdr (assoc feature elx-known-features))))
+
 (defun elx--lookup-required (required)
+  "Return the packages providing all features in list REQUIRED.
+The returned value has the form: ((PACKAGE FEATURE...)...)."
   (let (packages)
     (dolist (feature required)
-      (let* ((package
-	      (or (cdr (assoc feature elx-known-features))
-		  (when (featurep 'elm)
-		    (with-no-warnings
-		      (or (cdr (assoc feature elm-external-features))
-			  (when (member feature elm-internal-features)
-			    "emacs"))))))
-	     (entry (assoc package packages)))
-	(if entry
-	    (unless (memq feature (cdr entry))
-	      (setcdr entry (sort (cons feature (cdr entry)) 'string<)))
-	  (push (list package feature) packages))))
+      (let ((package (elx--lookup-required-1 feature))
+	    (feature-name (symbol-name feature)))
+	(when (and (not package)
+		   (string-match "-autoloads?$" feature-name))
+	  (setq package (elx--lookup-required-1
+			 (intern (substring feature-name 0
+					    (match-beginning 0))))))
+	(let ((entry (assoc package packages)))
+	  (if entry
+	      (unless (memq feature (cdr entry))
+		(setcdr entry (sort (cons feature (cdr entry))
+				    'string<)))
+	    (push (list package feature) packages)))))
     (sort* packages
 	   (lambda (a b)
 	     (cond ((null a) nil)

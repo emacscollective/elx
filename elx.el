@@ -4,8 +4,8 @@
 
 ;; Author: Jonas Bernoulli <jonas@bernoul.li>
 ;; Created: 20081202
-;; Updated: 20100412
-;; Version: 0.4.2
+;; Updated: 20100417
+;; Version: 0.4.2+
 ;; Homepage: https://github.com/tarsius/elx
 ;; Keywords: docs, libraries, packages
 
@@ -732,7 +732,7 @@ the providing package, a string.  This variable has to be set for function
 yourself.")
 
 (defconst elx-provided-regexp "\
-\(\\(?:cc-\\)?provide[\s\t\n]'\
+\(\\(?:cc-\\)?provide[\s\t\n]+'\
 \\([^(),\s\t\n]+\\)\\(?:[\s\t\n]+'\
 \(\\([^(),]+\\))\\)?)")
 
@@ -785,7 +785,7 @@ This function finds provided features using `elx-provided-regexp'."
    :test #'equal))
 
 (defconst elx-required-regexp "\
-\(\\(?:cc-\\)?require[\s\t\n]'\
+\(\\(?:cc-\\)?require[\s\t\n]+'\
 \\([^(),\s\t\n]+\\)\
 \\(?:\\(?:[\s\t\n]+\\(?:nil\\|\".*\"\\)\\)\
 \\(?:[\s\t\n]+\\(?:nil\\|\\(t\\)\\)\\)?\\)?)")

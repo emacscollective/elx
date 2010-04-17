@@ -966,10 +966,11 @@ an existing revision in that repository.  In this case the returned paths
 are always relative to the repository."
   ;; FIXME When extracting from fs files from hidden folders
   ;; are excluded but when extracting from git they are not.
+  ;; TODO document what files are matched
   (let (files)
     (if (consp source)
 	(mapcan (lambda (elt)
-		  (when (string-match "[^./][^/]+?.el$" elt)
+		  (when (string-match "[^./][^/]+?\\.el\\(\\.in\\)?$" elt)
 		    (list elt)))
 		(lgit (car source) "ls-tree -r --name-only %s" (cdr source)))
       (dolist (file (directory-files source t "^[^.]" t))

@@ -732,7 +732,7 @@ the providing package, a string.  This variable has to be set for function
 yourself.")
 
 (defconst elx-provided-regexp "\
-\(\\(?:cc-\\)?provide[\s\t\n]+'\
+\(\\(?:cc-\\|silentcomp-\\)?provide[\s\t\n]+'\
 \\([^(),\s\t\n]+\\)\\(?:[\s\t\n]+'\
 \(\\([^(),]+\\))\\)?)")
 

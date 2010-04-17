@@ -912,7 +912,7 @@ This function finds required features using `elx-required-regexp'."
     (elx--format-required (list hard soft))))
 
 (defun elx-required-packages (source &optional provided)
-  "Return the packages packages required by SOURCE.
+  "Return the packages required by SOURCE.
 
 The returned value has the form:
 

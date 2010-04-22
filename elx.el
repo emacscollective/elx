@@ -4,8 +4,8 @@
 
 ;; Author: Jonas Bernoulli <jonas@bernoul.li>
 ;; Created: 20081202
-;; Updated: 20100417
-;; Version: 0.4.3
+;; Updated: 20100422
+;; Version: 0.4.4
 ;; Homepage: https://github.com/tarsius/elx
 ;; Keywords: docs, libraries, packages
 
@@ -147,10 +147,7 @@ If STANDARDIZE is non-nil remove trailing period and upcase first word."
       summary)))
 
 
-(defcustom elx-remap-keywords
-  '(("emacs")
-    ("is") ("of") ("not") ("this")
-    ("file" "files"))
+(defcustom elx-remap-keywords nil
   "List of keywords that should be replaced or dropped by `elx-keywords'.
 If function `elx-keywords' is called with a non-nil SANITIZE argument it
 checks this variable to determine if keywords should be dropped from the
@@ -641,7 +638,18 @@ the value of variable `emacs-version'."
 
 ;;; Extract People.
 
-(defun elx-crack-address (x)
+(defcustom elx-remap-names nil
+  "List of names that should be replaced or dropped by `elx-crack-address'.
+If function `elx-crack-address' is called with a non-nil SANITIZE argument
+it checks this variable to determine if names should be dropped from the
+return value or replaced by another.  If the cdr of an entry is nil then
+the keyword is dropped; otherwise it will be replaced with the keyword in
+the cadr."
+  :group 'elx
+  :type '(repeat (list string (choice (const  :tag "drop" nil)
+				      (string :tag "replacement")))))
+
+(defun elx-crack-address (x &optional sanitize)
   "Split up an email address X into full name and real email address.
 The value is a cons of the form (FULLNAME . ADDRESS)."
   (let (name mail)
@@ -686,10 +694,13 @@ The value is a cons of the form (FULLNAME . ADDRESS)."
 			     "[a-z0-9]\\(?:[a-z0-9-]*[a-z0-9]\\)?"
 			     "\\)\\s-*$") mail)
 		    (downcase (match-string 1 mail))))
+    (let ((elt (assoc name elx-remap-names)))
+      (when elt
+	(setq name (cadr elt))))
     (when (or name mail)
       (cons name mail))))
 
-(defun elx-authors (&optional file)
+(defun elx-authors (&optional file sanitize)
   "Return the author list of file FILE.
 Or the current buffer if FILE is equal to `buffer-file-name' or is nil.
 Each element of the list is a cons; the car is the full name,
@@ -697,29 +708,29 @@ the cdr is an email address."
   (elx-with-file file
     (mapcan (lambda (elt)
 	      (when elt
-		(setq elt (elx-crack-address elt))
+		(setq elt (elx-crack-address elt) sanitize)
 		(when elt
 		  (list elt))))
 	    (elx-header "authors?" t ", +"))))
 
-(defun elx-maintainer (&optional file)
+(defun elx-maintainer (&optional file sanitize)
   "Return the maintainer of file FILE.
 Or the current buffer if FILE is equal to `buffer-file-name' or is nil.
 The return value has the form (NAME . ADDRESS)."
   (elx-with-file file
     (let ((maint (elx-header "maintainer" nil ", +")))
       (if maint
-	  (elx-crack-address (car maint))
+	  (elx-crack-address (car maint) sanitize)
 	(car (elx-authors))))))
 
-(defun elx-adapted-by (&optional file)
+(defun elx-adapted-by (&optional file sanitize)
   "Return the person how adapted file FILE.
 Or the current buffer if FILE is equal to `buffer-file-name' or is nil.
 The return value has the form (NAME . ADDRESS)."
   (elx-with-file file
     (let ((adapter (elx-header "adapted-by" nil ", +")))
       (when adapter
-	(elx-crack-address (car adapter))))))
+	(elx-crack-address (car adapter) sanitize)))))
 
 ;;; Extract Features.
 
@@ -1112,8 +1123,7 @@ Otherwise function `elx-package-mainfile' (which see) is used to determine
 which file is the mainfile.  MAINFILE has to be relative to the package
 directory or be an absolute path.
 
-If optional SANITIZE is non-nil some values are sanitized the list of
-keywords.
+If optional SANITIZE is non-nil some values are sanitized.
 
 \(fn SOURCE &optional MAINFILE)" ; BRANCH is only useful for `elm.el'.
   (let* ((provided (elx-provided source))
@@ -1123,9 +1133,9 @@ keywords.
 	    :created (elx-created mainfile)
 	    :updated (elx-updated mainfile)
 	    :license (elx-license)
-	    :authors (elx-authors)
-	    :maintainer (elx-maintainer)
-	    :adapted-by (elx-adapted-by)
+	    :authors (elx-authors nil sanitize)
+	    :maintainer (elx-maintainer nil sanitize)
+	    :adapted-by (elx-adapted-by nil sanitize)
 	    :provided provided
 	    :required required
 	    :keywords (elx-keywords mainfile sanitize)

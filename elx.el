@@ -4,8 +4,8 @@
 
 ;; Author: Jonas Bernoulli <jonas@bernoul.li>
 ;; Created: 20081202
-;; Updated: 20100422
-;; Version: 0.4.4
+;; Updated: 20100502
+;; Version: 0.4.5
 ;; Homepage: https://github.com/tarsius/elx
 ;; Keywords: docs, libraries, packages
 
@@ -801,17 +801,13 @@ This function finds provided features using `elx-provided-regexp'."
 \\(?:\\(?:[\s\t\n]+\\(?:nil\\|\".*\"\\)\\)\
 \\(?:[\s\t\n]+\\(?:nil\\|\\(t\\)\\)\\)?\\)?)")
 
-(defvar elx-xemacs-specific-features
-  '(apollo auto-show behavior bg-mouse buff-menu build-report byte-optimize canna-leim cl-extra code-cmds config cus-dep cus-file devan-util devanagari dialog-gtk dragdrop egg-jpn egg-kor font-menu font-mgr fontconfig fontl-hooks gdk generic-widgets gnome gnome-widgets gpm gtk-compose gtk-extra gtk-ffi gtk-file-dialog gtk-font-menu gtk-password-dialog gutter-items hyper-apropos iso8859-1 itimer leim-canna-initialized lib-complete menubar menubar-items mode-motion mswindows-font-menu next-error obsolete package-admin package-get package-info package-ui packages rsz-minibuf slovenian symbol-syntax text-props view-less widgets-gtk x-compose x-font-menu x-menubar
-    ;; These were manually added and have to be verified:
-    atomic-extents auc-menu balloon-help func-menu un-define)
+(defvar elx-xemacs-specific-features nil
   "List of features which are provided by XEmacs only.
 Should not contains any packages also provided by GNU Emacs or packages
 mirrored on the Emacsmirror.  Since this list is only irregularly updated
 this rule might be violated sometimes.")
 
-(defvar elx-backward-compat-features
-  '(hilit19 help+20 hfy-emacs20)
+(defvar elx-backward-compat-features nil
   "List of features which are provided for backward compatibilty only.")
 
 (defun elx--format-required (required)

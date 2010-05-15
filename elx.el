@@ -4,8 +4,8 @@
 
 ;; Author: Jonas Bernoulli <jonas@bernoul.li>
 ;; Created: 20081202
-;; Updated: 20100502
-;; Version: 0.4.5
+;; Updated: 20100515
+;; Version: 0.4.6
 ;; Homepage: https://github.com/tarsius/elx
 ;; Keywords: docs, libraries, packages
 
@@ -239,33 +239,52 @@ http://www.emacswiki.org/emacs/Git_repository respectively."
   :group 'elx
   :type 'directory)
 
-(defun elx-wikipage (file &optional pages urlp)
+(defun elx-wikipage (file &optional name pages urlp)
   "Extract the page on the Emacswiki for the specified package.
 
-FILE is the the mainfile of the package.  Optional PAGES if non-nil
-should be either a list of existing pages or a directory containing
-the pages.  If it is not specified or nil the value of function
-`elx-wiki-directory' is used.  If optional URLP is specified and
-non-nil return the url of the page otherwise only the name.
+The page is extracted from the respective header of FILE which should be
+the package's mainfile.  If this fails the package's name is matched
+against a list of pages known to exist on the Emacswiki.
 
-The page is determined by comparing the name of FILE with existing pages.
-So their is no garanty that this will always return the page about a
-package, even if it exists.  False-positives might also occur."
-  (or (elx-with-file file
-	(elx-header "\\(?:x-\\)?\\(?:emacs\\)?wiki-?page"))
-      (let ((page (upcase-initials
-		   (replace-regexp-in-string "\\+$" "Plus"
-		    (replace-regexp-in-string "-."
-		     (lambda (str)
-		       (upcase (substring str 1)))
-		     (file-name-sans-extension
-		      (file-name-nondirectory file)))))))
-	(when (member page (if (consp pages)
-			       pages
-			     (make-directory (or pages elx-wiki-directory) t)
-			     (directory-files (or pages elx-wiki-directory)
-					      nil "^[^.]" t)))
-	  (concat (when urlp "http://www.emacswiki.org/emacs/") page)))))
+This list can be specified explicitly using the optional PAGES argument
+which either has to be a list of filenames or a directory containing the
+pages at the toplevel.  If PAGES is nil the contents of
+`elx-wiki-directory' are used.
+
+The name of the package can be passed explicitly using the optional NAME
+argument otherwise it is derived from FILE.  If NAME is set FILE may be
+omitted.
+
+Both the package's name and the pages it is being matched against are
+downcased for comparison.  Also a trailing plus sign in the package's name
+is replaced with \"plus\" and dashes appearing anywhere in it are removed.
+
+If optional URLP is specified and non-nil return the url of the page
+otherwise only the name.
+
+There is no guarantee that this will always return the package's page on
+the Emacswiki when such a page exists or that false-positives do not ever
+occur."
+  (or (when file
+	(elx-with-file file
+	  (elx-header "\\(?:x-\\)?\\(?:emacs\\)?wiki-?page")))
+      (flet ((match (name)
+		    (car (member* name pages :test 'equal :key 'downcase))))
+	(unless (consp pages)
+	  (setq pages (directory-files (or pages elx-wiki-directory)
+				       nil "^[^.]" t)))
+	(setq name (downcase
+		    (replace-regexp-in-string "\\+$" "plus"
+		     (replace-regexp-in-string "-" ""
+		      (or name
+			  (file-name-sans-extension
+			   (file-name-nondirectory file)))))))
+	(let ((page (or (match name)
+			(match (if (string-match "mode$" name)
+				   (substring name 0 -4)
+				 (concat name "mode"))))))
+	  (when page
+	    (concat (when urlp "http://www.emacswiki.org/emacs/") page))))))
 
 (defun elx-homepage (file)
   "Extract the homepage of the specified package."
@@ -1098,7 +1117,7 @@ an existing revision in that repository."
 	 (lgit-with-file (car source) (cdr source) mainfile ,@body)
        (elx-with-file mainfile ,@body))))
 
-(defun elx-package-metadata (source &optional mainfile sanitize branch)
+(defun elx-package-metadata (source &optional mainfile name sanitize branch)
   "Extract and return the metadata of an Emacs Lisp package.
 
 SOURCE has to be the path to an Emacs Lisp library (a single file) or the
@@ -1112,38 +1131,43 @@ extracted from all Emacs Lisp files in the directory collectively).
 
 If library `lgit' is loaded SOURCE can also be a cons cell whose car is
 the path to a git repository (which may be bare) and whose cdr has to be
-an existing revision in that repository.
+an existing revision in that repository.  In this case the optional and
+otherwise ignored BRANCH if specified is checked out before extracting
+any metadata.
 
 Optional MAINFILE can be used to specify the \"mainfile\" explicitly.
 Otherwise function `elx-package-mainfile' (which see) is used to determine
 which file is the mainfile.  MAINFILE has to be relative to the package
 directory or be an absolute path.
 
-If optional SANITIZE is non-nil some values are sanitized.
+Optional NAME is passed on to all called functions that also have such an
+optional argument.
 
-\(fn SOURCE &optional MAINFILE)" ; BRANCH is only useful for `elm.el'.
+If optional SANITIZE is non-nil some values are sanitized."
+  ;; TODO "checkout" BRANCH
   (let* ((provided (elx-provided source))
          (required (elx-required-packages source provided t)))
     (elx-with-mainfile source mainfile
-      (list :summary (elx-summary nil t)
-	    :created (elx-created mainfile)
-	    :updated (elx-updated mainfile)
-	    :license (elx-license)
-	    :authors (elx-authors nil sanitize)
-	    :maintainer (elx-maintainer nil sanitize)
-	    :adapted-by (elx-adapted-by nil sanitize)
-	    :provided provided
-	    :required required
-	    :keywords (elx-keywords mainfile sanitize)
-	    :homepage (or (elx-homepage mainfile)
-			  (when branch
-			    (or (cadr (lgit (car source) 1
-					    "config branch.%s.elm-webpage"
-					    branch))
-				(when (equal branch "emacswiki")
-				  (elx-wikipage mainfile nil t)))))
-	    :wikipage (elx-wikipage mainfile nil t)
-	    :commentary (elx-commentary mainfile)))))
+      (let ((wikipage (elx-wikipage mainfile name nil t)))
+	(list :summary (elx-summary nil t)
+	      :created (elx-created mainfile)
+	      :updated (elx-updated mainfile)
+	      :license (elx-license)
+	      :authors (elx-authors nil sanitize)
+	      :maintainer (elx-maintainer nil sanitize)
+	      :adapted-by (elx-adapted-by nil sanitize)
+	      :provided provided
+	      :required required
+	      :keywords (elx-keywords mainfile sanitize)
+	      :homepage (or (elx-homepage mainfile)
+			    (when (consp source)
+			      (or (cadr (lgit (car source) 1
+					      "config branch.%s.elm-webpage"
+					      branch))
+				  (when (equal branch "emacswiki")
+				    wikipage))))
+	      :wikipage wikipage
+	      :commentary (elx-commentary mainfile))))))
 
 (provide 'elx)
 ;;; elx.el ends here

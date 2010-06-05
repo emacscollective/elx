@@ -4,8 +4,8 @@
 
 ;; Author: Jonas Bernoulli <jonas@bernoul.li>
 ;; Created: 20081202
-;; Updated: 20100515
-;; Version: 0.4.6
+;; Updated: 20100605
+;; Version: 0.4.7
 ;; Homepage: https://github.com/tarsius/elx
 ;; Keywords: docs, libraries, packages
 
@@ -171,7 +171,7 @@ Or the current buffer if FILE is equal to `buffer-file-name' or is nil."
 	   (when (string-match "^[-a-z]+$" str)
 	     (let ((elt (assoc str elx-remap-keywords)))
 	       (if elt
-		   (cdr elt)
+		   (cadr elt)
 		 (list str)))))
 	 (split-string
 	  (replace-regexp-in-string

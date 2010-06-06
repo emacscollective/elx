@@ -4,8 +4,8 @@
 
 ;; Author: Jonas Bernoulli <jonas@bernoul.li>
 ;; Created: 20081202
-;; Updated: 20100605
-;; Version: 0.4.7
+;; Updated: 20100606
+;; Version: 0.4.8
 ;; Homepage: https://github.com/tarsius/elx
 ;; Keywords: docs, libraries, packages
 
@@ -843,8 +843,9 @@ this rule might be violated sometimes.")
   "Return a string representing the package that provides FEATURE."
   (if (featurep 'elm)
       (with-no-warnings
-	(or (cdr (assoc  feature elm-external-features))
-	    (and (member feature elm-internal-features) "emacs")))
+	;; internal and external should eventually be switched
+	(or (when (member feature elm-internal-features) "emacs")
+	    (cdr  (assoc  feature elm-external-features))))
     (cdr (assoc feature elx-known-features))))
 
 (defun elx--lookup-required (required)

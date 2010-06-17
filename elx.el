@@ -853,7 +853,7 @@ this rule might be violated sometimes.")
   "Return a string representing the package that provides FEATURE."
   (if (featurep 'elm)
       (with-no-warnings
-	;; internal and external should eventually be switched
+	;; FIXME internal and external should eventually be switched
 	(or (when (member feature elm-internal-features) "emacs")
 	    (cdr  (assoc  feature elm-external-features))))
     (cdr (assoc feature elx-known-features))))

@@ -830,11 +830,20 @@ this rule might be violated sometimes.")
 (defvar elx-backward-compat-features nil
   "List of features which are provided for backward compatibilty only.")
 
-(defun elx--format-required (required)
-  (let ((hard (delete-duplicates (sort (nth 0 required) #'string<)
-				 :test #'equal))
-	(soft (delete-duplicates (sort (nth 1 required) #'string<)
-				 :test #'equal)))
+(defun elx--sanitize-required-1 (required &optional provided drop)
+  (let (sanitized)
+    (dolist (feature required)
+      (unless (or (member feature sanitized)
+		  (member feature provided)
+		  (when drop
+		    (or (member feature elx-xemacs-specific-features)
+			(member feature elx-backward-compat-features))))
+	(push feature sanitized)))
+    (sort sanitized #'string<)))
+
+(defun elx--sanitize-required (required &optional provided drop)
+  (let ((hard (elx--sanitize-required-1 (nth 0 required) provided drop))
+	(soft (elx--sanitize-required-1 (nth 0 required) provided drop)))
     (if soft
 	(list hard soft)
       (when hard
@@ -874,12 +883,11 @@ The returned value has the form: ((PACKAGE FEATURE...)...)."
 		   (t (string< a b))))
 	   :key 'car)))
 
-;; TODO document argument DROP here and in other functions
-
-(defun elx--buffer-required (buffer &optional provided drop)
+(defun elx--buffer-required (&optional buffer)
+  "Return the features required by BUFFER's (or current buffer's) content."
   (let (required-hard
 	required-soft)
-    (with-current-buffer buffer
+    (with-current-buffer (or buffer (current-buffer))
       (save-excursion
 	(goto-char (point-min))
 	(while (re-search-forward elx-required-regexp nil t)
@@ -888,24 +896,13 @@ The returned value has the form: ((PACKAGE FEATURE...)...)."
 		      (or (nth 3 (syntax-ppss))    ; in string
 			  (nth 4 (syntax-ppss))))) ; in comment
 		  ((match-string 2)
-		   (unless
-		       (or (member feature required-hard)
-			   (member feature required-soft)
-			   (member feature provided)
-			   (when drop
-			     (or (member feature elx-xemacs-specific-features)
-				 (member feature elx-backward-compat-features)
-				 )))
+		   (unless (or (member feature required-hard)
+			       (member feature required-soft))
 		     (push feature required-soft)))
-		  ((not (or (member feature required-hard)
-			    (member feature provided)
-			    (when drop
-			      (or (member feature elx-xemacs-specific-features)
-				  (member feature elx-backward-compat-features)
-				  ))))
+		  ((not (member feature required-hard))
 		   (setq required-soft (remove feature required-soft))
 		   (push feature required-hard))))))
-      (elx--format-required (list required-hard required-soft)))))
+      (elx--sanitize-required (list required-hard required-soft)))))
 
 (defun elx-required (source &optional provided drop)
   "Return the features required by SOURCE.
@@ -949,19 +946,17 @@ This function finds required features using `elx-required-regexp'."
 			  (elx-elisp-files source t)))
 		   (t
 		    (elx-with-file source
-		      (split (elx--buffer-required (current-buffer)
-						   provided drop))))))
+		      (split (elx--buffer-required))))))
 	    ((atom (cdr source))
 	     (mapc (lambda (elt)
 		     (lgit-with-file (car source) (cdr source) elt
-		       (split (elx--buffer-required (current-buffer)
-						    provided drop))))
+		       (split (elx--buffer-required))))
 		   (elx-elisp-files source)))
 	    (t
 	     (mapc (lambda (elt)
 		     (split (elx-required elt provided)))
 		   (elx-elisp-files source t)))))
-    (elx--format-required (list hard soft))))
+    (elx--sanitize-required (list hard soft) provided drop)))
 
 (defun elx-required-packages (source &optional provided drop)
   "Return the packages required by SOURCE.

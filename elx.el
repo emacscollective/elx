@@ -4,8 +4,8 @@
 
 ;; Author: Jonas Bernoulli <jonas@bernoul.li>
 ;; Created: 20081202
-;; Updated: 20100608
-;; Version: 0.4.9
+;; Updated: 20100617
+;; Version: 0.4.9+
 ;; Homepage: https://github.com/tarsius/elx
 ;; Keywords: docs, libraries, packages
 
@@ -1016,17 +1016,16 @@ If library `lgit' is loaded SOURCE can also be a cons cell whose car is
 the path to a git repository (which may be bare) and whose cdr has to be
 an existing revision in that repository.  In this case the returned paths
 are always relative to the repository."
-  ;; FIXME When extracting from fs files from hidden folders
-  ;; are excluded but when extracting from git they are not.
   ;; TODO document what files are matched
   (let (files)
     (if (consp source)
 	(mapcan (lambda (elt)
-		  (when (string-match "[^./][^/]+?\\.el\\(\\.in\\)?$" elt)
+		  (when (string-match ".+?\\.el\\(\\.in\\)?$" elt)
 		    (list elt)))
 		(lgit (car source) "ls-tree -r --name-only %s" (cdr source)))
-      (dolist (file (directory-files source t "^[^.]" t))
-	(cond ((file-directory-p file)
+      (dolist (file (directory-files source t))
+	(cond ((string-match "^\.\\{1,2\\}$" file))
+	      ((file-directory-p file)
 	       (setq files (nconc (elx-elisp-files file t) files)))
 	      ((string-match "\\.el$" file)
 	       (setq files (cons file files)))))

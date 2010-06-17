@@ -767,6 +767,9 @@ yourself.")
 \\([^(),\s\t\n]+\\)\\(?:[\s\t\n]+'\
 \(\\([^(),]+\\))\\)?)")
 
+(defun elx--sanitize-provided (provided)
+  (delete-duplicates (sort provided #'string<) :test #'equal))
+
 (defun elx--buffer-provided (&optional buffer)
   (let (features)
     (with-current-buffer (or buffer (current-buffer))
@@ -780,7 +783,7 @@ yourself.")
 				   (when (match-string 2)
 				     (split-string (match-string 2) " " t))))
 	      (add-to-list 'features (intern feature))))))
-      (sort features #'string<))))
+      (elx--sanitize-provided features))))
 
 (defun elx-provided (source)
   "Return a list of the features provided by SOURCE.
@@ -797,23 +800,21 @@ the path to a git repository (which may be bare) and whose cdr has to be
 an existing revision in that repository.
 
 This function finds provided features using `elx-provided-regexp'."
-  (delete-duplicates
-   (sort (cond ((atom source)
-		(cond ((file-symlink-p source))
-		      ((file-directory-p source)
-		       (mapcan #'elx-provided (elx-elisp-files source t)))
-		      (t
-		       (elx-with-file source
-			 (elx--buffer-provided)))))
-	       ((atom (cdr source))
-		(mapcan (lambda (elt)
-			  (lgit-with-file (car source) (cdr source) elt
-			    (elx--buffer-provided)))
-			(elx-elisp-files source)))
-	       (t
-		(mapcan #'elx-provided source)))
-	 #'string<)
-   :test #'equal))
+  (elx--sanitize-provided
+   (cond ((atom source)
+	  (cond ((file-symlink-p source))
+		((file-directory-p source)
+		 (mapcan #'elx-provided (elx-elisp-files source t)))
+		(t
+		 (elx-with-file source
+		   (elx--buffer-provided)))))
+	 ((atom (cdr source))
+	  (mapcan (lambda (elt)
+		    (lgit-with-file (car source) (cdr source) elt
+		      (elx--buffer-provided)))
+		  (elx-elisp-files source)))
+	 (t
+	  (mapcan #'elx-provided source)))))
 
 (defconst elx-required-regexp "\
 \(\\(?:cc-\\)?require[\s\t\n]+'\

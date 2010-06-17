@@ -1027,7 +1027,10 @@ SOURCE."
       (dolist (file (directory-files source t))
 	(cond ((string-match "^\.\\{1,2\\}$" file))
 	      ((file-directory-p file)
-	       (setq files (nconc (elx-elisp-files file t) files)))
+	       (setq files (nconc (mapcar (lambda (elt)
+					    (concat file elt))
+					  (elx-elisp-files file t drop))
+				  files)))
 	      ((string-match "\\.el$" file)
 	       (setq files (cons file files))))))
     (if full

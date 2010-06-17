@@ -773,8 +773,15 @@ yourself.")
 \\([^(),\s\t\n]+\\)\\(?:[\s\t\n]+'\
 \(\\([^(),]+\\))\\)?)")
 
-(defun elx--sanitize-provided (provided)
-  (delete-duplicates (sort provided #'string<) :test #'equal))
+(defun elx--sanitize-provided (provided &optional drop)
+  (let (sanitized)
+    (dolist (feature provided)
+      (unless (or (member feature sanitized)
+		  (when drop
+		    (or (member feature elx-features-xemacs)
+			(member feature elx-features-compat))))
+	(push feature sanitized)))
+    (sort sanitized #'string<)))
 
 (defun elx--buffer-provided (&optional buffer)
   (let (features)
@@ -791,7 +798,7 @@ yourself.")
 	      (add-to-list 'features (intern feature))))))
       (elx--sanitize-provided features))))
 
-(defun elx-provided (source)
+(defun elx-provided (source &optional drop)
   "Return a list of the features provided by SOURCE.
 
 SOURCE has to be a file, directory or list of files and/or directories.
@@ -820,7 +827,8 @@ This function finds provided features using `elx-provided-regexp'."
 		      (elx--buffer-provided)))
 		  (elx-elisp-files source)))
 	 (t
-	  (mapcan #'elx-provided source)))))
+	  (mapcan #'elx-provided source)))
+   drop))
 
 (defconst elx-required-regexp "\
 \(\\(?:cc-\\)?require[\s\t\n]+'\

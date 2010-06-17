@@ -1009,30 +1009,31 @@ This function finds required features using `elx-required-regexp'."
 (defun elx-elisp-files (source &optional full)
   "Return a list of Emacs lisp files inside directory SOURCE.
 
-If optional FULL is non-nil return full paths, otherwise relative to
-SOURCE.
-
 If library `lgit' is loaded SOURCE can also be a cons cell whose car is
 the path to a git repository (which may be bare) and whose cdr has to be
-an existing revision in that repository.  In this case the returned paths
-are always relative to the repository."
+an existing revision in that repository.
+
+If optional FULL is non-nil return full paths, otherwise relative to
+SOURCE."
   ;; TODO document what files are matched
   (let (files)
     (if (consp source)
-	(mapcan (lambda (elt)
-		  (when (string-match ".+?\\.el\\(\\.in\\)?$" elt)
-		    (list elt)))
-		(lgit (car source) "ls-tree -r --name-only %s" (cdr source)))
+	(setq files
+	      (mapcan (lambda (elt)
+			(when (string-match ".+?\\.el\\(\\.in\\)?$" elt)
+			  (list elt)))
+		      (lgit (car source) "ls-tree -r --name-only %s"
+			    (cdr source))))
       (dolist (file (directory-files source t))
 	(cond ((string-match "^\.\\{1,2\\}$" file))
 	      ((file-directory-p file)
 	       (setq files (nconc (elx-elisp-files file t) files)))
 	      ((string-match "\\.el$" file)
-	       (setq files (cons file files)))))
-      (if full
-	  files
-	(let ((default-directory source))
-	  (mapcar 'file-relative-name files))))))
+	       (setq files (cons file files))))))
+    (if full
+	files
+      (let ((default-directory (if (listp source) (car source) source)))
+	(mapcar 'file-relative-name files)))))
 
 (defun elx-package-mainfile (source &optional full)
   "Return the mainfile of the package inside SOURCE.

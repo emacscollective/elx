@@ -767,9 +767,9 @@ yourself.")
 \\([^(),\s\t\n]+\\)\\(?:[\s\t\n]+'\
 \(\\([^(),]+\\))\\)?)")
 
-(defun elx--buffer-provided (buffer)
+(defun elx--buffer-provided (&optional buffer)
   (let (features)
-    (with-current-buffer buffer
+    (with-current-buffer (or buffer (current-buffer))
       (save-excursion
 	(goto-char (point-min))
 	(while (re-search-forward elx-provided-regexp nil t)
@@ -804,11 +804,11 @@ This function finds provided features using `elx-provided-regexp'."
 		       (mapcan #'elx-provided (elx-elisp-files source t)))
 		      (t
 		       (elx-with-file source
-			 (elx--buffer-provided (current-buffer))))))
+			 (elx--buffer-provided)))))
 	       ((atom (cdr source))
 		(mapcan (lambda (elt)
 			  (lgit-with-file (car source) (cdr source) elt
-			    (elx--buffer-provided (current-buffer))))
+			    (elx--buffer-provided)))
 			(elx-elisp-files source)))
 	       (t
 		(mapcan #'elx-provided source)))

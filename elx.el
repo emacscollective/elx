@@ -1006,16 +1006,25 @@ This function finds required features using `elx-required-regexp'."
 
 ;;; Extract Package Metadata.
 
-(defun elx-elisp-files (source &optional full)
+(defvar elx-elisp-ignored-names '("^\\."))
+
+(defun elx-elisp-files (source &optional full drop)
   "Return a list of Emacs lisp files inside directory SOURCE.
 
 If library `lgit' is loaded SOURCE can also be a cons cell whose car is
 the path to a git repository (which may be bare) and whose cdr has to be
 an existing revision in that repository.
 
-If optional FULL is non-nil return full paths, otherwise relative to
-SOURCE."
-  ;; TODO document what files are matched
+Actually all files ending with the \".el\" or even \".el.in\" suffixes are
+returned, unless optional DROP is non-nil.
+
+If optional FULL is non-nil return full paths, otherwise paths relative to
+SOURCE.
+
+DROP, if non-nil, can either be a list of regular expressions or t in
+which case the regular expressions listed in `elx-elisp-ignored-names' are
+used.  These regular expressions are matched against the basename of all
+Emacs lisp files and matching files are omitted from the return value."
   (let (files)
     (if (consp source)
 	(setq files
@@ -1026,6 +1035,13 @@ SOURCE."
 			    (cdr source))))
       (dolist (file (directory-files source t))
 	(cond ((string-match "^\.\\{1,2\\}$" file))
+	      ((progn (string-match "\\([^/]+\\)/?$" file)
+		      (member* (match-string 1 file)
+			       (if (eq drop t)
+				   elx-elisp-ignored-names
+				 drop)
+			       :test (lambda (item regexp)
+				       (string-match regexp item)))))
 	      ((file-directory-p file)
 	       (setq files (nconc (mapcar (lambda (elt)
 					    (concat file elt))

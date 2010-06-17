@@ -754,13 +754,19 @@ The return value has the form (NAME . ADDRESS)."
 
 ;;; Extract Features.
 
-(defvar elx-known-features nil
-  "List of known features.
+(defvar elx-features-provided nil
+  "List of features and the providing packages.
 
 Each element is a cons cell whose car is a feature symbol and whose cdr is
 the providing package, a string.  This variable has to be set for function
 `elx-required-packages' to work correctly; you are responsible to do that
 yourself.")
+
+(defvar elx-features-xemacs nil
+  "List of features which are provided only for or by XEmacs.")
+
+(defvar elx-features-compat nil
+  "List of features which are provided only for backward compatibilty.")
 
 (defconst elx-provided-regexp "\
 \(\\(?:cc-\\|silentcomp-\\)?provide[\s\t\n]+'\
@@ -822,23 +828,14 @@ This function finds provided features using `elx-provided-regexp'."
 \\(?:\\(?:[\s\t\n]+\\(?:nil\\|\".*\"\\)\\)\
 \\(?:[\s\t\n]+\\(?:nil\\|\\(t\\)\\)\\)?\\)?)")
 
-(defvar elx-xemacs-specific-features nil
-  "List of features which are provided by XEmacs only.
-Should not contains any packages also provided by GNU Emacs or packages
-mirrored on the Emacsmirror.  Since this list is only irregularly updated
-this rule might be violated sometimes.")
-
-(defvar elx-backward-compat-features nil
-  "List of features which are provided for backward compatibilty only.")
-
 (defun elx--sanitize-required-1 (required &optional provided drop)
   (let (sanitized)
     (dolist (feature required)
       (unless (or (member feature sanitized)
 		  (member feature provided)
 		  (when drop
-		    (or (member feature elx-xemacs-specific-features)
-			(member feature elx-backward-compat-features))))
+		    (or (member feature elx-features-xemacs)
+			(member feature elx-features-compat))))
 	(push feature sanitized)))
     (sort sanitized #'string<)))
 
@@ -857,7 +854,7 @@ this rule might be violated sometimes.")
 	;; FIXME internal and external should eventually be switched
 	(or (when (member feature elm-internal-features) "emacs")
 	    (cdr  (assoc  feature elm-external-features))))
-    (cdr (assoc feature elx-known-features))))
+    (cdr (assoc feature elx-features-provided))))
 
 (defun elx--lookup-required (required)
   "Return the packages providing all features in list REQUIRED.
@@ -986,7 +983,7 @@ optional PROVIDED is not provided or nil the features provided by SOURCE
 are determined using `elx-provided'.  Otherwise PROVIDED has to be a list
 of features which are assumed to be the features provided by SOURCE.
 
-Note that this function uses the value of variable `elx-known-features'
+Note that this function uses the value of variable `elx-features-provided'
 to determine what package provides a feature.  You are responsible to
 setup that variable yourself.
 

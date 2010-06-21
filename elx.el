@@ -772,6 +772,32 @@ This excludes all features also provided by GNU Emacs.")
 (defvar elx-features-compat nil
   "List of features which are provided only for backward compatibilty.")
 
+(defcustom elx-xemacs-elisp "/unknown/"
+  "Directory contain XEmacs' lisp files."
+  :group 'elx
+  :type 'directory)
+
+(defun elx-update-emacs-features ()
+  (message "Updating Emacs features...")
+  (setq elx-features-emacs
+	(elx-provided (file-name-directory (find-library-name "version"))))
+  (message "Updating Emacs features...done"))
+
+(defun elx-update-xemacs-features ()
+  (unless elx-features-emacs
+    (elx-update-emacs-features))
+  (message "Updating XEmacs features...")
+  (let ((exclusive '(xemacs
+		     ;; FIXME Apparently these are also provided by XEmacs.
+		     ;; Verify that this is the case (maybe they were
+		     ;; provided by older versions?).
+		     atomic-extents auc-menu balloon-help func-menu un-define)))
+    (dolist (feature (elx-provided elx-xemacs-elisp))
+      (unless (member feature elx-features-emacs)
+	(push feature exclusive)))
+    (setq elx-features-xemacs (sort exclusive #'string<)))
+  (message "Updating XEmacs features...done"))
+
 (defconst elx-provided-regexp "\
 \(\\(?:cc-\\|silentcomp-\\)?provide[\s\t\n]+'\
 \\([^(),\s\t\n]+\\)\\(?:[\s\t\n]+'\

@@ -769,6 +769,8 @@ yourself.")
   "List of features provided by XEmacs only.
 This excludes all features also provided by GNU Emacs.")
 
+(defvar elx-features-bundled nil)
+
 (defvar elx-features-compat nil
   "List of features which are provided only for backward compatibilty.")
 

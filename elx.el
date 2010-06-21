@@ -4,7 +4,7 @@
 
 ;; Author: Jonas Bernoulli <jonas@bernoul.li>
 ;; Created: 20081202
-;; Updated: 20100617
+;; Updated: 20100622
 ;; Version: 0.4.9+
 ;; Homepage: https://github.com/tarsius/elx
 ;; Keywords: docs, libraries, packages
@@ -762,8 +762,12 @@ the providing package, a string.  This variable has to be set for function
 `elx-required-packages' to work correctly; you are responsible to do that
 yourself.")
 
+(defvar elx-features-emacs nil
+  "List of features provided by Emacs.")
+
 (defvar elx-features-xemacs nil
-  "List of features which are provided only for or by XEmacs.")
+  "List of features provided by XEmacs only.
+This excludes all features also provided by GNU Emacs.")
 
 (defvar elx-features-compat nil
   "List of features which are provided only for backward compatibilty.")
@@ -857,11 +861,8 @@ This function finds provided features using `elx-provided-regexp'."
 
 (defun elx--lookup-required-1 (feature)
   "Return a string representing the package that provides FEATURE."
-  (if (featurep 'elm)
-      (with-no-warnings
-	;; FIXME internal and external should eventually be switched
-	(or (when (member feature elm-internal-features) "emacs")
-	    (cdr  (assoc  feature elm-external-features))))
+  (if (member feature elx-features-emacs)
+      "emacs"
     (cdr (assoc feature elx-features-provided))))
 
 (defun elx--lookup-required (required)

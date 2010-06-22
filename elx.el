@@ -769,8 +769,6 @@ yourself.")
   "List of features provided by XEmacs only.
 This excludes all features also provided by GNU Emacs.")
 
-(defvar elx-features-bundled nil)
-
 (defvar elx-features-drop-deps nil)
 
 (defcustom elx-xemacs-elisp "/unknown/"

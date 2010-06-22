@@ -1163,6 +1163,8 @@ an existing revision in that repository."
 
 ;;; Check and aggregate extracted information.
 
+;; TODO document these functions
+
 (defun elx--git-get (repo variable)
   (mapcan #'split-string (cdr (lgit repo 1 "config --get-all %s" variable))))
 
@@ -1218,55 +1220,25 @@ an existing revision in that repository."
     ;; Return features.
     (list provided-repo required-hard required-soft)))
 
-(defun elx-package-metadata (source &optional mainfile name sanitize branch)
-  "Extract and return the metadata of an Emacs Lisp package.
-
-SOURCE has to be the path to an Emacs Lisp library (a single file) or the
-path to a directory containing a package consisting of one or more Emacs
-Lisp files.  This directory may also contain auxiliary files.
-
-If SOURCE is a directory this function needs to know which file is the
-package's \"mainfile\"; that is the file from which most information is
-extracted (everything but the required and provided features which are
-extracted from all Emacs Lisp files in the directory collectively).
-
-If library `lgit' is loaded SOURCE can also be a cons cell whose car is
-the path to a git repository (which may be bare) and whose cdr has to be
-an existing revision in that repository.  In this case the optional and
-otherwise ignored BRANCH if specified is checked out before extracting
-any metadata.
-
-Optional MAINFILE can be used to specify the \"mainfile\" explicitly.
-Otherwise function `elx-package-mainfile' (which see) is used to determine
-which file is the mainfile.  MAINFILE has to be relative to the package
-directory or be an absolute path.
-
-Optional NAME is passed on to all called functions that also have such an
-optional argument.
-
-If optional SANITIZE is non-nil some values are sanitized."
-  ;; TODO "checkout" BRANCH
-  (let* ((provided (elx-provided source))
-         (required (elx-required-packages source provided t)))
-    (elx-with-mainfile source mainfile
+(defun elx-package-metadata (name repo rev &optional branch)
+  (let ((features (elx-package-features name repo rev)))
+    (elx-with-mainfile (cons repo rev) nil
       (let ((wikipage (elx-wikipage mainfile name nil t)))
 	(list :summary (elx-summary nil t)
 	      :created (elx-created mainfile)
 	      :updated (elx-updated mainfile)
 	      :license (elx-license)
-	      :authors (elx-authors nil sanitize)
-	      :maintainer (elx-maintainer nil sanitize)
-	      :adapted-by (elx-adapted-by nil sanitize)
-	      :provided provided
-	      :required required
-	      :keywords (elx-keywords mainfile sanitize)
+	      :authors (elx-authors nil t)
+	      :maintainer (elx-maintainer nil t)
+	      :adapted-by (elx-adapted-by nil t)
+	      :provided (car features)
+	      :required (cdr features)
+	      :keywords (elx-keywords mainfile t)
 	      :homepage (or (elx-homepage mainfile)
-			    (when (consp source)
-			      (or (cadr (lgit (car source) 1
-					      "config branch.%s.elm-webpage"
-					      branch))
-				  (when (equal branch "emacswiki")
-				    wikipage))))
+			    (cadr (lgit repo 1 "config branch.%s.elm-webpage"
+					(or branch rev)))
+			    (when (equal (or branch rev) "emacswiki")
+			      wikipage))
 	      :wikipage wikipage
 	      :commentary (elx-commentary mainfile))))))
 

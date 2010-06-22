@@ -1064,7 +1064,7 @@ Emacs lisp files and matching files are omitted from the return value."
 		      (lgit (car source) "ls-tree -r --name-only %s"
 			    (cdr source))))
       (dolist (file (directory-files source t))
-	(cond ((string-match "^\.\\{1,2\\}$" file))
+	(cond ((string-match "\\.\\{1,2\\}$" file))
 	      ((progn (string-match "\\([^/]+\\)/?$" file)
 		      (member* (match-string 1 file)
 			       (if (eq drop t)
@@ -1073,10 +1073,7 @@ Emacs lisp files and matching files are omitted from the return value."
 			       :test (lambda (item regexp)
 				       (string-match regexp item)))))
 	      ((file-directory-p file)
-	       (setq files (nconc (mapcar (lambda (elt)
-					    (concat file elt))
-					  (elx-elisp-files file t drop))
-				  files)))
+	       (setq files (nconc (elx-elisp-files file t drop) files)))
 	      ((string-match "\\.el$" file)
 	       (setq files (cons file files))))))
     (if full

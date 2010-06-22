@@ -1032,7 +1032,7 @@ This function finds required features using `elx-required-regexp'."
       (when hard
 	(list hard)))))
 
-;;; Extract Package Metadata.
+;;; Extract Package Files.
 
 (defvar elx-elisp-ignored-names '("^\\."))
 
@@ -1162,6 +1162,63 @@ an existing revision in that repository."
      (if (consp source)
 	 (lgit-with-file (car source) (cdr source) mainfile ,@body)
        (elx-with-file mainfile ,@body))))
+
+;;; Check and aggregate extracted information.
+
+(defun elx--git-get (repo variable)
+  (mapcan #'split-string (cdr (lgit repo 1 "config --get-all %s" variable))))
+
+(defun elx-package-features (name repo rev &optional only-features)
+  (let (required required-hard required-soft
+	provided provided-repo bundled
+	(exclude (mapcar #'intern (elx--git-get repo "elm.exclude")))
+	(exclude-path (elx--git-get repo "elm.exclude-path")))
+    ;; Collect features.
+    (dolist (file (elx-elisp-files (cons repo rev)))
+      (lgit-with-file repo rev file
+	(setq provided (elx--buffer-provided)
+	      required (elx--buffer-required)))
+      (dolist (prov provided)
+	(cond ((or (member  prov exclude)
+		   (member* file exclude-path
+			    :test (lambda (file path)
+				    (string-match path file))))
+	       (push prov bundled))
+	      (t
+	       (when prov
+		 (push prov provided-repo))
+	       (setq required-hard
+		     (nconc (copy-list (nth 0 required)) required-hard))
+	       (setq required-soft
+		     (nconc (copy-list (nth 1 required)) required-soft))))))
+    ;; Add provides to `elx-features-provided', check for conflicts.
+    (dolist (prov provided-repo)
+      (let ((elt (assoc prov elx-features-provided)))
+	(if elt
+	    (unless (equal (cdr elt) name)
+	      (elm-log "Feature %s provided by %s and %s"
+		       prov (cdr elt) name))
+	  (aput 'elx-features-provided prov name))))
+    ;; Cleanup features.  (sort, remove dups, remove xemacs specific deps)
+    (setq provided-repo (elx--sanitize-provided   provided-repo t))
+    (setq required-hard (elx--sanitize-required-1 required-hard
+						  provided-repo t))
+    (setq required-soft (elx--sanitize-required-1 required-soft
+						  (append provided-repo
+							  required-hard) t))
+    ;; Get packages providing dependecies.
+    (unless only-features
+      (setq required-hard (elx--lookup-required required-hard))
+      (setq required-soft (elx--lookup-required required-soft))
+      ;; Report missing
+      (dolist (dep (cdr (assoc nil required-hard)))
+	(unless (memq dep bundled)
+	  (message "%s: hard required %s not available" name dep)))
+      (dolist (dep (cdr (assoc nil required-soft)))
+	(unless (memq dep bundled)
+	  (message "%s: soft required %s not available" name dep))))
+    ;; Return features.
+    (list provided-repo required-hard required-soft)))
 
 (defun elx-package-metadata (source &optional mainfile name sanitize branch)
   "Extract and return the metadata of an Emacs Lisp package.

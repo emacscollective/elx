@@ -771,8 +771,7 @@ This excludes all features also provided by GNU Emacs.")
 
 (defvar elx-features-bundled nil)
 
-(defvar elx-features-compat nil
-  "List of features which are provided only for backward compatibilty.")
+(defvar elx-features-drop-deps nil)
 
 (defcustom elx-xemacs-elisp "/unknown/"
   "Directory contain XEmacs' lisp files."
@@ -810,8 +809,7 @@ This excludes all features also provided by GNU Emacs.")
     (dolist (feature provided)
       (unless (or (member feature sanitized)
 		  (when drop
-		    (or (member feature elx-features-xemacs)
-			(member feature elx-features-compat))))
+		    (member feature elx-features-xemacs)))
 	(push feature sanitized)))
     (sort sanitized #'string<)))
 
@@ -875,7 +873,7 @@ This function finds provided features using `elx-provided-regexp'."
 		  (member feature provided)
 		  (when drop
 		    (or (member feature elx-features-xemacs)
-			(member feature elx-features-compat))))
+			(member feature elx-features-drop-deps))))
 	(push feature sanitized)))
     (sort sanitized #'string<)))
 

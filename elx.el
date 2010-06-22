@@ -879,7 +879,7 @@ This function finds provided features using `elx-provided-regexp'."
 
 (defun elx--sanitize-required (required &optional provided drop)
   (let ((hard (elx--sanitize-required-1 (nth 0 required) provided drop))
-	(soft (elx--sanitize-required-1 (nth 0 required) provided drop)))
+	(soft (elx--sanitize-required-1 (nth 1 required) provided drop)))
     (if soft
 	(list hard soft)
       (when hard

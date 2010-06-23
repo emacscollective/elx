@@ -1117,15 +1117,9 @@ actually exists."
 			(concat name "-mode"))))
 	      ((consp source)
 	       (let ((files (elx-elisp-files source))
-		     (mains (cdr (lgit (car source) 1
-				       "config --get-all elm.mainfile")))
-		     main)
-		 (if (and mains (not (string-match "\\.el$" (car mains))))
-		     (car mains)
-		   (while mains
-		     (setq main (car (member (pop mains) files)))
-		     (when main
-		       (setq mains nil)))
+		     (main (cadr (lgit (car source) 1
+				       "config elm.mainfile"))))
+		 (when (and main (member main files))
 		   main))))))))
 
 (defmacro elx-with-mainfile (source mainfile &rest body)

@@ -4,7 +4,7 @@
 
 ;; Author: Jonas Bernoulli <jonas@bernoul.li>
 ;; Created: 20081202
-;; Updated: 20100622
+;; Updated: 20100623
 ;; Version: 0.4.9+
 ;; Homepage: https://github.com/tarsius/elx
 ;; Keywords: docs, libraries, packages
@@ -450,7 +450,7 @@ If no matching entry exists return nil."
 	       (string-match "[\"<]\\([-0-9]+\\)[\s\t].+[\">]" value))
       (match-string 1 value))))
 
-(defun elx-updated (file)
+(defun elx-updated (&optional file)
   (elx-with-file file
     (or (dconv-convert-date (elx-header "\\(last-\\)?updated"))
 	(dconv-convert-date (elx-header "modified"))

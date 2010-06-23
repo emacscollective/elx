@@ -1226,7 +1226,10 @@ an existing revision in that repository."
 	      :maintainer (elx-maintainer nil t)
 	      :adapted-by (elx-adapted-by nil t)
 	      :provided (car features)
-	      :required (cdr features)
+	      :required (unless (equal (cdr features) '(nil nil))
+			  (if (equal (cddr features) '(nil))
+			      (list (cadr features))
+			    (cdr features)))
 	      :keywords (elx-keywords mainfile t)
 	      :homepage (or (elx-homepage mainfile)
 			    (cadr (lgit repo 1 "config branch.%s.elm-webpage"

@@ -316,19 +316,19 @@ occur."
       ("Apache-2.0" . ,(replace-regexp-in-string " " r
 			"Apache License, Version 2.0"))
       ("GPL"        . ,(replace-regexp-in-string " " r (concat
-		        "Everyone is granted permission to copy, modify and redistribute "
-                        ".*, but only under the conditions described in the "
-                        "GNU Emacs General Public License.")))
+			"Everyone is granted permission to copy, modify and redistribute "
+			".*, but only under the conditions described in the "
+			"GNU Emacs General Public License.")))
       ("GPL"        . ,(concat l "GPL'ed as under the GNU license"))
       ("GPL"        . ,(concat l "GPL'ed under GNU's public license"))
       ("GPL-2"      . ,(concat l ".* GPL v2 applies."))
       ("GPL-2"      . ,(concat l "The same license/disclaimer for "
-			         "XEmacs also applies to this package."))
+				 "XEmacs also applies to this package."))
       ("GPL-3"      . ,(concat l "Licensed under the same terms as Emacs."))
       ("MIT"        . ,(concat l ".* mit license"))
       ("as-is"      . ,(concat l ".* \\(provided\\|distributed\\) "
-			         "\\(by the author \\)?"
-			         "[\"`']\\{0,2\\}as[- ]is[\"`']\\{0,2\\}"))
+				 "\\(by the author \\)?"
+				 "[\"`']\\{0,2\\}as[- ]is[\"`']\\{0,2\\}"))
       ("public-domain" . ,(concat l ".*in\\(to\\)? the public[- ]domain"))
       ("public-domain" . "^;+ +Public domain.")))
   "List of regexp to common license string mappings.

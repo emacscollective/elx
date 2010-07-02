@@ -4,8 +4,8 @@
 
 ;; Author: Jonas Bernoulli <jonas@bernoul.li>
 ;; Created: 20081202
-;; Updated: 20100623
-;; Version: 0.5_pre1
+;; Updated: 20100703
+;; Version: 0.5_pre1+
 ;; Homepage: https://github.com/tarsius/elx
 ;; Keywords: docs, libraries, packages
 
@@ -287,7 +287,7 @@ occur."
 	  (when page
 	    (concat (when urlp "http://www.emacswiki.org/emacs/") page))))))
 
-(defun elx-homepage (file)
+(defun elx-homepage (&optional file)
   "Extract the homepage of the specified package."
   (elx-with-file file
     (elx-header "\\(?:x-\\)?\\(?:homepage\\|?url\\)")))

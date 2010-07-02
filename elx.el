@@ -244,8 +244,9 @@ http://www.emacswiki.org/emacs/Git_repository respectively."
   "Extract the page on the Emacswiki for the specified package.
 
 The page is extracted from the respective header of FILE which should be
-the package's mainfile.  If this fails the package's name is matched
-against a list of pages known to exist on the Emacswiki.
+the package's mainfile.  If this fails the package's NAME is matched
+against a list of pages known to exist on the Emacswiki.  While either
+FILE and NAME may be nil at least one has to be non-nil.
 
 This list can be specified explicitly using the optional PAGES argument
 which either has to be a list of filenames or a directory containing the

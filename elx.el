@@ -1220,8 +1220,8 @@ an existing revision in that repository."
     (elx-with-mainfile (cons repo rev) nil
       (let ((wikipage (elx-wikipage mainfile name nil t)))
 	(list :summary (elx-summary nil t)
-	      :created (elx-created mainfile)
-	      :updated (elx-updated mainfile)
+	      :created (elx-created)
+	      :updated (elx-updated)
 	      :license (elx-license)
 	      :authors (elx-authors nil t)
 	      :maintainer (elx-maintainer nil t)
@@ -1232,7 +1232,7 @@ an existing revision in that repository."
 			      (list (cadr features))
 			    (cdr features)))
 	      :keywords (elx-keywords mainfile t)
-	      :homepage (or (elx-homepage mainfile)
+	      :homepage (or (elx-homepage)
 			    (cadr (lgit repo 1 "config branch.%s.elm-webpage"
 					(or branch rev)))
 			    (when (equal (or branch rev) "emacswiki")

@@ -435,6 +435,7 @@ If no matching entry exists return nil."
   (elx-with-file file
     (let ((lm-copyright-prefix "^\\(;+[ \t]\\)+Copyright \\((C) \\)?"))
       (when (lm-copyright-mark)
+	;; FIXME \/ seams to have problems with ranges like 2009-2010
 	(cadr (lm-crack-copyright))))))
 
 (defun elx-date--last-copyright (&optional file)
@@ -1084,7 +1085,7 @@ Emacs lisp files and matching files are omitted from the return value."
 	       (setq files (nconc (elx-elisp-files file t drop) files)))
 	      ((string-match "\\.el$" file)
 	       (setq files (cons file files))))))
-    (if full
+    (if full ; FIXME when git is used we have to make it full here
 	files
       (let ((default-directory (if (listp source) (car source) source)))
 	(mapcar 'file-relative-name files)))))

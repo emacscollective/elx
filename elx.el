@@ -578,7 +578,8 @@ and complain to the respective author."
     (let ((version (or (elx-header "version")
 		       (elx-version--no-colon)))
 	  (update (elx-header "update\\( #\\)?")))
-      (setq version (elx-version-sanitize version))
+      (when version
+	(setq version (elx-version-sanitize version)))
       (when update
 	(setq version (concat (or version "0") "." update)))
       (elx-version--do-verify (if (and version standardize)

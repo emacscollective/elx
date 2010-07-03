@@ -4,7 +4,7 @@
 
 ;; Author: Jonas Bernoulli <jonas@bernoul.li>
 ;; Created: 20081202
-;; Updated: 20100703
+;; Updated: 20100704
 ;; Version: 0.5_pre1+
 ;; Homepage: https://github.com/tarsius/elx
 ;; Keywords: docs, libraries, packages
@@ -1205,7 +1205,9 @@ an existing revision in that repository."
 	(if elt
 	    (unless (equal (cdr elt) name)
 	      (elm-log "Feature %s provided by %s and %s"
-		       prov (cdr elt) name))
+		       prov (cdr elt) name)
+	      (when (eq (intern name) prov)
+		(aput 'elx-features-provided prov name)))
 	  (aput 'elx-features-provided prov name))))
     ;; Cleanup features.  (sort, remove dups, remove xemacs specific deps)
     (setq provided-repo (elx--sanitize-provided   provided-repo t))

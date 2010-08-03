@@ -4,8 +4,8 @@
 
 ;; Author: Jonas Bernoulli <jonas@bernoul.li>
 ;; Created: 20081202
-;; Updated: 20100707
-;; Version: 0.5_pre2
+;; Updated: 20100803
+;; Version: 0.5_pre2+
 ;; Homepage: https://github.com/tarsius/elx
 ;; Keywords: docs, libraries, packages
 
@@ -1131,10 +1131,13 @@ actually exists."
 			(concat name "-mode"))))
 	      ((consp source)
 	       (let ((files (elx-elisp-files source))
-		     (main (cadr (lgit (car source) 1
-				       "config elm.mainfile"))))
-		 (when (and main (member main files))
-		   main))))))))
+		     (mains (cdr (lgit (car source) 1
+				       "config elm.mainfile")))
+		     main)
+		 (while mains
+		   (when (member (car mains) files)
+		     (setq main (car mains) mains nil)))
+		 main)))))))
 
 (defmacro elx-with-mainfile (source mainfile &rest body)
   "Execute BODY in a buffer containing the contents of SOURCE's mainfile.

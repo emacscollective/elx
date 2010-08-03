@@ -1095,8 +1095,7 @@ Emacs lisp files and matching files are omitted from the return value."
   "Return the mainfile of the package inside SOURCE.
 
 SOURCE has to be a directory containing all libraries belonging to some
-package.  If optional FULL is non-nil return an absolute path, otherwise
-return the path relative to SOURCE.
+package.
 
 If library `lgit' is loaded SOURCE can also be a cons cell whose car is
 the path to a git repository (which may be bare) and whose cdr has to be
@@ -1106,12 +1105,15 @@ If the package has only one file ending in \".el\" return that file
 unconditionally.  Otherwise return the file which provides the feature
 matching the basename of SOURCE, or if no such file exists the file
 that provides the feature matching the basename of SOURCE with \"-mode\"
-added to or removed from the end, whatever makes sense.
+added to or removed from the end, whatever makes sense.  Case is ignored.
 
 If SOURCE is a cons cell and the mainfile can not be determined as
 described above the value of the git variable \"elm.mainfile\" is used.
 If this variable is defined multiple times use the first file that
-actually exists."
+actually exists.
+
+If optional FULL is non-nil return an absolute path, otherwise return the
+path relative to SOURCE."
   (let ((files (elx-elisp-files source full))
 	(name (regexp-quote
 	       (file-name-nondirectory

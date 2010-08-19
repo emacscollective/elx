@@ -1000,7 +1000,7 @@ This function finds required features using `elx-required-regexp'."
 	    (t
 	     (mapc (lambda (elt)
 		     (split (elx-required elt provided)))
-		   (elx-elisp-files source t)))))
+		   source))))
     (elx--sanitize-required (list hard soft) provided drop)))
 
 (defun elx-required-packages (source &optional provided drop)

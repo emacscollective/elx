@@ -4,7 +4,7 @@
 
 ;; Author: Jonas Bernoulli <jonas@bernoul.li>
 ;; Created: 20081202
-;; Updated: 20100803
+;; Updated: 20100819
 ;; Version: 0.5_pre2+
 ;; Homepage: https://github.com/tarsius/elx
 ;; Keywords: docs, libraries, packages
@@ -1065,31 +1065,35 @@ DROP, if non-nil, can either be a list of regular expressions or t in
 which case the regular expressions listed in `elx-elisp-ignored-names' are
 used.  These regular expressions are matched against the basename of all
 Emacs lisp files and matching files are omitted from the return value."
+  (if (atom source)
+      (elx-elisp-files-1 source full drop)
+    (elx-elisp-files-git (car source) (cdr source) drop)))
+
+(defun elx-elisp-files-1 (source &optional full drop)
   (let (files)
-    (if (consp source)
-	(setq files
-	      (mapcan (lambda (elt)
-			(when (string-match ".+?\\.el\\(\\.in\\)?$" elt)
-			  (list elt)))
-		      (lgit (car source) "ls-tree -r --name-only %s"
-			    (cdr source))))
-      (dolist (file (directory-files source t))
-	(cond ((string-match "\\.\\{1,2\\}$" file))
-	      ((progn (string-match "\\([^/]+\\)/?$" file)
-		      (member* (match-string 1 file)
-			       (if (eq drop t)
-				   elx-elisp-ignored-names
-				 drop)
-			       :test (lambda (item regexp)
-				       (string-match regexp item)))))
-	      ((file-directory-p file)
-	       (setq files (nconc (elx-elisp-files file t drop) files)))
-	      ((string-match "\\.el$" file)
-	       (setq files (cons file files))))))
-    (if full ; FIXME when git is used we have to make it full here
+    (dolist (file (directory-files source t))
+      (cond ((string-match "\\.\\{1,2\\}$" file))
+	    ((progn (string-match "\\([^/]+\\)/?$" file)
+		    (member* (match-string 1 file)
+			     (if (eq drop t)
+				 elx-elisp-ignored-names
+			       drop)
+			     :test (lambda (item regexp)
+				     (string-match regexp item)))))
+	    ((file-directory-p file)
+	     (setq files (nconc (elx-elisp-files-1 file t drop) files)))
+	    ((string-match "\\.el$" file)
+	     (setq files (cons file files)))))
+    (if full
 	files
-      (let ((default-directory (if (listp source) (car source) source)))
+      (let ((default-directory source))
 	(mapcar 'file-relative-name files)))))
+
+(defun elx-elisp-files-git (repo rev &optional drop)
+  (mapcan (lambda (elt)
+	    (when (string-match ".+?\\.el\\(\\.in\\)?$" elt)
+	      (list elt)))
+	  (lgit repo "ls-tree -r --name-only %s" rev)))
 
 (defun elx-package-mainfile (source &optional full)
   "Return the mainfile of the package inside SOURCE.
@@ -1187,7 +1191,7 @@ an existing revision in that repository."
 	(exclude (mapcar #'intern (elx--git-get repo "elm.exclude")))
 	(exclude-path (elx--git-get repo "elm.exclude-path")))
     ;; Collect features.
-    (dolist (file (elx-elisp-files (cons repo rev)))
+    (dolist (file (elx-elisp-files-git repo rev))
       (lgit-with-file repo rev file
 	(setq provided (elx--buffer-provided)
 	      required (elx--buffer-required)))

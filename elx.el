@@ -4,7 +4,7 @@
 
 ;; Author: Jonas Bernoulli <jonas@bernoul.li>
 ;; Created: 20081202
-;; Updated: 20100819
+;; Updated: 20100820
 ;; Version: 0.5_pre2+
 ;; Homepage: https://github.com/tarsius/elx
 ;; Keywords: docs, libraries, packages
@@ -897,8 +897,12 @@ This function finds provided features using `elx-provided-regexp'."
     (sort sanitized #'string<)))
 
 (defun elx--sanitize-required (required &optional provided drop)
-  (let ((hard (elx--sanitize-required-1 (nth 0 required) provided drop))
-	(soft (elx--sanitize-required-1 (nth 1 required) provided drop)))
+  (let (hard soft)
+    (dolist (requ required)
+      (setq hard (append (nth 0 requ) hard)
+	    soft (append (nth 1 requ) soft)))
+    (setq hard (elx--sanitize-required-1 hard provided drop))
+    (setq soft (elx--sanitize-required-1 soft provided drop))
     (if soft
 	(list hard soft)
       (when hard
@@ -954,7 +958,7 @@ The returned value has the form: ((PACKAGE FEATURE...)...)."
 		  ((not (member feature required-hard))
 		   (setq required-soft (remove feature required-soft))
 		   (push feature required-hard))))))
-      (elx--sanitize-required (list required-hard required-soft)))))
+      (elx--sanitize-required (list (list required-hard required-soft))))))
 
 (defun elx-required (source &optional provided drop)
   "Return the features required by SOURCE.
@@ -985,40 +989,28 @@ of features are not included in the return value.
 
 This function finds required features using `elx-required-regexp'."
   (if (or (atom source) (listp (cdr source)))
-      (elx-required-1 source provided drop)
+      (elx--sanitize-required
+       (elx-required-1 source) (or provided (elx-provided source) drop))
     (elx-required-git (car source) (cdr source) provided drop)))
 
-(defun elx-required-1 (source &optional provided drop)
-  (unless provided
-    (setq provided (elx-provided source)))
-  (let (hard soft)
-    (flet ((split (required)
-		  (setq hard (nconc (nth 0 required) hard)
-			soft (nconc (nth 1 required) soft))))
-      (cond ((listp source)
-	     (mapc (lambda (elt)
-		     (split (elx-required elt provided)))
-		   source))
-	    ((file-symlink-p source))
-	    ((file-regular-p source)
-	     (elx-with-file source
-	       (split (elx--buffer-required))))
-	    (t
-	     (mapc (lambda (elt)
-		     (split (elx-required elt provided)))
-		   (elx-elisp-files source t)))))
-    (elx--sanitize-required (list hard soft) provided drop)))
+(defun elx-required-1 (source)
+  (cond ((listp source)
+	 (mapcar #'elx-required-1 source))
+	((file-symlink-p source)
+	 nil)
+	((file-regular-p source)
+	 (elx-with-file source
+	   (elx--buffer-required)))
+	(t
+	 (mapcar #'elx-required-1 (elx-elisp-files source t)))))
 
 (defun elx-required-git (repo rev &optional provided drop)
-  (let (hard soft)
-    (flet ((split (required)
-		  (setq hard (nconc (nth 0 required) hard)
-			soft (nconc (nth 1 required) soft))))
-      (mapc (lambda (elt)
-	      (lgit-with-file repo rev elt
-		(split (elx--buffer-required))))
-	    (elx-elisp-files-git repo rev)))
-    (elx--sanitize-required (list hard soft) provided drop)))
+  (elx--sanitize-required
+   (mapcar (lambda (file)
+	     (lgit-with-file repo rev file
+	       (elx--buffer-required)))
+	   (elx-elisp-files-git repo rev))
+   provided drop))
 
 (defun elx-required-packages (source &optional provided drop)
   "Return the packages required by SOURCE.

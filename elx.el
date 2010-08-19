@@ -1089,11 +1089,22 @@ Emacs lisp files and matching files are omitted from the return value."
       (let ((default-directory source))
 	(mapcar 'file-relative-name files)))))
 
-(defun elx-elisp-files-git (repo rev &optional drop)
-  (mapcan (lambda (elt)
-	    (when (string-match ".+?\\.el\\(\\.in\\)?$" elt)
-	      (list elt)))
-	  (lgit repo "ls-tree -r --name-only %s" rev)))
+(defun elx-elisp-files-git (repo rev &optional drop-p)
+  (mapcan
+   (lambda (file)
+     (when (and (string-match ".+?\\.el\\(\\.in\\)?$" file)
+		(when drop-p
+		  (let (drop part (parts (split-string file "/" t)))
+		    (while parts
+		      (string-match "\\([^/]+\\)/?$" (car parts))
+		      (when (string-match (if (eq drop-p t)
+					      elx-elisp-files-exclude
+					    drop-p)
+					  (match-string 1 (pop parts)))
+			(setq drop t parts nil)))
+		    (not drop))))
+       (list file)))
+   (lgit repo "ls-tree -r --name-only %s" rev)))
 
 (defun elx-package-mainfile (source &optional full)
   "Return the mainfile of the package inside SOURCE.

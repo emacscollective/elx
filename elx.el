@@ -855,21 +855,28 @@ the path to a git repository (which may be bare) and whose cdr has to be
 an existing revision in that repository.
 
 This function finds provided features using `elx-provided-regexp'."
+  (if (or (atom source) (listp (cdr source)))
+      (elx--sanitize-provided
+       (elx-provided-1 source) drop)
+    (elx-provided-git (car source) (cdr source) drop)))
+
+(defun elx-provided-1 (source)
+  (cond ((listp source)
+	 (mapcan #'elx-provided source))
+	((file-symlink-p source)
+	 nil)
+	((file-regular-p source)
+	 (elx-with-file source
+	   (elx--buffer-provided)))
+	(t
+	 (mapcan #'elx-provided-1 (elx-elisp-files source)))))
+
+(defun elx-provided-git (repo rev &optional drop)
   (elx--sanitize-provided
-   (cond ((atom source)
-	  (cond ((file-symlink-p source))
-		((file-directory-p source)
-		 (mapcan #'elx-provided (elx-elisp-files source t)))
-		(t
-		 (elx-with-file source
-		   (elx--buffer-provided)))))
-	 ((atom (cdr source))
-	  (mapcan (lambda (elt)
-		    (lgit-with-file (car source) (cdr source) elt
-		      (elx--buffer-provided)))
-		  (elx-elisp-files source)))
-	 (t
-	  (mapcan #'elx-provided source)))
+   (mapcan (lambda (file)
+	     (lgit-with-file repo rev file
+	       (elx--buffer-provided)))
+	   (elx-elisp-files-git repo rev))
    drop))
 
 (defconst elx-required-regexp "\
@@ -977,30 +984,40 @@ only argument and use the returned list of features.  Members of this list
 of features are not included in the return value.
 
 This function finds required features using `elx-required-regexp'."
+  (if (or (atom source) (listp (cdr source)))
+      (elx-required-1 source provided drop)
+    (elx-required-git (car source) (cdr source) provided drop)))
+
+(defun elx-required-1 (source &optional provided drop)
   (unless provided
     (setq provided (elx-provided source)))
   (let (hard soft)
     (flet ((split (required)
 		  (setq hard (nconc (nth 0 required) hard)
 			soft (nconc (nth 1 required) soft))))
-      (cond ((atom source)
-	     (cond ((file-symlink-p source))
-		   ((file-directory-p source)
-		    (mapc (lambda (elt)
-			    (split (elx-required elt provided)))
-			  (elx-elisp-files source t)))
-		   (t
-		    (elx-with-file source
-		      (split (elx--buffer-required))))))
-	    ((atom (cdr source))
+      (cond ((listp source)
 	     (mapc (lambda (elt)
-		     (lgit-with-file (car source) (cdr source) elt
-		       (split (elx--buffer-required))))
-		   (elx-elisp-files source)))
+		     (split (elx-required elt provided)))
+		   source))
+	    ((file-symlink-p source))
+	    ((file-regular-p source)
+	     (elx-with-file source
+	       (split (elx--buffer-required))))
 	    (t
 	     (mapc (lambda (elt)
 		     (split (elx-required elt provided)))
-		   source))))
+		   (elx-elisp-files source t)))))
+    (elx--sanitize-required (list hard soft) provided drop)))
+
+(defun elx-required-git (repo rev &optional provided drop)
+  (let (hard soft)
+    (flet ((split (required)
+		  (setq hard (nconc (nth 0 required) hard)
+			soft (nconc (nth 1 required) soft))))
+      (mapc (lambda (elt)
+	      (lgit-with-file repo rev elt
+		(split (elx--buffer-required))))
+	    (elx-elisp-files-git repo rev)))
     (elx--sanitize-required (list hard soft) provided drop)))
 
 (defun elx-required-packages (source &optional provided drop)

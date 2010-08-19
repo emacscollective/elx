@@ -1175,19 +1175,17 @@ an existing revision in that repository."
 	 (mainfile ,mainfile))
      (unless mainfile
        (setq mainfile
-	     (if (file-directory-p (if (consp source)
-				       (car source)
-				     source))
-		 (elx-package-mainfile source t)
-	       source)))
-     (if mainfile
-	 (unless (or (consp source)
-		     (file-name-absolute-p mainfile))
-	   (setq mainfile (concat source mainfile)))
+	     (if (and (atom source) (file-regular-p source))
+		 source
+	       (elx-package-mainfile source t))))
+     (unless mainfile
        (error "The mainfile can not be determined"))
      (if (consp source)
 	 (lgit-with-file (car source) (cdr source) mainfile ,@body)
-       (elx-with-file mainfile ,@body))))
+       (elx-with-file (if (file-name-absolute-p mainfile)
+			  mainfile
+			(concat source mainfile))
+	 ,@body))))
 
 ;;; Check and aggregate extracted information.
 

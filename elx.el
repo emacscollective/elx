@@ -1189,9 +1189,6 @@ an existing revision in that repository."
 
 ;;; Check and aggregate extracted information.
 
-(defun elx--git-get (repo variable)
-  (mapcan #'split-string (cdr (lgit repo 1 "config --get-all %s" variable))))
-
 (defun elx-package-features (name repo rev &optional dependencies associate)
   "Process features of the package named NAME.
 
@@ -1232,16 +1229,17 @@ Also see the source comments of this function for more information."
 	;; `load-path' works for all packages that depend on it.
 	;;
 	;; Features are excluded by setting the git variables "elm.exclude"
-	;; and "elm.exclude-path" in the packages repository.
-	(exclude (mapcar #'intern (elx--git-get repo "elm.exclude")))
-	(exclude-path (elx--git-get repo "elm.exclude-path")))
+	;; (can be specified multiple times, matching features are excluded)
+	;; and "elm.exclude-path" (files whose path match are excluded) in
+	;; the packages repository.
+	(exclude (mapcar #'intern (cdr (lgit repo 1 "config --get-all %s"
+					     "elm.exclude"))))
+	(exclude-path (cadr (lgit repo 1 "config elm.exclude-path"))))
     (dolist (file (elx-elisp-files-git repo rev))
       (dolist (prov (lgit-with-file repo rev file
 		      (elx--buffer-provided)))
-	(if (or (member  prov exclude)
-		(member* file exclude-path
-			 :test (lambda (file path)
-				 (string-match path file))))
+	(if (or (member prov exclude)
+		(and exclude-path (string-match exclude-path file)))
 	    (push prov bundled)
 	  (when prov
 	    (push prov provided))

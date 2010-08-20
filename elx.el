@@ -1059,55 +1059,50 @@ This function finds required features using `elx-required-regexp'."
 
 (defvar elx-elisp-files-exclude "^\\.")
 
-(defun elx-elisp-files (source &optional drop)
+(defun elx-elisp-files (source &optional select)
   "Return a list of Emacs lisp files inside directory SOURCE.
 
-The returned list consists of paths relative to directory SOURCE for
-files whose basename matches \"\\\\.el\\\\(\\\\.in\\\\)$\", but might exclude
-some files depending on the value of optional DROP.
+The returned list consists of paths relative to directory SOURCE for files
+whose basename matches \"\\\\.el\\\\(\\\\.in\\\\)$\", but excludes files which
+have a part of their path which matches the regular expression stored in
+`elx-elisp-files-exclude'.
 
-DROP, if non-nil, should be a regular expression.  All files whose
-basename matches the regular expression or are stored inside a directory
-whose basename matches are excluded from the returned list.  DROP can
-also be t in which case the value of variable `elx-elisp-files-exclude'
-is used.
+If optional SELECT is a string use that instead of the default regular
+expression.  Any other non-nil value means do not exclude any files.
 
 If library `lgit' is loaded SOURCE can also be a cons cell whose car is
 the path to a git repository (which may be bare) and whose cdr has to be
 an existing revision in that repository."
   (if (atom source)
-      (elx-elisp-files-1 source drop)
-    (elx-elisp-files-git (car source) (cdr source) drop)))
+      (elx-elisp-files-1 source select)
+    (elx-elisp-files-git (car source) (cdr source) select)))
 
-(defun elx-elisp-files-1 (source &optional drop)
+(defun elx-elisp-files-1 (source &optional select)
   (mapcan (lambda (file)
 	    (cond ((or (string-match "\\.\\{1,2\\}$" file)
-		       (when drop
+		       (when (or (not select) (stringp select))
 			 (string-match "\\([^/]+\\)/?$" file)
-			 (string-match (if (eq drop t)
-					   elx-elisp-files-exclude
-					 drop)
+			 (string-match (or select elx-elisp-files-exclude)
 				       (match-string 1 file))))
 		   nil)
 		  ((file-directory-p file)
 		   (mapcar (lambda (child)
 			     (concat file child))
-			   (elx-elisp-files-1 file drop)))
+			   (elx-elisp-files-1 file select)))
 		  ((string-match "\\.el$" file)
 		   (list file))))
 	  (directory-files source t)))
 
-(defun elx-elisp-files-git (repo rev &optional drop-p)
+(defun elx-elisp-files-git (repo rev &optional select)
   (mapcan
    (lambda (file)
      (when (and (string-match ".+?\\.el\\(\\.in\\)?$" file)
-		(when drop-p
+		(when (or (not select) (stringp select))
 		  (let (drop part (parts (split-string file "/" t)))
 		    (while parts
 		      (string-match "\\([^/]+\\)/?$" (car parts))
-		      (when (string-match (if (eq drop-p t)
-					      elx-elisp-files-exclude
-					    drop-p)
+		      (when (string-match (or select
+					      elx-elisp-files-exclude)
 					  (match-string 1 (pop parts)))
 			(setq drop t parts nil)))
 		    (not drop))))

@@ -869,7 +869,8 @@ This function finds provided features using `elx-provided-regexp'."
 	 (elx-with-file source
 	   (elx--buffer-provided)))
 	(t
-	 (mapcan #'elx-provided-1 (elx-elisp-files source)))))
+	 (let ((default-directory source))
+	   (mapcan #'elx-provided-1 (elx-elisp-files source))))))
 
 (defun elx-provided-git (repo rev &optional drop)
   (elx--sanitize-provided
@@ -1002,7 +1003,8 @@ This function finds required features using `elx-required-regexp'."
 	 (elx-with-file source
 	   (elx--buffer-required)))
 	(t
-	 (mapcar #'elx-required-1 (elx-elisp-files source t)))))
+	 (let ((default-directory source))
+	   (mapcar #'elx-required-1 (elx-elisp-files source t))))))
 
 (defun elx-required-git (repo rev &optional provided drop)
   (elx--sanitize-required
@@ -1064,8 +1066,6 @@ The returned list consists of paths relative to directory SOURCE for
 files whose basename matches \"\\\\.el\\\\(\\\\.in\\\\)$\", but might exclude
 some files depending on the value of optional DROP.
 
-If optional FULL is non-nil return full paths.
-
 DROP, if non-nil, should be a regular expression.  All files whose
 basename matches the regular expression or are stored inside a directory
 whose basename matches are excluded from the returned list.  DROP can
@@ -1076,27 +1076,26 @@ If library `lgit' is loaded SOURCE can also be a cons cell whose car is
 the path to a git repository (which may be bare) and whose cdr has to be
 an existing revision in that repository."
   (if (atom source)
-      (elx-elisp-files-1 source full drop)
+      (elx-elisp-files-1 source drop)
     (elx-elisp-files-git (car source) (cdr source) drop)))
 
-(defun elx-elisp-files-1 (source &optional full drop)
-  (let (files)
-    (dolist (file (directory-files source t))
-      (cond ((or (string-match "\\.\\{1,2\\}$" file)
-		 (when drop
-		   (string-match "\\([^/]+\\)/?$" file)
-		   (string-match (if (eq drop t)
-				     elx-elisp-files-exclude
-				   drop)
-				 (match-string 1 file)))))
-	    ((file-directory-p file)
-	     (setq files (nconc (elx-elisp-files-1 file t drop) files)))
-	    ((string-match "\\.el$" file)
-	     (setq files (cons file files)))))
-    (if full
-	files
-      (let ((default-directory source))
-	(mapcar 'file-relative-name files)))))
+(defun elx-elisp-files-1 (source &optional drop)
+  (mapcan (lambda (file)
+	    (cond ((or (string-match "\\.\\{1,2\\}$" file)
+		       (when drop
+			 (string-match "\\([^/]+\\)/?$" file)
+			 (string-match (if (eq drop t)
+					   elx-elisp-files-exclude
+					 drop)
+				       (match-string 1 file))))
+		   nil)
+		  ((file-directory-p file)
+		   (mapcar (lambda (child)
+			     (concat file child))
+			   (elx-elisp-files-1 file drop)))
+		  ((string-match "\\.el$" file)
+		   (list file))))
+	  (directory-files source t)))
 
 (defun elx-elisp-files-git (repo rev &optional drop-p)
   (mapcan

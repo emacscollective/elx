@@ -886,11 +886,11 @@ This function finds provided features using `elx-provided-regexp'."
 \\(?:\\(?:[\s\t\n]+\\(?:nil\\|\".*\"\\)\\)\
 \\(?:[\s\t\n]+\\(?:nil\\|\\(t\\)\\)\\)?\\)?)")
 
-(defun elx--sanitize-required-1 (required &optional provided drop)
+(defun elx--sanitize-required-1 (required &optional exclude drop)
   (let (sanitized)
     (dolist (feature required)
       (unless (or (member feature sanitized)
-		  (member feature provided)
+		  (member feature exclude)
 		  (when drop
 		    (or (member feature elx-features-xemacs)
 			(member feature elx-features-drop-deps))))
@@ -902,8 +902,8 @@ This function finds provided features using `elx-provided-regexp'."
     (dolist (requ required)
       (setq hard (append (nth 0 requ) hard)
 	    soft (append (nth 1 requ) soft)))
-    (setq hard (elx--sanitize-required-1 hard provided drop))
-    (setq soft (elx--sanitize-required-1 soft provided drop))
+    (setq hard (elx--sanitize-required-1 hard provided drop)
+	  soft (elx--sanitize-required-1 soft (append provided hard) drop))
     (if soft
 	(list hard soft)
       (when hard

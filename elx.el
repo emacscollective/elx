@@ -1189,8 +1189,6 @@ an existing revision in that repository."
 
 ;;; Check and aggregate extracted information.
 
-;; TODO document these functions
-
 (defun elx--git-get (repo variable)
   (mapcan #'split-string (cdr (lgit repo 1 "config --get-all %s" variable))))
 
@@ -1321,6 +1319,14 @@ Also see the source comments of this function for more information."
 	(list provided hard soft)))))
 
 (defun elx-package-metadata (name repo rev &optional branch)
+  "Return the metadata of the specified revision of the package named NAME.
+
+REPO is the path to the git repository containing the package; it may be
+bare.  REV has to be an existing revision in that repository.
+
+If optional BRANCH is specified it should be the vendor branch containing
+REV.  It is only used to get the vendor homepage from the git config if
+necessary."
   (let ((features (elx-package-features name repo rev t)))
     (elx-with-mainfile (cons repo rev) nil
       (let ((wikipage (elx-wikipage mainfile name nil t)))

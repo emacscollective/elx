@@ -1194,55 +1194,134 @@ an existing revision in that repository."
 (defun elx--git-get (repo variable)
   (mapcan #'split-string (cdr (lgit repo 1 "config --get-all %s" variable))))
 
-(defun elx-package-features (name repo rev &optional only-features)
-  (let (required-repo required-hard required-soft provided-repo bundled
+(defun elx-package-features (name repo rev &optional dependencies associate)
+  "Process features of the package named NAME.
+
+REPO is the path to the git repository containing the package; it may be
+bare.  REV has to be an existing revision in that repository.
+
+If optional DEPENDENCIES is non-nil return a list of the form:
+
+  ((PROVIDED-FEATURE...)
+   ((PROVIDING-PACKAGE HARD-REQUIRED-FEATURE...)...)
+   ((PROVIDING-PACKAGE HARD-REQUIRED-FEATURE...)...))
+
+Otherwise return nil.
+
+If optional ASSOCIATE is non-nil associate the provided features with the
+package in the value of variable `elx-provided-features', if appropriate.
+
+Also see the source comments of this function for more information."
+  (let (required provided bundled
+	;; Sometimes features provided by a packages repository have to be
+	;; excluded from the list of features provided by the package.
+	;; This usually is the case when a package bundles libraries that
+	;; originate from another package.  Note that this is sometimes
+	;; done even for bundled packages are not mirrored themselves (yet).
+	;;
+	;; This does not result in unresolved dependencies (also see below),
+	;; on the opposite the package actually providing the bundled
+	;; features is not even added to the list of dependencies so we can
+	;; be sure the bundled libraries are loaded which might differ from
+	;; those of the package they originate from.
+	;;
+	;; If no other package depends on the same features (or does also
+	;; bundle them) this is a good solution.  However when other
+	;; packages also require the packages providing these features
+	;; the libraries in the original packages conflict with the
+	;; bundled libraries - we simply can't do anything about that and
+	;; must hope the file that gets loaded based in it's position in
+	;; `load-path' works for all packages that depend on it.
+	;;
+	;; Features are excluded by setting the git variables "elm.exclude"
+	;; and "elm.exclude-path" in the packages repository.
 	(exclude (mapcar #'intern (elx--git-get repo "elm.exclude")))
 	(exclude-path (elx--git-get repo "elm.exclude-path")))
-    ;; Collect features.
     (dolist (file (elx-elisp-files-git repo rev))
-      (let (required provided)
-	(lgit-with-file repo rev file
-	  (setq provided (elx--buffer-provided)
-		required (elx--buffer-required)))
-	(dolist (prov provided)
-	  (if (or (member  prov exclude)
-		  (member* file exclude-path
-			   :test (lambda (file path)
-				   (string-match path file))))
-	      (push prov bundled)
-	    (when prov
-	      (push prov provided-repo))
-	    (push required required-repo)))))
-    ;; Add provides to `elx-features-provided', check for conflicts.
-    (dolist (prov provided-repo)
-      (let ((elt (assoc prov elx-features-provided)))
-	(if elt
-	    (unless (equal (cdr elt) name)
-	      (elm-log "Feature %s provided by %s and %s"
-		       prov (cdr elt) name)
-	      (when (eq (intern name) prov)
-		(aput 'elx-features-provided prov name)))
-	  (aput 'elx-features-provided prov name))))
-    ;; Cleanup features.  (sort, remove dups, remove xemacs specific deps)
-    (setq provided-repo (elx--sanitize-provided provided-repo t))
-    (setq required-repo (elx--sanitize-required required-repo
-						provided-repo t))
-    ;; Get packages providing dependencies.
-    (unless only-features
-      (setq required-hard (elx--lookup-required (nth 0 required-repo))
-	    required-soft (elx--lookup-required (nth 1 required-repo)))
-      ;; Report missing
-      (dolist (dep (cdr (assoc nil required-hard)))
-	(unless (memq dep bundled)
-	  (message "%s: hard required %s not available" name dep)))
-      (dolist (dep (cdr (assoc nil required-soft)))
-	(unless (memq dep bundled)
-	  (message "%s: soft required %s not available" name dep))))
-    ;; Return features.
-    (list provided-repo required-hard required-soft)))
+      (dolist (prov (lgit-with-file repo rev file
+		      (elx--buffer-provided)))
+	(if (or (member  prov exclude)
+		(member* file exclude-path
+			 :test (lambda (file path)
+				 (string-match path file))))
+	    (push prov bundled)
+	  (when prov
+	    (push prov provided))
+	  (when dependencies
+	    ;; Even if some of the features provided by this file are
+	    ;; excluded do not exclude the required features if at least
+	    ;; one of the provided features is not excluded.  We do this
+	    ;; because the file might be legitimately belong the the
+	    ;; package but might never-the-less illegitimately provide
+	    ;; a foreign feature to indicate that is a drop-in replacement
+	    ;; or whatever.
+	    ;;
+	    ;; If multiple features are provided and not excluded then the
+	    ;; required features are added multiple times to the list of
+	    ;; required features at this point but that is not a problem
+	    ;; as duplicates are later removed.
+	    ;;
+	    ;; Since it is rare that a file provides multiple features, we
+	    ;; don't care if we extract the dependencies multiple times.
+	    (push (lgit-with-file repo rev file (elx--buffer-required))
+		  required)))))
+    (setq provided (elx--sanitize-provided provided t))
+    (when associate
+      ;; If and only if optional argument ASSOCIATE is non-nil add
+      ;; associations for the provided features to the value of variable
+      ;; `elx-features-provided' unless another package is already
+      ;; associated with the feature and the current package does not win
+      ;; based on a comparison of it's package name with the feature name.
+      ;; In case of conflict and regardless which package wins a warning
+      ;; is shown.
+      ;;
+      ;; The value of `elx-features-provided' is not updated always
+      ;; updated when this function is called because is called for all
+      ;; versions as well as the tips of all vendor branches and these
+      ;; different revisions might differ in what features they provide.
+      ;; If the caller of this function could not control whether
+      ;; associations are updated or not could seemingly randomly change
+      ;; depending on what revision was last processed.
+      ;;
+      ;; Since Emacs provides no way to specify what version of a package
+      ;; another package depends on a particular revision had to be
+      ;; choosen whose provided features are recorded to calculate the
+      ;; dependencies of other packages.  The latest tagged revision
+      ;; of the "main" vendor or if no tagged revision exists it's tip
+      ;; has been chosen for this purpose, but this is controlled by the
+      ;; callers of this function not itself.
+      (dolist (prov provided)
+	(let ((elt (assoc prov elx-features-provided)))
+	  (if elt
+	      (unless (equal (cdr elt) name)
+		(elm-log "Feature %s provided by %s and %s"
+			 prov (cdr elt) name)
+		(when (eq (intern name) prov)
+		  (aput 'elx-features-provided prov name)))
+	    (aput 'elx-features-provided prov name)))))
+    (when dependencies
+      ;; This function usually is called to update/create revision epkgs
+      ;; and to updated the value of variable `elx-features-provided' by
+      ;; side-effect.  However in some cases we only need to do the latter
+      ;; so it is possible to skip the step of determine the dependencies.
+      ;; In this case we also return nil.
+      (setq required (elx--sanitize-required required
+						  provided t))
+      (let ((hard (elx--lookup-required (nth 0 required)))
+	    (soft (elx--lookup-required (nth 1 required))))
+	;; If the package providing a particular feature can not be
+	;; determined and the providing library also isn't bundled report
+	;; a warning here.
+	(dolist (dep (cdr (assoc nil hard)))
+	  (unless (memq dep bundled)
+	    (elm-log "%s: hard required %s not available" name dep)))
+	(dolist (dep (cdr (assoc nil soft)))
+	  (unless (memq dep bundled)
+	    (elm-log "%s: soft required %s not available" name dep)))
+	(list provided hard soft)))))
 
 (defun elx-package-metadata (name repo rev &optional branch)
-  (let ((features (elx-package-features name repo rev)))
+  (let ((features (elx-package-features name repo rev t)))
     (elx-with-mainfile (cons repo rev) nil
       (let ((wikipage (elx-wikipage mainfile name nil t)))
 	(list :summary (elx-summary nil t)

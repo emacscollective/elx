@@ -1057,7 +1057,7 @@ This function finds required features using `elx-required-regexp'."
 
 ;;; Extract Package Files.
 
-(defvar elx-elisp-files-exclude "^\\.")
+(defvar elx-elisp-files-exclude "\\(^\\.\\|autoloads?\\)")
 
 (defun elx-elisp-files (source &optional select)
   "Return a list of Emacs lisp files inside directory SOURCE.

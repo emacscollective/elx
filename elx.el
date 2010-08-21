@@ -5,7 +5,7 @@
 ;; Author: Jonas Bernoulli <jonas@bernoul.li>
 ;; Created: 20081202
 ;; Updated: 20100821
-;; Version: 0.5_pre2+
+;; Version: 0.5_pre3
 ;; Homepage: https://github.com/tarsius/elx
 ;; Keywords: docs, libraries, packages
 
@@ -1055,7 +1055,7 @@ This function finds required features using `elx-required-regexp'."
       (when hard
 	(list hard)))))
 
-;;; Extract Package Files.
+;;; List Emacs Lisp Files.
 
 (defconst elx-elisp-files-suffix "\\.el\\(\\.in\\)?$")
 (defconst elx-elisp-files-exclude "\\(\\`\\|/\\)\\.")
@@ -1095,6 +1095,8 @@ an existing revision in that repository."
 						  file))))
 	      (list file)))
    (lgit repo "ls-tree -r --name-only %s" rev)))
+
+;;; Extract Package Information.
 
 (defun elx-package-mainfile (source)
   "Return the mainfile of the package inside SOURCE.
@@ -1173,8 +1175,6 @@ an existing revision in that repository."
 			  mainfile
 			(concat source mainfile))
 	 ,@body))))
-
-;;; Check and aggregate extracted information.
 
 (defun elx-package-features (name repo rev &optional dependencies associate)
   "Process features of the package named NAME.

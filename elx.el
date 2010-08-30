@@ -468,71 +468,6 @@ If no matching entry exists return nil."
 
 ;;; Extract Version.
 
-(defun elx-version--no-colon (&optional file)
-  (elx-with-file file
-    (when (re-search-forward ";+[\s\t]+Version[\s\t]+\\([\s\t]+\\)"
-			     (lm-code-mark) t)
-      (match-string-no-properties 1))))
-
-(defun elx-version--id-header (&optional file)
-  (elx-with-file file
-    (when (re-search-forward "\\$[Ii]d: [^ ]+ \\([^ ]+\\) "
-			     (lm-code-mark) t)
-      (match-string-no-properties 1))))
-
-(defun elx-version--revision-header (&optional file)
-  (elx-with-file file
-    (when (re-search-forward "\\$Revision: +\\([^ ]+\\) "
-			     (lm-code-mark) t)
-      (match-string-no-properties 1))))
-
-(defun elx-version--variable (file)
-  (elx-with-file file
-    (when (re-search-forward
-	   (concat "(def\\(var\\|const\\) "
-		   (file-name-sans-extension
-		    (file-name-nondirectory file))
-		   "[-:]version \"\\([-_.0-9a-z]+\\)\"")
-	   (lm-code-mark) t)
-      (match-string-no-properties 2))))
-
-(defun elx-version--greater (version old-version)
-  (when (and version old-version
-	     (vcomp-compare version old-version #'<))
-    (error "New version is smaller than old version: %s %s"
-	   version old-version))
-  (if version
-      (if (equal version old-version)
-	  (if (string-match "[^a-z][a-z]$" old-version)
-	      (concat (substring old-version 0 -1)
-		      (char-to-string (1+ (string-to-char
-					   (substring old-version -1)))))
-	    (concat old-version "a"))
-	version)
-    (if old-version
-	(number-to-string (1+ (string-to-number old-version)))
-      "0001")))
-
-(defvar elx-version-sanitize-regexps
-  '(("\\$[Ii]d: [^ ]+ \\([^ ]+\\) " . "\\1")
-    ("\\$[Rr]evision: +\\([^ ]+\\) " . "\\1")
-    ("\\([-_.0-9a-z]+\\)[\s\t].+" . "\\1")
-    ("[^[:digit:]]+\\([[:alnum]_.-]+\\)" . "\\1"))
-  "List of regexps to use to sanitize a version string.
-
-This is a list of the form (REGEXP . REP), to be passed to
-`replace-regexp-in-string'.")
-
-(defun elx-version-sanitize (version)
-  "Clean up a VERSION, stripping extraneous text.
-
-If VERSION passes all of the checks, return it unmodified."
-  ;; TODO: Make this into a list of regexps against which to match.
-  (dolist (filter elx-version-sanitize-regexps)
-    (setq version (replace-regexp-in-string
-		   (car filter) (cdr filter) version)))
-  version)
-
 (defun elx-version (file &optional standardize)
   "Return the version of file FILE.
 Or the current buffer if FILE is equal to `buffer-file-name'.
@@ -550,85 +485,12 @@ and complain to the respective author."
   (elx-with-file file
     (let ((version (elx-header "version"))
 	  (update  (elx-header "update\\( #\\)?")))
-      (when version
-	(setq version (elx-version-sanitize version)))
       (when update
 	(setq version (concat (or version "0") "." update)))
       (if standardize
 	  (when (and version (vcomp-version-p version))
 	    (vcomp-normalize version))
 	version))))
-
-(defun elx-version+ (file &optional standardize)
-  "Return _a_ version string for file FILE.
-Or the current buffer if FILE is equal to `buffer-file-name'.
-
-If the file properly defines a version extract it using `elx-version'.
-Otherwise try several known ways in which people have defined the version
-in Emacs Lisp libraries.
-
-If optional STANDARDIZE is non-nil verify and possible convert the version
-using function `vcomp-normalize' (which see).
-
-If this function returns nil then the author of FILE sucks badly at
-writing library headers and if you can absolutely not live with that use
-`elx-version>' instead."
-  (let ((version (elx-version file standardize)))
-    (if version
-	version
-      (elx-with-file file
-	(setq version (or (elx-version--no-colon)
-			  (elx-version--variable file)
-			  (elx-version--id-header)
-			  (elx-version--revision-header))))
-      (if standardize
-	  (when (and version (vcomp-version-p version))
-	    (vcomp-normalize version))
-	version))))
-
-(defun elx-version> (file old-version &optional standardize)
-  "Return _a_ version string for the file FILE.
-Or the current buffer if FILE is equal to `buffer-file-name'.
-
-If no version can be found return a pseudo version like \"0001\".
-
-If OLD-VERSION is non-nil the new version has to be greater.  If it is
-smaller this is an error.  If it is equal increase it.  E.g. \"0.1\" becomes
-\"0.1a\" but if OLD-VERSION appears to be a pseudo version like \"0001\" use
-something like \"0002\" instead.
-
-If optional STANDARDIZE is non-nil verify and possible convert the version
-using function `vcomp-normalize' (which see).
-
-Also see functions `elx-version' and `elx-version+' for less aggressive
-approches and more aggressive doc-strings."
-  ;; FIXME doc-string might be wrong for some side cases.
-  (elx-version--greater (or (elx-version+ file standardize)
-			    (elx-updated file))
-			old-version))
-
-(defun elx-version-internal (file &optional standardize)
-  "Return the version string of the file FILE.
-Or the current buffer if FILE is equal to `buffer-file-name'.
-
-Only use this for files that are distributed with GNU Emacs otherwise use
-function `elx-version'.
-
-If optional STANDARDIZE is non-nil verify and possibly convert the version
-using function `vcomp-normalize' (which see).
-
-If the file defines a version extract it using function `elx-version' and
-if that fails using function `elx-version--variable'.  If that fails return
-the value of variable `emacs-version'."
-  (or (elx-version file t)
-      (let ((version (elx-version--variable file)))
-	(if (and version standardize)
-	    (elx-version--do-standardize version)
-	  version))
-      emacs-version))
-
-(defun elx-version-internal> (file old-version &optional standardize)
-  (elx-version--greater (elx-version-internal file standardize) old-version))
 
 ;;; Extract People.
 

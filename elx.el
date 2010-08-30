@@ -1129,7 +1129,8 @@ actually exists."
     (if (= 1 (length files))
 	(car files)
       (flet ((match (feature)
-		    (car (member* (format "^\\(.+?/\\)?%s\\.el$" feature)
+		    (car (member* (format "^\\(.+?/\\)?%s\\.el$"
+					  (regexp-quote feature))
 				  files :test 'string-match))))
 	(cond ((match name))
 	      ((match (if (string-match "-mode$" name)

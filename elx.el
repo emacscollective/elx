@@ -4,8 +4,8 @@
 
 ;; Author: Jonas Bernoulli <jonas@bernoul.li>
 ;; Created: 20081202
-;; Updated: 20100821
-;; Version: 0.5_pre3
+;; Updated: 20100830
+;; Version: 0.5_pre3+
 ;; Homepage: https://github.com/tarsius/elx
 ;; Keywords: docs, libraries, packages
 
@@ -1082,11 +1082,11 @@ an existing revision in that repository."
 		   nil)
 		  ((file-directory-p file)
 		   (mapcar (lambda (child)
-			     (concat file child))
+			     (concat (file-name-as-directory file) child))
 			   (elx-elisp-files-1 file all)))
 		  ((string-match "\\.el$" file)
 		   (list file))))
-	  (directory-files source t)))
+	  (directory-files source)))
 
 (defun elx-elisp-files-git (repo rev &optional all)
   (mapcan (lambda (file)

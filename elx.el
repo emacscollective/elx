@@ -1115,9 +1115,7 @@ the path to a git repository (which may be bare) and whose cdr has to be
 an existing revision in that repository.
 
 If SOURCE is a cons cell and the mainfile can not be determined as
-described above the value of the git variable \"elm.mainfile\" is used.
-If this variable is defined multiple times use the first file that
-actually exists."
+described above the value of the git variable \"elm.mainfile\" is used."
   (let ((files (elx-elisp-files source))
 	(name (regexp-quote
 	       (file-name-nondirectory
@@ -1132,19 +1130,15 @@ actually exists."
 		    (car (member* (format "^\\(.+?/\\)?%s\\.el$"
 					  (regexp-quote feature))
 				  files :test 'string-match))))
-	(cond ((match name))
-	      ((match (if (string-match "-mode$" name)
-			  (substring name 0 -5)
-			(concat name "-mode"))))
-	      ((consp source)
-	       (let ((files (elx-elisp-files source))
-		     (mains (cdr (lgit (car source) 1
-				       "config elm.mainfile")))
-		     main)
-		 (while mains
-		   (when (member (car mains) files)
-		     (setq main (car mains) mains nil)))
-		 main)))))))
+	(or (match name)
+	    (match (if (string-match "-mode$" name)
+		       (substring name 0 -5)
+		     (concat name "-mode")))
+	    (when (consp source)
+	      (let ((mainfile (cadr (lgit (car source) 1
+					  "config elm.mainfile"))))
+		(when (and mainfile (member mainfile files))
+		  mainfile))))))))
 
 (defmacro elx-with-mainfile (source mainfile &rest body)
   "Execute BODY in a buffer containing the contents of SOURCE's mainfile.

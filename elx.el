@@ -4,7 +4,7 @@
 
 ;; Author: Jonas Bernoulli <jonas@bernoul.li>
 ;; Created: 20081202
-;; Updated: 20100830
+;; Updated: 20100902
 ;; Version: 0.5-git
 ;; Homepage: https://github.com/tarsius/elx
 ;; Keywords: docs, libraries, packages
@@ -286,7 +286,7 @@ occur."
 				   (substring name 0 -4)
 				 (concat name "mode"))))))
 	  (when page
-	    (concat (when urlp "http://www.emacswiki.org/emacs/") page))))))
+	    (concat (when urlp "http://www.emacswiki.org/") page))))))
 
 (defun elx-homepage (&optional file)
   "Extract the homepage of the specified package."

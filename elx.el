@@ -4,8 +4,8 @@
 
 ;; Author: Jonas Bernoulli <jonas@bernoul.li>
 ;; Created: 20081202
-;; Updated: 20100902
-;; Version: 0.5-git
+;; Updated: 20101003
+;; Version: 0.6
 ;; Homepage: https://github.com/tarsius/elx
 ;; Keywords: docs, libraries, packages
 
@@ -26,11 +26,16 @@
 
 ;;; Commentary:
 
-;; This library extracts information from Emacs Lisp libraries.
+;; This package extracts information from Emacs Lisp libraries.
 
-;; This extends library `lisp-mnt', which is only suitable for libraries
-;; that closely follow the header conventions.  Unfortunately there are
-;; many libraries that do not - this library tries to cope with that.
+;; It is not aware that libraries are part of packages resp. that a
+;; library is also a package.  If you need this functionality have a
+;; look at package `xpkg'.
+
+;; This package extends library `lisp-mnt', which is only suitable for
+;; libraries that closely follow the header conventions.  Unfortunately
+;; there are many libraries that do not - this library tries to cope
+;; with that.
 
 ;; This library is also able to extract some values that `lisp-mnt' can't.
 ;; Most notably this library can extract the features required and
@@ -590,49 +595,6 @@ The return value has the form (NAME . ADDRESS)."
 
 ;;; Extract Features.
 
-(defvar elx-features-provided nil
-  "List of features and the providing packages.
-
-Each element is a cons cell whose car is a feature symbol and whose cdr is
-the providing package, a string.  This variable has to be set for function
-`elx-required-packages' to work correctly; you are responsible to do that
-yourself.")
-
-(defvar elx-features-emacs nil
-  "List of features provided by Emacs.")
-
-(defvar elx-features-xemacs nil
-  "List of features provided by XEmacs only.
-This excludes all features also provided by GNU Emacs.")
-
-(defvar elx-features-drop-deps nil)
-
-(defcustom elx-xemacs-elisp "/unknown/"
-  "Directory contain XEmacs' lisp files."
-  :group 'elx
-  :type 'directory)
-
-(defun elx-update-emacs-features ()
-  (message "Updating Emacs features...")
-  (setq elx-features-emacs
-	(elx-provided (file-name-directory (find-library-name "version"))))
-  (message "Updating Emacs features...done"))
-
-(defun elx-update-xemacs-features ()
-  (unless elx-features-emacs
-    (elx-update-emacs-features))
-  (message "Updating XEmacs features...")
-  (let ((exclusive '(xemacs
-		     ;; FIXME Apparently these are also provided by XEmacs.
-		     ;; Verify that this is the case (maybe they were
-		     ;; provided by older versions?).
-		     atomic-extents auc-menu balloon-help func-menu un-define)))
-    (dolist (feature (elx-provided elx-xemacs-elisp))
-      (unless (member feature elx-features-emacs)
-	(push feature exclusive)))
-    (setq elx-features-xemacs (sort exclusive #'string<)))
-  (message "Updating XEmacs features...done"))
-
 (defconst elx-provided-regexp "\
 \(\\(?:cc-\\|silentcomp-\\)?provide[\s\t\n]+'\
 \\([^(),\s\t\n]+\\)\\(?:[\s\t\n]+'\
@@ -641,9 +603,7 @@ This excludes all features also provided by GNU Emacs.")
 (defun elx--sanitize-provided (provided &optional drop)
   (let (sanitized)
     (dolist (feature provided)
-      (unless (or (member feature sanitized)
-		  (when drop
-		    (member feature elx-features-xemacs)))
+      (unless (member feature sanitized)
 	(push feature sanitized)))
     (sort sanitized #'string<)))
 
@@ -711,11 +671,7 @@ This function finds provided features using `elx-provided-regexp'."
 (defun elx--sanitize-required-1 (required &optional exclude drop)
   (let (sanitized)
     (dolist (feature required)
-      (unless (or (member feature sanitized)
-		  (member feature exclude)
-		  (when drop
-		    (or (member feature elx-features-xemacs)
-			(member feature elx-features-drop-deps))))
+      (unless (member feature (append sanitized exclude))
 	(push feature sanitized)))
     (sort sanitized #'string<)))
 
@@ -730,37 +686,6 @@ This function finds provided features using `elx-provided-regexp'."
 	(list hard soft)
       (when hard
 	(list hard)))))
-
-(defun elx--lookup-required-1 (feature)
-  "Return a string representing the package that provides FEATURE."
-  (if (member feature elx-features-emacs)
-      "emacs"
-    (cdr (assoc feature elx-features-provided))))
-
-(defun elx--lookup-required (required)
-  "Return the packages providing all features in list REQUIRED.
-The returned value has the form: ((PACKAGE FEATURE...)...)."
-  (let (packages)
-    (dolist (feature required)
-      (let ((package (elx--lookup-required-1 feature))
-	    (feature-name (symbol-name feature)))
-	(when (and (not package)
-		   (string-match "-autoloads?$" feature-name))
-	  (setq package (elx--lookup-required-1
-			 (intern (substring feature-name 0
-					    (match-beginning 0))))))
-	(let ((entry (assoc package packages)))
-	  (if entry
-	      (unless (memq feature (cdr entry))
-		(setcdr entry (sort (cons feature (cdr entry))
-				    'string<)))
-	    (push (list package feature) packages)))))
-    (sort* packages
-	   (lambda (a b)
-	     (cond ((null a) nil)
-		   ((null b) t)
-		   (t (string< a b))))
-	   :key 'car)))
 
 (defun elx--buffer-required (&optional buffer)
   "Return the features required by BUFFER's (or current buffer's) content."
@@ -836,47 +761,6 @@ This function finds required features using `elx-required-regexp'."
 	   (elx-elisp-files-git repo rev))
    provided drop))
 
-(defun elx-required-packages (source &optional provided drop)
-  "Return the packages required by SOURCE.
-
-The returned value has the form:
-
-  (((HARD-REQUIRED-PACKAGE FEATURE...)...)
-   [((SOFT-REQUIRED-PACKAGE FEATURE...)...)])
-
-Where HARD-REQUIRED-PACKAGE and SOFT-REQUIRED-PACKAGE are strings and
-FEATURE is a symbol.  If SOURCE has no external dependencies required nil.
-
-SOURCE has to be a file, directory, list of files and/or directories.
-
-If SOURCE is a directory return all packages required by Emacs lisp files
-inside SOURCE and recursively all subdirectories.  Files not ending in
-\".el\" and directories starting with a period are ignored, except when
-explicetly passed to this function.
-
-If library `lgit' is loaded SOURCE can also be a cons cell whose car is
-the path to a git repository (which may be bare) and whose cdr has to be
-an existing revision in that repository.
-
-The return value does not include features provided by SOURCE.  If
-optional PROVIDED is not provided or nil the features provided by SOURCE
-are determined using `elx-provided'.  Otherwise PROVIDED has to be a list
-of features which are assumed to be the features provided by SOURCE.
-
-Note that this function uses the value of variable `elx-features-provided'
-to determine what package provides a feature.  You are responsible to
-setup that variable yourself.
-
-This function finds required features using `elx-required-regexp'."
-  (let* ((required (elx-required source (or provided
-					    (elx-provided source))))
-	 (hard (elx--lookup-required (nth 0 required)))
-	 (soft (elx--lookup-required (nth 1 required))))
-    (if soft
-	(list hard soft)
-      (when hard
-	(list hard)))))
-
 ;;; List Emacs Lisp Files.
 
 (defconst elx-elisp-files-suffix "\\.el\\(\\.in\\)?$")
@@ -917,241 +801,6 @@ an existing revision in that repository."
 						  file))))
 	      (list file)))
    (lgit repo "ls-tree -r --name-only %s" rev)))
-
-;;; Extract Package Information.
-
-(defun elx-package-mainfile (source)
-  "Return the mainfile of the package inside SOURCE.
-
-The returned path is relative to SOURCE which has to be a directory
-containing all libraries belonging to some package.
-
-If the package has only one file matching \"\\\\.el\\\\(\\\\.in\\\\)$\" return that
-file unconditionally.  Otherwise return the file which provides the feature
-matching the basename of SOURCE, or if no such file exists the file
-that provides the feature matching the basename of SOURCE with \"-mode\"
-added to or removed from the end, whatever makes sense.  Case is ignored.
-
-If library `lgit' is loaded SOURCE can also be a cons cell whose car is
-the path to a git repository (which may be bare) and whose cdr has to be
-an existing revision in that repository.
-
-If SOURCE is a cons cell and the mainfile can not be determined as
-described above the value of the git variable \"elm.mainfile\" is used."
-  (let ((files (elx-elisp-files source))
-	(name (regexp-quote
-	       (file-name-nondirectory
-		(directory-file-name
-		 (if (atom source)
-		     source
-		   (replace-regexp-in-string
-		    "\\.git/?$" "" (car source))))))))
-    (if (= 1 (length files))
-	(car files)
-      (flet ((match (feature)
-		    (car (member* (format "^\\(.+?/\\)?%s\\.el$"
-					  (regexp-quote feature))
-				  files :test 'string-match))))
-	(or (match name)
-	    (match (if (string-match "-mode$" name)
-		       (substring name 0 -5)
-		     (concat name "-mode")))
-	    (when (consp source)
-	      (let ((mainfile (cadr (lgit (car source) 1
-					  "config elm.mainfile"))))
-		(when (and mainfile (member mainfile files))
-		  mainfile))))))))
-
-(defmacro elx-with-mainfile (source mainfile &rest body)
-  "Execute BODY in a buffer containing the contents of SOURCE's mainfile.
-
-If MAINFILE is non-nil use that as mainfile otherwise determine the
-mainfile by applying `elx-package-mainfile' to SOURCE.
-
-SOURCE has to be the mainfile itself (in which case it doesn't make much
-sense to specify MAINFILE also) or a directory containing a package
-consisting of one or more Emacs Lisp files.  This directory may also
-contain auxiliary files.
-
-If library `lgit' is loaded SOURCE can also be a cons cell whose car is
-the path to a git repository (which may be bare) and whose cdr has to be
-an existing revision in that repository."
-  (declare (indent 2) (debug t))
-  `(let ((source ,source)
-	 (mainfile ,mainfile))
-     (unless mainfile
-       (setq mainfile
-	     (if (and (atom source) (file-regular-p source))
-		 source
-	       (elx-package-mainfile source))))
-     (unless mainfile
-       (error "The mainfile can not be determined"))
-     (if (consp source)
-	 (lgit-with-file (car source) (cdr source) mainfile ,@body)
-       (elx-with-file (if (file-name-absolute-p mainfile)
-			  mainfile
-			(concat source mainfile))
-	 ,@body))))
-
-(defun elx-package-features (name repo rev &optional dependencies associate)
-  "Process features of the package named NAME.
-
-REPO is the path to the git repository containing the package; it may be
-bare.  REV has to be an existing revision in that repository.
-
-If optional DEPENDENCIES is non-nil return a list of the form:
-
-  ((PROVIDED-FEATURE...)
-   ((PROVIDING-PACKAGE HARD-REQUIRED-FEATURE...)...)
-   ((PROVIDING-PACKAGE HARD-REQUIRED-FEATURE...)...))
-
-Otherwise return nil.
-
-If optional ASSOCIATE is non-nil associate the provided features with the
-package in the value of variable `elx-provided-features', if appropriate.
-
-Also see the source comments of this function for more information."
-  (let (required provided bundled
-	;; Sometimes features provided by a packages repository have to be
-	;; excluded from the list of features provided by the package.
-	;; This usually is the case when a package bundles libraries that
-	;; originate from another package.  Note that this is sometimes
-	;; done even for bundled packages are not mirrored themselves (yet).
-	;;
-	;; This does not result in unresolved dependencies (also see below),
-	;; on the opposite the package actually providing the bundled
-	;; features is not even added to the list of dependencies so we can
-	;; be sure the bundled libraries are loaded which might differ from
-	;; those of the package they originate from.
-	;;
-	;; If no other package depends on the same features (or does also
-	;; bundle them) this is a good solution.  However when other
-	;; packages also require the packages providing these features
-	;; the libraries in the original packages conflict with the
-	;; bundled libraries - we simply can't do anything about that and
-	;; must hope the file that gets loaded based in it's position in
-	;; `load-path' works for all packages that depend on it.
-	;;
-	;; Features are excluded by setting the git variables "elm.exclude"
-	;; (can be specified multiple times, matching features are excluded)
-	;; and "elm.exclude-path" (files whose path match are excluded) in
-	;; the packages repository.
-	(exclude (mapcar #'intern (cdr (lgit repo 1 "config --get-all %s"
-					     "elm.exclude"))))
-	(exclude-path (cadr (lgit repo 1 "config elm.exclude-path"))))
-    (dolist (file (elx-elisp-files-git repo rev))
-      (dolist (prov (lgit-with-file repo rev file
-		      (elx--buffer-provided)))
-	(if (or (member prov exclude)
-		(and exclude-path (string-match exclude-path file)))
-	    (push prov bundled)
-	  (when prov
-	    (push prov provided))
-	  (when dependencies
-	    ;; Even if some of the features provided by this file are
-	    ;; excluded do not exclude the required features if at least
-	    ;; one of the provided features is not excluded.  We do this
-	    ;; because the file might be legitimately belong the the
-	    ;; package but might never-the-less illegitimately provide
-	    ;; a foreign feature to indicate that is a drop-in replacement
-	    ;; or whatever.
-	    ;;
-	    ;; If multiple features are provided and not excluded then the
-	    ;; required features are added multiple times to the list of
-	    ;; required features at this point but that is not a problem
-	    ;; as duplicates are later removed.
-	    ;;
-	    ;; Since it is rare that a file provides multiple features, we
-	    ;; don't care if we extract the dependencies multiple times.
-	    (push (lgit-with-file repo rev file (elx--buffer-required))
-		  required)))))
-    (setq provided (elx--sanitize-provided provided t))
-    (when associate
-      ;; If and only if optional argument ASSOCIATE is non-nil add
-      ;; associations for the provided features to the value of variable
-      ;; `elx-features-provided' unless another package is already
-      ;; associated with the feature and the current package does not win
-      ;; based on a comparison of it's package name with the feature name.
-      ;; In case of conflict and regardless which package wins a warning
-      ;; is shown.
-      ;;
-      ;; The value of `elx-features-provided' is not updated always
-      ;; updated when this function is called because is called for all
-      ;; versions as well as the tips of all vendor branches and these
-      ;; different revisions might differ in what features they provide.
-      ;; If the caller of this function could not control whether
-      ;; associations are updated or not could seemingly randomly change
-      ;; depending on what revision was last processed.
-      ;;
-      ;; Since Emacs provides no way to specify what version of a package
-      ;; another package depends on a particular revision had to be
-      ;; choosen whose provided features are recorded to calculate the
-      ;; dependencies of other packages.  The latest tagged revision
-      ;; of the "main" vendor or if no tagged revision exists it's tip
-      ;; has been chosen for this purpose, but this is controlled by the
-      ;; callers of this function not itself.
-      (dolist (prov provided)
-	(let ((elt (assoc prov elx-features-provided)))
-	  (if elt
-	      (unless (equal (cdr elt) name)
-		(elm-log "Feature %s provided by %s and %s"
-			 prov (cdr elt) name)
-		(when (eq (intern name) prov)
-		  (aput 'elx-features-provided prov name)))
-	    (aput 'elx-features-provided prov name)))))
-    (when dependencies
-      ;; This function usually is called to update/create revision epkgs
-      ;; and to updated the value of variable `elx-features-provided' by
-      ;; side-effect.  However in some cases we only need to do the latter
-      ;; so it is possible to skip the step of determine the dependencies.
-      ;; In this case we also return nil.
-      (setq required (elx--sanitize-required required
-						  provided t))
-      (let ((hard (elx--lookup-required (nth 0 required)))
-	    (soft (elx--lookup-required (nth 1 required))))
-	;; If the package providing a particular feature can not be
-	;; determined and the providing library also isn't bundled report
-	;; a warning here.
-	(dolist (dep (cdr (assoc nil hard)))
-	  (unless (memq dep bundled)
-	    (elm-log "%s: hard required %s not available" name dep)))
-	(dolist (dep (cdr (assoc nil soft)))
-	  (unless (memq dep bundled)
-	    (elm-log "%s: soft required %s not available" name dep)))
-	(list provided hard soft)))))
-
-(defun elx-package-metadata (name repo rev &optional branch)
-  "Return the metadata of the specified revision of the package named NAME.
-
-REPO is the path to the git repository containing the package; it may be
-bare.  REV has to be an existing revision in that repository.
-
-If optional BRANCH is specified it should be the vendor branch containing
-REV.  It is only used to get the vendor homepage from the git config if
-necessary."
-  (let ((features (elx-package-features name repo rev t)))
-    (elx-with-mainfile (cons repo rev) nil
-      (let ((wikipage (elx-wikipage mainfile name nil t)))
-	(list :summary (elx-summary nil t)
-	      :created (elx-created)
-	      :updated (elx-updated)
-	      :license (elx-license)
-	      :authors (elx-authors nil t)
-	      :maintainer (elx-maintainer nil t)
-	      :adapted-by (elx-adapted-by nil t)
-	      :provided (car features)
-	      :required (unless (equal (cdr features) '(nil nil))
-			  (if (equal (cddr features) '(nil))
-			      (list (cadr features))
-			    (cdr features)))
-	      :keywords (elx-keywords mainfile t)
-	      :homepage (or (elx-homepage)
-			    (cadr (lgit repo 1 "config branch.%s.elm-webpage"
-					(or branch rev)))
-			    (when (equal (or branch rev) "emacswiki")
-			      wikipage))
-	      :wikipage wikipage
-	      :commentary (elx-commentary mainfile))))))
 
 (provide 'elx)
 ;;; elx.el ends here

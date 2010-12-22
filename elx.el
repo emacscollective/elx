@@ -4,8 +4,8 @@
 
 ;; Author: Jonas Bernoulli <jonas@bernoul.li>
 ;; Created: 20081202
-;; Updated: 20101003
-;; Version: 0.6
+;; Updated: 20101223
+;; Version: 0.6.1
 ;; Homepage: https://github.com/tarsius/elx
 ;; Keywords: docs, libraries, packages
 
@@ -275,21 +275,27 @@ occur."
   (or (when file
 	(elx-with-file file
 	  (elx-header "\\(?:x-\\)?\\(?:emacs\\)?wiki-?page")))
-      (flet ((match (name)
-		    (car (member* name pages :test 'equal :key 'downcase))))
-	(unless (consp pages)
-	  (setq pages (directory-files (or pages elx-wiki-directory)
-				       nil "^[^.]" t)))
+      (progn
+	(setq pages (mapcar
+		     (lambda (page)
+		       (cons (downcase
+			      (replace-regexp-in-string "-" "" page))
+			     page))
+		     (if (consp pages)
+			 pages
+		       (directory-files (or pages elx-wiki-directory)
+					nil "^[^.]" t))))
 	(setq name (downcase
 		    (replace-regexp-in-string "\\+$" "plus"
 		     (replace-regexp-in-string "-" ""
 		      (or name
 			  (file-name-sans-extension
 			   (file-name-nondirectory file)))))))
-	(let ((page (or (match name)
-			(match (if (string-match "mode$" name)
-				   (substring name 0 -4)
-				 (concat name "mode"))))))
+	(let ((page (or (cdr (assoc name pages))
+			(cdr (assoc (if (string-match "mode$" name)
+					(substring name 0 -4)
+				      (concat name "mode"))
+				    pages)))))
 	  (when page
 	    (concat (when urlp "http://www.emacswiki.org/") page))))))
 

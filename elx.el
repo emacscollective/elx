@@ -61,7 +61,8 @@
 (require 'dconv)
 (require 'vcomp)
 (require 'lisp-mnt)
-(require 'lgit nil t)
+(and (require 'magit nil t)
+     (require 'arc-mode nil t))
 
 (defgroup elx nil
   "Extract information from Emacs Lisp libraries."
@@ -73,18 +74,30 @@
 If FILE is nil or equal to `buffer-file-name' execute BODY in the
 current buffer.  Move to beginning of buffer before executing BODY."
   (declare (indent 1) (debug t))
-  (let ((filesym (gensym "file")))
-    `(let ((,filesym ,file))
-       (if (and ,filesym (not (equal ,filesym buffer-file-name)))
+  (let ((filesym (gensym "file"))
+	(revsym  (gensym "rev")))
+    (if (consp file)
+	`(let ((,filesym ,file) ,revsym)
+	   (setq ,revsym  (car ,filesym)
+		 ,filesym (cdr ,filesym))
 	   (with-temp-buffer
-	     (insert-file-contents ,filesym)
+	     (magit-git-insert (list "show" (format "%s:%s" ,revsym ,filesym)))
+	     (archive-set-buffer-as-visiting-file ,filesym)
+	     (setq buffer-file-name ,filesym)
 	     (with-syntax-table emacs-lisp-mode-syntax-table
 	       (goto-char (point-min))
-	       ,@body))
-	 (save-excursion
-	   (with-syntax-table emacs-lisp-mode-syntax-table
-	     (goto-char (point-min))
-	     ,@body))))))
+	       ,@body)))
+      `(let ((,filesym ,file))
+	 (if (and ,filesym (not (equal ,filesym buffer-file-name)))
+	     (with-temp-buffer
+	       (insert-file-contents ,filesym)
+	       (with-syntax-table emacs-lisp-mode-syntax-table
+		 (goto-char (point-min))
+		 ,@body))
+	   (save-excursion
+	     (with-syntax-table emacs-lisp-mode-syntax-table
+	       (goto-char (point-min))
+	       ,@body)))))))
 
 ;; This is almost identical to `lm-header-multiline' and will be merged
 ;; into that function.
@@ -638,7 +651,7 @@ inside SOURCE and recursively all subdirectories.  Files not ending in
 \".el\" and directories starting with a period are ignored, except when
 explicitly passed to this function.
 
-If library `lgit' is loaded SOURCE can also be a cons cell whose car is
+If library `magit' is loaded SOURCE can also be a cons cell whose car is
 the path to a git repository (which may be bare) and whose cdr has to be
 an existing revision in that repository.
 
@@ -660,12 +673,12 @@ This function finds provided features using `elx-provided-regexp'."
 	 (let ((default-directory source))
 	   (mapcan #'elx-provided-1 (elx-elisp-files source))))))
 
-(defun elx-provided-git (repo rev &optional drop)
+(defun elx-provided-git (default-directory rev &optional drop)
   (elx--sanitize-provided
    (mapcan (lambda (file)
-	     (lgit-with-file repo rev file
+	     (elx-with-file (cons rev file)
 	       (elx--buffer-provided)))
-	   (elx-elisp-files-git repo rev))
+	   (elx-elisp-files-git rev))
    drop))
 
 (defconst elx-required-regexp "\
@@ -732,7 +745,7 @@ inside SOURCE and recursively all subdirectories.  Files not ending in
 \".el\" and directories starting with a period are ignored, except when
 explicetly passed to this function.
 
-If library `lgit' is loaded SOURCE can also be a cons cell whose car is
+If library `magit' is loaded SOURCE can also be a cons cell whose car is
 the path to a git repository (which may be bare) and whose cdr has to be
 an existing revision in that repository.
 
@@ -759,12 +772,12 @@ This function finds required features using `elx-required-regexp'."
 	 (let ((default-directory source))
 	   (mapcar #'elx-required-1 (elx-elisp-files source t))))))
 
-(defun elx-required-git (repo rev &optional provided drop)
+(defun elx-required-git (default-directory rev &optional provided drop)
   (elx--sanitize-required
    (mapcar (lambda (file)
-	     (lgit-with-file repo rev file
+	     (elx-with-file (cons rev file)
 	       (elx--buffer-required)))
-	   (elx-elisp-files-git repo rev))
+	   (elx-elisp-files-git rev))
    provided drop))
 
 ;;; List Emacs Lisp Files.
@@ -780,12 +793,12 @@ lisp files is determinded by it's suffix.  Files whose basename or any
 path component begins with a dot are excluded unless optional ALL is
 non-nil.
 
-If library `lgit' is loaded SOURCE can also be a cons cell whose car is
+If library `magit' is loaded SOURCE can also be a cons cell whose car is
 the path to a git repository (which may be bare) and whose cdr has to be
 an existing revision in that repository."
   (if (atom source)
       (elx-elisp-files-1 source all)
-    (elx-elisp-files-git (car source) (cdr source) all)))
+    (elx-elisp-files-git (cdr source) all)))
 
 (defun elx-elisp-files-1 (source &optional all)
   (mapcan (lambda (file)
@@ -800,13 +813,13 @@ an existing revision in that repository."
 		   (list file))))
 	  (directory-files source)))
 
-(defun elx-elisp-files-git (repo rev &optional all)
+(defun elx-elisp-files-git (rev &optional all)
   (mapcan (lambda (file)
 	    (when (and (string-match elx-elisp-files-suffix file)
 		       (or all (not (string-match elx-elisp-files-exclude
 						  file))))
 	      (list file)))
-   (lgit repo "ls-tree -r --name-only %s" rev)))
+	  (magit-git-lines "ls-tree" "-r" "--name-only" rev)))
 
 (provide 'elx)
 ;;; elx.el ends here

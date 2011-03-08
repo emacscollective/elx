@@ -220,7 +220,7 @@ http://www.emacswiki.org/Git_repository respectively."
   :group 'elx
   :type 'directory)
 
-(defun elx-wikipage (file &optional name pages urlp)
+(defun elx-wikipage (&optional file name pages urlp)
   "Extract the page on the Emacswiki for the specified package.
 
 The page is extracted from the respective header of FILE which should be
@@ -247,32 +247,32 @@ otherwise only the name.
 There is no guarantee that this will always return the package's page on
 the Emacswiki when such a page exists or that false-positives do not ever
 occur."
-  (or (when file
-	(elx-with-file file
-	  (elx-header "\\(?:x-\\)?\\(?:emacs\\)?wiki-?page")))
-      (progn
-	(setq pages (mapcar
-		     (lambda (page)
-		       (cons (downcase
-			      (replace-regexp-in-string "-" "" page))
-			     page))
-		     (if (consp pages)
-			 pages
-		       (directory-files (or pages elx-wiki-directory)
-					nil "^[^.]" t))))
-	(setq name (downcase
-		    (replace-regexp-in-string "\\+$" "plus"
-		     (replace-regexp-in-string "-" ""
-		      (or name
-			  (file-name-sans-extension
-			   (file-name-nondirectory file)))))))
-	(let ((page (or (cdr (assoc name pages))
-			(cdr (assoc (if (string-match "mode$" name)
-					(substring name 0 -4)
-				      (concat name "mode"))
-				    pages)))))
-	  (when page
-	    (concat (when urlp "http://www.emacswiki.org/") page))))))
+  (elx-with-file file
+    (or (when file
+	  (elx-header "\\(?:x-\\)?\\(?:emacs\\)?wiki-?page"))
+	(progn
+	  (setq pages (mapcar
+		       (lambda (page)
+			 (cons (downcase
+				(replace-regexp-in-string "-" "" page))
+			       page))
+		       (if (consp pages)
+			   pages
+			 (directory-files (or pages elx-wiki-directory)
+					  nil "^[^.]" t))))
+	  (setq name (downcase
+		      (replace-regexp-in-string "\\+$" "plus"
+		       (replace-regexp-in-string "-" ""
+			(or name
+			    (file-name-sans-extension
+			     (file-name-nondirectory (buffer-file-name))))))))
+	  (let ((page (or (cdr (assoc name pages))
+			  (cdr (assoc (if (string-match "mode$" name)
+					  (substring name 0 -4)
+					(concat name "mode"))
+				      pages)))))
+	    (when page
+	      (concat (when urlp "http://www.emacswiki.org/") page)))))))
 
 (defun elx-homepage (&optional file)
   "Extract the homepage of the specified package."
@@ -454,7 +454,7 @@ If no matching entry exists return nil."
 
 ;;; Extract Version.
 
-(defun elx-version (file &optional standardize)
+(defun elx-version (&optional file standardize)
   "Return the version of file FILE.
 Or the current buffer if FILE is equal to `buffer-file-name'.
 

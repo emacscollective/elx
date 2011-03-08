@@ -1,11 +1,11 @@
 ;;; elx.el --- extract information from Emacs Lisp libraries
 
-;; Copyright (C) 2008, 2009, 2010  Jonas Bernoulli
+;; Copyright (C) 2008-2011  Jonas Bernoulli
 
 ;; Author: Jonas Bernoulli <jonas@bernoul.li>
 ;; Created: 20081202
-;; Updated: 20101223
-;; Version: 0.6.1
+;; Updated: 20110308
+;; Version: 0.6.1-git
 ;; Homepage: https://github.com/tarsius/elx
 ;; Keywords: docs, libraries, packages
 
@@ -240,8 +240,8 @@ on the Emacswiki about a given package.
 It's value should be a directory containing all or a subset of pages from
 the Emacswiki all at the top-level.  You can create such a directory by
 cloning eigher the svn or git repository described at
-http://www.emacswiki.org/emacs/SVN_repository and
-http://www.emacswiki.org/emacs/Git_repository respectively."
+http://www.emacswiki.org/SVN_repository and
+http://www.emacswiki.org/Git_repository respectively."
   :group 'elx
   :type 'directory)
 

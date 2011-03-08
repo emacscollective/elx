@@ -37,8 +37,6 @@
 (require 'dconv)
 (require 'vcomp)
 (require 'lisp-mnt)
-(and (require 'magit nil t)
-     (require 'arc-mode nil t))
 
 (defgroup elx nil
   "Extract information from Emacs Lisp libraries."
@@ -50,30 +48,18 @@
 If FILE is nil or equal to `buffer-file-name' execute BODY in the
 current buffer.  Move to beginning of buffer before executing BODY."
   (declare (indent 1) (debug t))
-  (let ((filesym (gensym "file"))
-	(revsym  (gensym "rev")))
-    (if (consp file)
-	`(let ((,filesym ,file) ,revsym)
-	   (setq ,revsym  (car ,filesym)
-		 ,filesym (cdr ,filesym))
+  (let ((filesym (gensym "file")))
+    `(let ((,filesym ,file))
+       (if (and ,filesym (not (equal ,filesym buffer-file-name)))
 	   (with-temp-buffer
-	     (magit-git-insert (list "show" (format "%s:%s" ,revsym ,filesym)))
-	     (archive-set-buffer-as-visiting-file ,filesym)
-	     (setq buffer-file-name ,filesym)
+	     (insert-file-contents ,filesym)
 	     (with-syntax-table emacs-lisp-mode-syntax-table
 	       (goto-char (point-min))
-	       ,@body)))
-      `(let ((,filesym ,file))
-	 (if (and ,filesym (not (equal ,filesym buffer-file-name)))
-	     (with-temp-buffer
-	       (insert-file-contents ,filesym)
-	       (with-syntax-table emacs-lisp-mode-syntax-table
-		 (goto-char (point-min))
-		 ,@body))
-	   (save-excursion
-	     (with-syntax-table emacs-lisp-mode-syntax-table
-	       (goto-char (point-min))
-	       ,@body)))))))
+	       ,@body))
+	 (save-excursion
+	   (with-syntax-table emacs-lisp-mode-syntax-table
+	     (goto-char (point-min))
+	     ,@body))))))
 
 ;; This is almost identical to `lm-header-multiline' and will be merged
 ;; into that function.

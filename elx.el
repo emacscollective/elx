@@ -5,7 +5,7 @@
 ;; Author: Jonas Bernoulli <jonas@bernoul.li>
 ;; Created: 20081202
 ;; Updated: 20110811
-;; Version: 0.7.0-git
+;; Version: 0.7.1
 ;; Homepage: https://github.com/tarsius/elx
 ;; Keywords: docs, libraries, packages
 
@@ -78,22 +78,11 @@ The returned value is a list of strings, one per line."
 	  (forward-line 1)))
       (nreverse res))))
 
-(defun elx-header (header &optional multiline seperator)
-  "Return the contents of the header named HEADER, a string.
-Or if MULTILINE and/or SEPERATOR is non-nil return a list of strings,
-one per continuation line and/or substring split by SEPERATOR."
-  (let ((value (if multiline
-		   (elx-header-multiline header)
-		 (save-excursion
-		   (list (lm-header header))))))
-    (when seperator
-      (setq value (mapcan (lambda (string)
-			    (when string
-			      (split-string string seperator t)))
-			  value)))
-    (if (or seperator multiline)
-	value
-      (car value))))
+(defun elx-header (header)
+  "Return the contents of the header named HEADER.
+The returned value is a string."
+  (save-excursion
+    (lm-header header)))
 
 ;;; Extract Various.
 
@@ -548,16 +537,16 @@ the cdr is an email address."
 		(setq elt (elx-crack-address elt))
 		(when elt
 		  (list elt))))
-	    (elx-header "authors?" t ", +"))))
+	    (elx-header-multiline "authors?"))))
 
 (defun elx-maintainer (&optional file)
   "Return the maintainer of file FILE.
 Or the current buffer if FILE is equal to `buffer-file-name' or is nil.
 The return value has the form (NAME . ADDRESS)."
   (elx-with-file file
-    (let ((maint (elx-header "maintainer" nil ", +")))
+    (let ((maint (elx-header "maintainer")))
       (if maint
-	  (elx-crack-address (car maint))
+	  (elx-crack-address maint)
 	(car (elx-authors))))))
 
 (defun elx-adapted-by (&optional file)
@@ -565,9 +554,9 @@ The return value has the form (NAME . ADDRESS)."
 Or the current buffer if FILE is equal to `buffer-file-name' or is nil.
 The return value has the form (NAME . ADDRESS)."
   (elx-with-file file
-    (let ((adapter (elx-header "adapted-by" nil ", +")))
+    (let ((adapter (elx-header "adapted-by")))
       (when adapter
-	(elx-crack-address (car adapter))))))
+	(elx-crack-address adapter)))))
 
 (provide 'elx)
 ;;; elx.el ends here

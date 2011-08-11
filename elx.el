@@ -486,7 +486,7 @@ the cadr."
   :type '(repeat (list string (choice (const  :tag "drop" nil)
 				      (string :tag "replacement")))))
 
-(defun elx-crack-address (x &optional sanitize)
+(defun elx-crack-address (x)
   "Split up an email address X into full name and real email address.
 The value is a cons of the form (FULLNAME . ADDRESS)."
   (let (name mail)
@@ -537,7 +537,7 @@ The value is a cons of the form (FULLNAME . ADDRESS)."
     (when (or name mail)
       (cons name mail))))
 
-(defun elx-authors (&optional file sanitize)
+(defun elx-authors (&optional file)
   "Return the author list of file FILE.
 Or the current buffer if FILE is equal to `buffer-file-name' or is nil.
 Each element of the list is a cons; the car is the full name,
@@ -545,29 +545,29 @@ the cdr is an email address."
   (elx-with-file file
     (mapcan (lambda (elt)
 	      (when elt
-		(setq elt (elx-crack-address elt sanitize))
+		(setq elt (elx-crack-address elt))
 		(when elt
 		  (list elt))))
 	    (elx-header "authors?" t ", +"))))
 
-(defun elx-maintainer (&optional file sanitize)
+(defun elx-maintainer (&optional file)
   "Return the maintainer of file FILE.
 Or the current buffer if FILE is equal to `buffer-file-name' or is nil.
 The return value has the form (NAME . ADDRESS)."
   (elx-with-file file
     (let ((maint (elx-header "maintainer" nil ", +")))
       (if maint
-	  (elx-crack-address (car maint) sanitize)
+	  (elx-crack-address (car maint))
 	(car (elx-authors))))))
 
-(defun elx-adapted-by (&optional file sanitize)
+(defun elx-adapted-by (&optional file)
   "Return the person how adapted file FILE.
 Or the current buffer if FILE is equal to `buffer-file-name' or is nil.
 The return value has the form (NAME . ADDRESS)."
   (elx-with-file file
     (let ((adapter (elx-header "adapted-by" nil ", +")))
       (when adapter
-	(elx-crack-address (car adapter) sanitize)))))
+	(elx-crack-address (car adapter))))))
 
 (provide 'elx)
 ;;; elx.el ends here

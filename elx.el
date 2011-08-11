@@ -61,9 +61,6 @@ current buffer.  Move to beginning of buffer before executing BODY."
 	     (goto-char (point-min))
 	     ,@body))))))
 
-;; This is almost identical to `lm-header-multiline' and will be merged
-;; into that function.
-;;
 (defun elx-header-multiline (header)
   "Return the contents of the header named HEADER, with continuation lines.
 The returned value is a list of strings, one per line."
@@ -73,14 +70,11 @@ The returned value is a list of strings, one per line."
       (when res
 	(setq res (list res))
 	(forward-line 1)
-	(while (and (or (looking-at (concat lm-header-prefix "[\t ]+"))
-			(and (not (looking-at
-				   (lm-get-header-re
-				    "\\sw\\(\\sw\\|\\s_\\|\\s-\\)*")))
-			     (looking-at lm-header-prefix)))
+	(while (and (or (looking-at "^;+[ \t]+\\(@(#)\\)?[ \t]*\\$?[ \t]+")
+			(looking-at    "^;+\t+\\(@(#)\\)?[ \t]*\\$?"))
 		    (goto-char (match-end 0))
 		    (looking-at ".+"))
-	  (setq res (cons (match-string-no-properties 0) res))
+	  (push (match-string-no-properties 0) res)
 	  (forward-line 1)))
       (nreverse res))))
 

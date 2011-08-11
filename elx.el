@@ -4,8 +4,8 @@
 
 ;; Author: Jonas Bernoulli <jonas@bernoul.li>
 ;; Created: 20081202
-;; Updated: 20110309
-;; Version: 0.7.0
+;; Updated: 20110811
+;; Version: 0.7.0-git
 ;; Homepage: https://github.com/tarsius/elx
 ;; Keywords: docs, libraries, packages
 
@@ -550,7 +550,7 @@ the cdr is an email address."
   (elx-with-file file
     (mapcan (lambda (elt)
 	      (when elt
-		(setq elt (elx-crack-address elt) sanitize)
+		(setq elt (elx-crack-address elt sanitize))
 		(when elt
 		  (list elt))))
 	    (elx-header "authors?" t ", +"))))

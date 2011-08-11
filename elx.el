@@ -120,7 +120,6 @@ If STANDARDIZE is non-nil remove trailing period and upcase first word."
 			(substring summary 1)))))
       summary)))
 
-
 (defcustom elx-remap-keywords nil
   "List of keywords that should be replaced or dropped by `elx-keywords'.
 If function `elx-keywords' is called with a non-nil SANITIZE argument it
@@ -135,26 +134,28 @@ the cadr."
 (defun elx-keywords (&optional file sanitize)
   "Return list of keywords given in file FILE.
 Or the current buffer if FILE is equal to `buffer-file-name' or is nil."
-  ;; TODO merge changes from `lisp-maint'.
   (elx-with-file file
-    (let ((keywords (elx-header "keywords" t)))
-      (when keywords
-	(mapcan
-	 ;; Filter some nonsense.
-	 (lambda (str)
-	   (when (string-match "^[-a-z]+$" str)
-	     (let ((elt (assoc str elx-remap-keywords)))
-	       (if elt
-		   (when (cadr elt)
-		     (list (cadr elt)))
-		 (list str)))))
-	 (split-string
-	  (replace-regexp-in-string
-	   "\\(\t\\|\s\\)+" "\s"
-	   (replace-regexp-in-string
-	    "," ""
-	    (downcase (mapconcat #'identity keywords " "))))
-	  " "))))))
+    (let ((lines (elx-header-multiline "keywords"))
+	  features)
+      (when lines
+	(dolist (feature
+		 (sort (mapcan
+			(lambda (line)
+			  (split-string
+			   (downcase line)
+			   (concat "\\("
+				   (if (string-match-p "," line)
+				       ",[ \t]*"
+				     "[ \t]+")
+				   "\\|[ \t]+and[ \t]+\\)")
+			   t)) lines) 'string<))
+	  (let ((remap (assoc feature elx-remap-keywords)))
+	    (when (cadr remap)
+	      (setq feature (cadr remap)))
+	    (when (and (not (equal feature (car features)))
+		       (string-match "^[- a-z]+$" feature))
+	      (push feature features))))
+	(sort features 'string<)))))
 
 (defsubst elx-commentary-start (&optional afterp)
   "Return the buffer location of the `Commentary' start marker.

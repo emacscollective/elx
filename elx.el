@@ -89,7 +89,7 @@ The returned value is a string."
 
 (defun elx-summary (&optional file standardize)
   "Return the summary of file FILE.
-Or the current buffer if FILE is equal to `buffer-file-name' or is nil.
+Or of the current buffer if FILE is equal to `buffer-file-name' or is nil.
 If STANDARDIZE is non-nil remove trailing period and upcase first word."
   (let ((summary
 	 (elx-with-file file
@@ -123,7 +123,7 @@ the cadr."
 
 (defun elx-keywords (&optional file sanitize)
   "Return list of keywords given in file FILE.
-Or the current buffer if FILE is equal to `buffer-file-name' or is nil."
+Or of the current buffer if FILE is equal to `buffer-file-name' or is nil."
   (elx-with-file file
     (let ((lines (elx-header-multiline "keywords"))
 	  features)
@@ -164,7 +164,7 @@ like when the actual code is not prefixed with the \"Code\" seciton tag."
 
 (defun elx-commentary (&optional file)
   "Return the commentary in file FILE.
-Or the current buffer if FILE is equal to `buffer-file-name' or is nil.
+Or of the current buffer if FILE is equal to `buffer-file-name' or is nil.
 
 Return the commentary as a normalized string.  The commentary section
 starts with the tag `Commentary' or `Documentation' and ends just before
@@ -338,7 +338,7 @@ Used by function `elx-license'.  Each entry has the form
 
 (defun elx-license (&optional file)
   "Return the license of file FILE.
-Or the current buffer if FILE is equal to `buffer-file-name' or is nil.
+Or of the current buffer if FILE is equal to `buffer-file-name' or is nil.
 
 The license is extracted from the \"License\" header or if that is missing
 by searching the file header for text matching entries in `elx-license-regexps'.
@@ -442,7 +442,7 @@ If no matching entry exists return nil."
 
 (defun elx-version (&optional file standardize)
   "Return the version of file FILE.
-Or the current buffer if FILE is equal to `buffer-file-name'.
+Or of the current buffer if FILE is equal to `buffer-file-name'.
 
 Return the value of header \"Version\".  If header \"Update\\( #\\)?\" is
 also defined append it's value after a period.  If \"Update\\( #\\)?\" is
@@ -530,7 +530,7 @@ The value is a cons of the form (FULLNAME . ADDRESS)."
 
 (defun elx-authors (&optional file)
   "Return the author list of file FILE.
-Or the current buffer if FILE is equal to `buffer-file-name' or is nil.
+Or of the current buffer if FILE is equal to `buffer-file-name' or is nil.
 Each element of the list is a cons; the car is the full name,
 the cdr is an email address."
   (elx-with-file file
@@ -543,7 +543,7 @@ the cdr is an email address."
 
 (defun elx-maintainer (&optional file)
   "Return the maintainer of file FILE.
-Or the current buffer if FILE is equal to `buffer-file-name' or is nil.
+Or of the current buffer if FILE is equal to `buffer-file-name' or is nil.
 The return value has the form (NAME . ADDRESS)."
   (elx-with-file file
     (let ((maint (elx-header "maintainer")))
@@ -552,8 +552,8 @@ The return value has the form (NAME . ADDRESS)."
 	(car (elx-authors))))))
 
 (defun elx-adapted-by (&optional file)
-  "Return the person how adapted file FILE.
-Or the current buffer if FILE is equal to `buffer-file-name' or is nil.
+  "Return the adapter of file FILE.
+Or of the current buffer if FILE is equal to `buffer-file-name' or is nil.
 The return value has the form (NAME . ADDRESS)."
   (elx-with-file file
     (let ((adapter (elx-header "adapted-by")))

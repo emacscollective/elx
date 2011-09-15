@@ -87,6 +87,14 @@ The returned value is a string."
 
 ;;; Extract Various.
 
+(defun elx-package (&optional file)
+  "Return the package of file FILE.
+Or of the current buffer if FILE is equal to `buffer-file-name' or is nil."
+  (elx-with-file file
+    (let ((p (elx-header "package")))
+      (when p
+	(intern p)))))
+
 (defun elx-summary (&optional file standardize)
   "Return the summary of file FILE.
 Or of the current buffer if FILE is equal to `buffer-file-name' or is nil.

@@ -4,8 +4,7 @@
 
 ;; Author: Jonas Bernoulli <jonas@bernoul.li>
 ;; Created: 20081202
-;; Updated: 20110822
-;; Version: 0.7.2
+;; Version: 0.7.2-git
 ;; Homepage: https://github.com/tarsius/elx
 ;; Keywords: docs, libraries, packages
 
@@ -50,16 +49,17 @@ current buffer.  Move to beginning of buffer before executing BODY."
   (declare (indent 1) (debug t))
   (let ((filesym (gensym "file")))
     `(let ((,filesym ,file))
-       (if (and ,filesym (not (equal ,filesym buffer-file-name)))
-	   (with-temp-buffer
-	     (insert-file-contents ,filesym)
+       (save-match-data
+	 (save-excursion
+	   (if (and ,filesym (not (equal ,filesym buffer-file-name)))
+	       (with-temp-buffer
+		 (insert-file-contents ,filesym)
+		 (with-syntax-table emacs-lisp-mode-syntax-table
+		   (goto-char (point-min))
+		   ,@body))
 	     (with-syntax-table emacs-lisp-mode-syntax-table
 	       (goto-char (point-min))
-	       ,@body))
-	 (save-excursion
-	   (with-syntax-table emacs-lisp-mode-syntax-table
-	     (goto-char (point-min))
-	     ,@body))))))
+	       ,@body)))))))
 
 (defun elx-header-multiline (header)
   "Return the contents of the header named HEADER, with continuation lines.
@@ -81,8 +81,9 @@ The returned value is a list of strings, one per line."
 (defun elx-header (header)
   "Return the contents of the header named HEADER.
 The returned value is a string."
-  (save-excursion
-    (lm-header header)))
+  (save-match-data
+    (save-excursion
+      (lm-header header))))
 
 ;;; Extract Various.
 

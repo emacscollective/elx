@@ -4,7 +4,7 @@
 
 ;; Author: Jonas Bernoulli <jonas@bernoul.li>
 ;; Created: 20081202
-;; Version: 0.7.3
+;; Version: 0.7.4
 ;; Homepage: https://github.com/tarsius/elx
 ;; Keywords: docs, libraries, packages
 
@@ -179,7 +179,7 @@ starts with the tag `Commentary' or `Documentation' and ends just before
 the next section.  Leading and trailing whitespace is removed from the
 returned value but it always ends with exactly one newline. On each line
 the leading semicolons and exactly one space are removed, likewise
-leading \"\(\" is replaced with just \"(\".  Lines only consisting only of
+leading \"\(\" is replaced with just \"(\".  Lines consisting only of
 whitespace are converted to empty lines."
   (elx-with-file file
     (let ((start (elx-commentary-start t)))
@@ -198,75 +198,6 @@ whitespace are converted to empty lines."
 	    (concat commentary "\n")))))))
 
 ;;; Extract Pages.
-
-(defcustom elx-wiki-directory
-  (convert-standard-filename "~/.emacs.d/wikipages/")
-  "The directory containing the Emacswiki pages.
-
-This variable is used by function `elx-wikipage' when determining the page
-on the Emacswiki about a given package.
-
-It's value should be a directory containing all or a subset of pages from
-the Emacswiki all at the top-level.  You can create such a directory by
-cloning eigher the svn or git repository described at
-http://www.emacswiki.org/SVN_repository and
-http://www.emacswiki.org/Git_repository respectively."
-  :group 'elx
-  :type 'directory)
-
-(defun elx-wikipage (&optional file name pages urlp)
-  "Extract the page on the Emacswiki for the specified package.
-
-The page is extracted from the respective header of FILE which should be
-the package's mainfile.  If this fails the package's NAME is matched
-against a list of pages known to exist on the Emacswiki.  While either
-FILE and NAME may be nil at least one has to be non-nil.
-
-This list can be specified explicitly using the optional PAGES argument
-which either has to be a list of filenames or a directory containing the
-pages at the toplevel.  If PAGES is nil the contents of
-`elx-wiki-directory' are used.
-
-The name of the package can be passed explicitly using the optional NAME
-argument otherwise it is derived from FILE.  If NAME is set FILE may be
-omitted.
-
-Both the package's name and the pages it is being matched against are
-downcased for comparison.  Also a trailing plus sign in the package's name
-is replaced with \"plus\" and dashes appearing anywhere in it are removed.
-
-If optional URLP is specified and non-nil return the url of the page
-otherwise only the name.
-
-There is no guarantee that this will always return the package's page on
-the Emacswiki when such a page exists or that false-positives do not ever
-occur."
-  (elx-with-file file
-    (or (when file
-	  (elx-header "\\(?:x-\\)?\\(?:emacs\\)?wiki-?page"))
-	(progn
-	  (setq pages (mapcar
-		       (lambda (page)
-			 (cons (downcase
-				(replace-regexp-in-string "-" "" page))
-			       page))
-		       (if (consp pages)
-			   pages
-			 (directory-files (or pages elx-wiki-directory)
-					  nil "^[^.]" t))))
-	  (setq name (downcase
-		      (replace-regexp-in-string "\\+$" "plus"
-		       (replace-regexp-in-string "-" ""
-			(or name
-			    (file-name-sans-extension
-			     (file-name-nondirectory (buffer-file-name))))))))
-	  (let ((page (or (cdr (assoc name pages))
-			  (cdr (assoc (if (string-match "mode$" name)
-					  (substring name 0 -4)
-					(concat name "mode"))
-				      pages)))))
-	    (when page
-	      (concat (when urlp "http://www.emacswiki.org/") page)))))))
 
 (defun elx-homepage (&optional file)
   "Extract the homepage of the specified package."
@@ -457,11 +388,7 @@ also defined append it's value after a period.  If \"Update\\( #\\)?\" is
 defined but \"Version\" is not assume 0 for \"Version\".
 
 If optional STANDARDIZE is non-nil verify and possible convert the version
-using function `vcomp-normalize' (which see).
-
-If the file fails to properly define the version and you absolutely need
-something else than nil try function `elx-version+' or even `elx-version>'
-and complain to the respective author."
+using function `vcomp-normalize' (which see)."
   (elx-with-file file
     (let ((version (elx-header "version"))
 	  (update  (elx-header "update\\( #\\)?")))

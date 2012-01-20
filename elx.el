@@ -4,7 +4,7 @@
 
 ;; Author: Jonas Bernoulli <jonas@bernoul.li>
 ;; Created: 20081202
-;; Version: 0.7.4
+;; Version: 0.7.5
 ;; Homepage: https://github.com/tarsius/elx
 ;; Keywords: docs, libraries, packages
 
@@ -95,10 +95,11 @@ Or of the current buffer if FILE is equal to `buffer-file-name' or is nil."
       (when p
 	(intern p)))))
 
-(defun elx-summary (&optional file standardize)
+(defun elx-summary (&optional file raw)
   "Return the summary of file FILE.
 Or of the current buffer if FILE is equal to `buffer-file-name' or is nil.
-If STANDARDIZE is non-nil remove trailing period and upcase first word."
+Trailing period is removed and first word is upcases unless optional RAW
+is non-nil."
   (let ((summary
 	 (elx-with-file file
 	   (when (and (looking-at lm-header-prefix)
@@ -108,8 +109,8 @@ If STANDARDIZE is non-nil remove trailing period and upcase first word."
 	       (if (string-match "[ \t]*-\\*-.*-\\*-" summary)
 		   (substring summary 0 (match-beginning 0))
 		 summary))))))
-    (unless (member summary '(nil ""))
-      (when standardize
+    (when (and summary (not (equal summary "")))
+      (unless raw
 	(when (string-match "\\.$" summary)
 	  (setq summary (substring summary 0 -1)))
 	(when (string-match "^[a-z]" summary)
@@ -129,7 +130,7 @@ the cadr."
   :type '(repeat (list string (choice (const  :tag "drop" nil)
 				      (string :tag "replacement")))))
 
-(defun elx-keywords (&optional file sanitize)
+(defun elx-keywords (&optional file)
   "Return list of keywords given in file FILE.
 Or of the current buffer if FILE is equal to `buffer-file-name' or is nil."
   (elx-with-file file

@@ -1,10 +1,10 @@
 ;;; elx.el --- extract information from Emacs Lisp libraries
 
-;; Copyright (C) 2008-2011  Jonas Bernoulli
+;; Copyright (C) 2008-2012  Jonas Bernoulli
 
 ;; Author: Jonas Bernoulli <jonas@bernoul.li>
 ;; Created: 20081202
-;; Version: 0.7.5
+;; Version: 0.7.6
 ;; Homepage: https://github.com/tarsius/elx
 ;; Keywords: docs, libraries, packages
 
@@ -100,15 +100,11 @@ Or of the current buffer if FILE is equal to `buffer-file-name' or is nil."
 Or of the current buffer if FILE is equal to `buffer-file-name' or is nil.
 Trailing period is removed and first word is upcases unless optional RAW
 is non-nil."
-  (let ((summary
-	 (elx-with-file file
-	   (when (and (looking-at lm-header-prefix)
-		      (progn (goto-char (match-end 0))
-			     (looking-at "[^ ]+[ \t]+--+[ \t]+\\(.*\\)")))
-	     (let ((summary (match-string-no-properties 1)))
-	       (if (string-match "[ \t]*-\\*-.*-\\*-" summary)
-		   (substring summary 0 (match-beginning 0))
-		 summary))))))
+  (let ((summary (elx-with-file file
+		   (or (elx-summary-1)
+		       ;; some people put it on the second line
+		       (progn (forward-line)
+			      (elx-summary-1))))))
     (when (and summary (not (equal summary "")))
       (unless raw
 	(when (string-match "\\.$" summary)
@@ -118,6 +114,16 @@ is non-nil."
 		(concat (upcase (substring summary 0 1))
 			(substring summary 1)))))
       summary)))
+
+(defun elx-summary-1 ()
+  (when (and (looking-at lm-header-prefix)
+	     (progn (goto-char (match-end 0))
+		    ;; lm-summary requires at least two dashes instead
+		    (looking-at "[^ ]+[ \t]+-+[ \t]+\\(.*\\)")))
+    (let ((summary (match-string-no-properties 1)))
+      (if (string-match "[ \t]*-\\*-.*-\\*-" summary)
+	  (substring summary 0 (match-beginning 0))
+	summary))))
 
 (defcustom elx-remap-keywords nil
   "List of keywords that should be replaced or dropped by `elx-keywords'.

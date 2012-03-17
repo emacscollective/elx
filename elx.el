@@ -4,7 +4,7 @@
 
 ;; Author: Jonas Bernoulli <jonas@bernoul.li>
 ;; Created: 20081202
-;; Version: 0.7.7
+;; Version: 0.7.8
 ;; Homepage: https://github.com/tarsius/elx
 ;; Keywords: docs, libraries, packages
 
@@ -208,8 +208,11 @@ whitespace are converted to empty lines."
 
 (defun elx-homepage (&optional file)
   "Extract the homepage of the specified package."
-  (elx-with-file file
-    (elx-header "\\(?:x-\\)?\\(?:homepage\\|url\\)")))
+  (let ((page (elx-with-file file
+		(elx-header "\\(?:x-\\)?\\(?:homepage\\|url\\)"))))
+    (if (and page (string-match "^<.+>$" page))
+	(substring page 1 -1)
+      page)))
 
 ;;; Extract License.
 

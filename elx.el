@@ -4,7 +4,7 @@
 
 ;; Author: Jonas Bernoulli <jonas@bernoul.li>
 ;; Created: 20081202
-;; Version: 0.7.8
+;; Version: 0.7.8-git
 ;; Homepage: https://github.com/tarsius/elx
 ;; Keywords: docs, libraries, packages
 
@@ -172,7 +172,7 @@ commentary header itself."
 (defsubst elx-commentary-end ()
   "Return the buffer location of the `Commentary' section end.
 This even works when no other section follows the commentary section
-like when the actual code is not prefixed with the \"Code\" seciton tag."
+like when the actual code is not prefixed with the \"Code\" section tag."
   (goto-char (elx-commentary-start t))
   (min (lm-section-end lm-commentary-header)
        (1- (or (re-search-forward "^[\s\t]*[^;\n]" nil t) (point-max)))))

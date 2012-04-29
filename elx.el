@@ -55,10 +55,9 @@ current buffer.  Move to beginning of buffer before executing BODY."
 	       (with-temp-buffer
 		 (insert-file-contents ,filesym)
 		 (with-syntax-table emacs-lisp-mode-syntax-table
-		   (goto-char (point-min))
 		   ,@body))
+	     (goto-char (point-min))
 	     (with-syntax-table emacs-lisp-mode-syntax-table
-	       (goto-char (point-min))
 	       ,@body)))))))
 
 (defun elx-header-multiline (header)

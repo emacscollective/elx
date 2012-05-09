@@ -4,7 +4,7 @@
 
 ;; Author: Jonas Bernoulli <jonas@bernoul.li>
 ;; Created: 20081202
-;; Version: 0.7.8-git
+;; Version: 0.8.0
 ;; Homepage: https://github.com/tarsius/elx
 ;; Keywords: docs, libraries, packages
 
@@ -33,7 +33,6 @@
 ;;; Code:
 
 (require 'cl)
-(require 'dconv)
 (require 'vcomp)
 (require 'lisp-mnt)
 
@@ -346,45 +345,64 @@ If no matching entry exists return nil."
 
 ;;; Extract Dates.
 
-(defun elx-date--id-header (&optional file)
+(defun elx-created (&optional file)
   (elx-with-file file
-    (when (re-search-forward "\\$[I]d: [^ ]+ [^ ]+ \\([^ ]+\\)"
-			     (lm-code-mark) t)
-      (match-string-no-properties 1))))
-
-(defun elx-date--first-copyright (&optional file)
-  (elx-with-file file
-    (let ((lm-copyright-prefix "^\\(;+[ \t]\\)+Copyright \\((C) \\)?"))
-      (when (lm-copyright-mark)
-	;; FIXME \/ seams to have problems with ranges like 2009-2010
-	(cadr (lm-crack-copyright))))))
-
-(defun elx-date--last-copyright (&optional file)
-  (elx-with-file file
-    (let ((lm-copyright-prefix "^\\(;+[ \t]\\)+Copyright \\((C) \\)?"))
-      (when (lm-copyright-mark)
-	(let ((last (car (last (lm-crack-copyright)))))
-	  last)))))
-
-(defun elx-date--time-stamp-header (&optional file)
-  (let ((value (elx-header "time-stamp")))
-    (when (and value
-	       (string-match "[\"<]\\([-0-9]+\\)[\s\t].+[\">]" value))
-      (match-string 1 value))))
+    (or (elx--date-1 (lm-creation-date))
+	(elx--date-1 (elx--date-copyright)))))
 
 (defun elx-updated (&optional file)
   (elx-with-file file
-    (or (dconv-convert-date (elx-header "\\(last-\\)?updated"))
-	(dconv-convert-date (elx-header "modified"))
-	(dconv-convert-date (elx-header "\\$date"))
-	(dconv-convert-date (elx-date--id-header))
-	(dconv-convert-date (elx-date--time-stamp-header))
-	(dconv-convert-date (elx-date--last-copyright)))))
+    (elx--date-1 (elx-header "\\(last-\\)?updated"))))
 
-(defun elx-created (&optional file)
-  (elx-with-file file
-    (or (dconv-convert-date (lm-creation-date))
-	(dconv-convert-date (elx-date--first-copyright)))))
+(defun elx--date-1 (string)
+  (when (stringp string)
+    (let ((ymd "\
+\\([0-9]\\{4,4\\}\\)\\(?:[-/.]?\
+\\([0-9]\\{1,2\\}\\)\\(?:[-/.]?\
+\\([0-9]\\{1,2\\}\\)?\\)?\\)")
+	  (dmy "\
+\\(?3:[0-9]\\{1,2\\}\\)\\(?:[-/.]?\\)\
+\\(?2:[0-9]\\{1,2\\}\\)\\(?:[-/.]?\\)\
+\\(?1:[0-9]\\{4,4\\}\\)"))
+      (or (elx--date-2 string ymd t)
+	  (elx--date-2 string dmy t)
+	  (let ((a (elx--date-3 string))
+		(b (or (elx--date-2 string ymd nil)
+		       (elx--date-2 string dmy nil))))
+	    (cond ((not a) b)
+		  ((not b) a)
+		  ((> (length a) (length b)) a)
+		  ((> (length b) (length a)) b)
+		  (t a)))))))
+  
+(defun elx--date-2 (string regexp anchored)
+  (when (string-match (if anchored (format "^%s$" regexp) regexp) string)
+    (let ((m  (match-string 2 string))
+	  (d  (match-string 3 string)))
+      (concat (match-string 1 string)
+	      (and m d (concat (if (= (length m) 2) m (concat "0" m))
+			       (if (= (length d) 2) d (concat "0" d))))))))
+
+(defun elx--date-3 (string)
+  (let ((time (mapcar (lambda (e) (or e 0))
+		      (butlast (parse-time-string string)))))
+    (unless (= (nth 5 time) 0)
+      (format-time-string
+       (if (and (> (nth 4 time) 0)
+		(> (nth 3 time) 0))
+	   "%Y%m%d"
+	 ;; (format-time-string "%Y" (encode-time x x x 0 0 2012))
+	 ;; => "2011"
+	 (setf (nth 3 time) 1 (nth 4 time) 1)
+	 "%Y")
+       (apply 'encode-time time)
+       t))))
+
+;; FIXME implement range extraction in lm-crack-copyright
+(defun elx--date-copyright ()
+  (let ((lm-copyright-prefix "^\\(;+[ \t]\\)+Copyright \\((C) \\)?"))
+    (when (lm-copyright-mark)
+      (cadr (lm-crack-copyright)))))
 
 ;;; Extract Version.
 

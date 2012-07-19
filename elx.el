@@ -33,7 +33,6 @@
 ;;; Code:
 
 (require 'cl)
-(require 'vcomp)
 (require 'lisp-mnt)
 
 (defgroup elx nil
@@ -406,6 +405,9 @@ If no matching entry exists return nil."
 
 ;;; Extract Version.
 
+(declare-function vcomp-version-p "vcomp" (string))
+(declare-function vcomp-normalize "vcomp" (version))
+
 (defun elx-version (&optional file standardize)
   "Return the version of file FILE.
 Or of the current buffer if FILE is equal to `buffer-file-name'.
@@ -416,6 +418,7 @@ defined but \"Version\" is not assume 0 for \"Version\".
 
 If optional STANDARDIZE is non-nil verify and possible convert the version
 using function `vcomp-normalize' (which see)."
+  (require 'vcomp)
   (elx-with-file file
     (let ((version (elx-header "version"))
 	  (update  (elx-header "update\\( #\\)?")))

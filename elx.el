@@ -408,15 +408,15 @@ If no matching entry exists return nil."
 (declare-function vcomp-version-p "vcomp" (string))
 (declare-function vcomp-normalize "vcomp" (version))
 
-(defun elx-version (&optional file standardize)
+(defun elx-version (&optional file raw)
   "Return the version of file FILE.
-Or of the current buffer if FILE is equal to `buffer-file-name'.
+Or of the current buffer if FILE is equal to `buffer-file-name' or nil.
 
 Return the value of header \"Version\".  If header \"Update\\( #\\)?\" is
 also defined append it's value after a period.  If \"Update\\( #\\)?\" is
 defined but \"Version\" is not assume 0 for \"Version\".
 
-If optional STANDARDIZE is non-nil verify and possible convert the version
+Unless optional RAW is non-nil verify and possible convert the version
 using function `vcomp-normalize' (which see)."
   (require 'vcomp)
   (elx-with-file file
@@ -424,10 +424,10 @@ using function `vcomp-normalize' (which see)."
 	  (update  (elx-header "update\\( #\\)?")))
       (when update
 	(setq version (concat (or version "0") "." update)))
-      (if standardize
-	  (when (and version (vcomp-version-p version))
-	    (vcomp-normalize version))
-	version))))
+      (if raw
+	  version
+	(when (and version (vcomp-version-p version))
+	  (vcomp-normalize version))))))
 
 ;;; Extract People.
 

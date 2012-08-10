@@ -426,7 +426,8 @@ using function `vcomp-normalize' (which see)."
 	(setq version (concat (or version "0") "." update)))
       (if raw
 	  version
-	(when (and version (vcomp-version-p version))
+	(when (and version
+		   (setq version (vcomp-prefixed-version-p version)))
 	  (vcomp-normalize version))))))
 
 ;;; Extract People.

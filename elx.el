@@ -407,6 +407,7 @@ If no matching entry exists return nil."
 
 (declare-function vcomp-version-p "vcomp" (string))
 (declare-function vcomp-normalize "vcomp" (version))
+(declare-function vcomp-prefixed-version-p "vcomp" (string &optional prefix))
 
 (defun elx-version (&optional file raw)
   "Return the version of file FILE.

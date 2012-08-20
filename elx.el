@@ -32,7 +32,6 @@
 
 ;;; Code:
 
-(require 'cl)
 (require 'lisp-mnt)
 
 (defgroup elx nil
@@ -45,7 +44,7 @@
 If FILE is nil or equal to `buffer-file-name' execute BODY in the
 current buffer.  Move to beginning of buffer before executing BODY."
   (declare (indent 1) (debug t))
-  (let ((filesym (gensym "file")))
+  (let ((filesym (make-symbol "file")))
     `(let ((,filesym ,file))
        (save-match-data
 	 (save-excursion
@@ -140,17 +139,19 @@ Or of the current buffer if FILE is equal to `buffer-file-name' or is nil."
     (let ((lines (elx-header-multiline "keywords"))
 	  features)
       (when lines
-	(dolist (feature
-		 (sort (mapcan
-			(lambda (line)
-			  (split-string
-			   (downcase line)
-			   (concat "\\("
-				   (if (string-match-p "," line)
-				       ",[ \t]*"
-				     "[ \t]+")
-				   "\\|[ \t]+and[ \t]+\\)")
-			   t)) lines) 'string<))
+	(dolist (line lines)
+	  (setq features
+		(nconc (split-string
+			(downcase line)
+			(concat "\\("
+				(if (string-match-p "," line)
+				    ",[ \t]*"
+				  "[ \t]+")
+				"\\|[ \t]+and[ \t]+\\)")
+			t)
+		       features)))
+	(setq lines (sort lines 'string<))
+	(dolist (feature features)
 	  (setq feature (intern feature))
 	  (let ((remap (assoc feature elx-remap-keywords)))
 	    (when (cadr remap)
@@ -340,7 +341,7 @@ use a page on the Emacsmirror instead."
   "Return the canonical url to LICENSE.
 The license is looked up in the variable `elx-license-url'.
 If no matching entry exists return nil."
-  (cdar (member* license elx-license-url :key 'car :test 'equal)))
+  (cdr (assoc license elx-license-url)))
 
 ;;; Extract Dates.
 
@@ -392,7 +393,8 @@ If no matching entry exists return nil."
 	   "%Y%m%d"
 	 ;; (format-time-string "%Y" (encode-time x x x 0 0 2012))
 	 ;; => "2011"
-	 (setf (nth 3 time) 1 (nth 4 time) 1)
+	 (setcar (nthcdr 3 time) 1)
+	 (setcar (nthcdr 4 time) 1)
 	 "%Y")
        (apply 'encode-time time)
        t))))
@@ -501,12 +503,13 @@ Or of the current buffer if FILE is equal to `buffer-file-name' or is nil.
 Each element of the list is a cons; the car is the full name,
 the cdr is an email address."
   (elx-with-file file
-    (mapcan (lambda (elt)
-	      (when elt
-		(setq elt (elx-crack-address elt))
-		(when elt
-		  (list elt))))
-	    (elx-header-multiline "authors?"))))
+    (let (authors)
+      (dolist (a (elx-header-multiline "authors?"))
+	(when a
+	  (setq a (elx-crack-address a))
+	  (when a
+	    (setq authors (cons a authors)))))
+      (sort authors (lambda (a b) (string< a b))))))
 
 (defun elx-maintainer (&optional file)
   "Return the maintainer of file FILE.

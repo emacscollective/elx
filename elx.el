@@ -132,34 +132,29 @@ the cadr."
   :type '(repeat (list string (choice (const  :tag "drop" nil)
 				      (string :tag "replacement")))))
 
+(defvar elx-keywords-regexp "^[- a-z]+$")
+
 (defun elx-keywords (&optional file)
   "Return list of keywords given in file FILE.
 Or of the current buffer if FILE is equal to `buffer-file-name' or is nil."
   (elx-with-file file
-    (let ((lines (elx-header-multiline "keywords"))
-	  features)
-      (when lines
-	(dolist (line lines)
-	  (setq features
-		(nconc (split-string
-			(downcase line)
-			(concat "\\("
-				(if (string-match-p "," line)
-				    ",[ \t]*"
-				  "[ \t]+")
-				"\\|[ \t]+and[ \t]+\\)")
-			t)
-		       features)))
-	(setq lines (sort lines 'string<))
-	(dolist (feature features)
-	  (setq feature (intern feature))
-	  (let ((remap (assoc feature elx-remap-keywords)))
-	    (when (cadr remap)
-	      (setq feature (cadr remap)))
-	    (when (and (not (eq feature (car features)))
-		       (string-match "^[- a-z]+$" (symbol-name feature)))
-	      (push feature features))))
-	(sort features 'string<)))))
+    (let (keywords)
+      (dolist (line (elx-header-multiline "keywords"))
+	(dolist (keyword (split-string
+			  (downcase line)
+			  (concat "\\("
+				  (if (string-match-p "," line)
+				      ",[ \t]*"
+				    "[ \t]+")
+				  "\\|[ \t]+and[ \t]+\\)")
+			  t))
+	  (setq keyword (intern keyword))
+	  (let ((remap (assoc keyword elx-remap-keywords)))
+	    (and remap (setq keyword (cadr remap))))
+	  (and keyword
+	       (string-match elx-keywords-regexp (symbol-name keyword))
+	       (add-to-list 'keywords keyword))))
+      (sort keywords 'string<))))
 
 (defsubst elx-commentary-start (&optional afterp)
   "Return the buffer location of the `Commentary' start marker.

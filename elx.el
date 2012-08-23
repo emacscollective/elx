@@ -499,9 +499,9 @@ The value is a cons of the form (FULLNAME . ADDRESS)."
 
 (defun elx-authors (&optional file)
   "Return the author list of file FILE.
-Or of the current buffer if FILE is equal to `buffer-file-name' or is nil.
-Each element of the list is a cons; the car is the full name,
-the cdr is an email address."
+Or of the current buffer if FILE is equal to `buffer-file-name'
+or is nil.  Each element of the list is a cons; the car is the
+full name, the cdr is an email address."
   (elx-with-file file
     (let (authors)
       (dolist (a (elx-header-multiline "authors?"))
@@ -509,7 +509,7 @@ the cdr is an email address."
 	  (setq a (elx-crack-address a))
 	  (when a
 	    (setq authors (cons a authors)))))
-      (sort authors (lambda (a b) (string< a b))))))
+      (nreverse authors))))
 
 (defun elx-maintainer (&optional file)
   "Return the maintainer of file FILE.

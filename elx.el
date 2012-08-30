@@ -207,6 +207,16 @@ whitespace are converted to empty lines."
 	(substring page 1 -1)
       page)))
 
+(defun elx-wikipage (&optional file)
+  "Extract the Emacswiki page of the specified package."
+  (let ((page (elx-with-file file
+		(elx-header "Doc URL"))))
+    (and page
+	 (string-match
+	  "^<?http://\\(?:www\\.\\)?emacswiki\\.org.*?\\([^/]+\\)>?$"
+	  page)
+	 (match-string 1 page))))
+
 ;;; Extract License.
 
 (defcustom elx-license-search

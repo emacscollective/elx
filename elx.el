@@ -98,9 +98,9 @@ Trailing period is removed and first word is upcases unless optional RAW
 is non-nil."
   (let ((summary (elx-with-file file
 		   (or (elx-summary-1)
-		       ;; some people put it on the second line
-		       (progn (forward-line)
-			      (elx-summary-1))))))
+		       ;; some people put it on the second or third line
+		       (progn (forward-line) (elx-summary-1))
+		       (progn (forward-line) (elx-summary-1))))))
     (when (and summary (not (equal summary "")))
       (unless raw
 	(when (string-match "\\.$" summary)

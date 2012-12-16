@@ -39,40 +39,20 @@
   :group 'maint
   :link '(url-link :tag "Homepage" "https://github.com/tarsius/elx"))
 
-(defmacro elx-with-file (file &rest body)
-  "Execute BODY in a buffer containing the contents of FILE.
-If FILE is nil or equal to `buffer-file-name' execute BODY in the
-current buffer.  Move to beginning of buffer before executing BODY."
-  (declare (indent 1) (debug t))
-  (let ((filesym (make-symbol "file")))
-    `(let ((,filesym ,file))
-       (save-match-data
-	 (save-excursion
-	   (if (and ,filesym (not (equal ,filesym buffer-file-name)))
-	       (with-temp-buffer
-		 (insert-file-contents ,filesym)
-		 (with-syntax-table emacs-lisp-mode-syntax-table
-		   ,@body))
-	     (goto-char (point-min))
-	     (with-syntax-table emacs-lisp-mode-syntax-table
-	       ,@body)))))))
-
 ;;; Extract Various.
 
 (defun elx-package (&optional file)
-  "Return the package of file FILE.
-Or of the current buffer if FILE is equal to `buffer-file-name' or is nil."
-  (elx-with-file file
+  "Return the package of file FILE, or current buffer if FILE is nil."
+  (lm-with-file file
     (let ((p (lm-header "package")))
       (when p
 	(intern p)))))
 
 (defun elx-summary (&optional file raw)
-  "Return the summary of file FILE.
-Or of the current buffer if FILE is equal to `buffer-file-name' or is nil.
+  "Return the summary of file FILE, or current buffer if FILE is nil.
 Trailing period is removed and first word is upcases unless optional RAW
 is non-nil."
-  (let ((summary (elx-with-file file
+  (let ((summary (lm-with-file file
 		   (or (elx-summary-1)
 		       ;; some people put it on the second or third line
 		       (progn (forward-line) (elx-summary-1))
@@ -111,9 +91,8 @@ the cadr."
 (defvar elx-keywords-regexp "^[- a-z]+$")
 
 (defun elx-keywords (&optional file)
-  "Return list of keywords given in file FILE.
-Or of the current buffer if FILE is equal to `buffer-file-name' or is nil."
-  (elx-with-file file
+  "Return list of keywords given in file FILE, or current buffer if FILE is nil."
+  (lm-with-file file
     (let (keywords)
       (dolist (line (lm-header-multiline "keywords"))
 	(dolist (keyword (split-string
@@ -147,8 +126,7 @@ like when the actual code is not prefixed with the \"Code\" section tag."
        (1- (or (re-search-forward "^[\s\t]*[^;\n]" nil t) (point-max)))))
 
 (defun elx-commentary (&optional file)
-  "Return the commentary in file FILE.
-Or of the current buffer if FILE is equal to `buffer-file-name' or is nil.
+  "Return the commentary in file FILE, or current buffer if FILE is nil.
 
 Return the commentary as a normalized string.  The commentary section
 starts with the tag `Commentary' or `Documentation' and ends just before
@@ -157,7 +135,7 @@ returned value but it always ends with exactly one newline. On each line
 the leading semicolons and exactly one space are removed, likewise
 leading \"\(\" is replaced with just \"(\".  Lines consisting only of
 whitespace are converted to empty lines."
-  (elx-with-file file
+  (lm-with-file file
     (let ((start (elx-commentary-start t)))
       (when start
 	(let ((commentary (buffer-substring-no-properties
@@ -177,7 +155,7 @@ whitespace are converted to empty lines."
 
 (defun elx-homepage (&optional file)
   "Extract the homepage of the specified package."
-  (let ((page (elx-with-file file
+  (let ((page (lm-with-file file
 		(lm-header "\\(?:x-\\)?\\(?:homepage\\|url\\)"))))
     (if (and page (string-match "^<.+>$" page))
 	(substring page 1 -1)
@@ -185,7 +163,7 @@ whitespace are converted to empty lines."
 
 (defun elx-wikipage (&optional file)
   "Extract the Emacswiki page of the specified package."
-  (let ((page (elx-with-file file
+  (let ((page (lm-with-file file
 		(lm-header "Doc URL"))))
     (and page
 	 (string-match
@@ -265,8 +243,7 @@ Used by function `elx-license'.  Each entry has the form
 		       (regexp :tag "for regexp"))))
 
 (defun elx-license (&optional file)
-  "Return the license of file FILE.
-Or of the current buffer if FILE is equal to `buffer-file-name' or is nil.
+  "Return the license of file FILE, or current buffer if FILE is nil.
 
 The license is extracted from the \"License\" header or if that is missing
 by searching the file header for text matching entries in `elx-license-regexps'.
@@ -275,7 +252,7 @@ The extracted license string might be modified using `elx-license-mappings'
 before it is returned ensuring that each known license is always represented
 the same.  If the extracted license does not match \"^[-_.a-zA-Z0-9]+$\"
 return nil."
-  (elx-with-file file
+  (lm-with-file file
     (let ((license (lm-header "License")))
       (unless license
 	(let ((regexps elx-license-search)
@@ -327,12 +304,12 @@ If no matching entry exists return nil."
 ;;; Extract Dates.
 
 (defun elx-created (&optional file)
-  (elx-with-file file
+  (lm-with-file file
     (or (elx--date-1 (lm-creation-date))
 	(elx--date-1 (elx--date-copyright)))))
 
 (defun elx-updated (&optional file)
-  (elx-with-file file
+  (lm-with-file file
     (elx--date-1 (lm-header "\\(last-\\)?updated"))))
 
 (defun elx--date-1 (string)
@@ -403,7 +380,7 @@ defined but \"Version\" is not assume 0 for \"Version\".
 Unless optional RAW is non-nil verify and possible convert the version
 using function `vcomp-normalize' (which see)."
   (require 'vcomp)
-  (elx-with-file file
+  (lm-with-file file
     (let ((version (lm-header "version"))
 	  (update  (lm-header "update\\( #\\)?")))
       (when update
@@ -483,7 +460,7 @@ The value is a cons of the form (FULLNAME . ADDRESS)."
 Or of the current buffer if FILE is equal to `buffer-file-name'
 or is nil.  Each element of the list is a cons; the car is the
 full name, the cdr is an email address."
-  (elx-with-file file
+  (lm-with-file file
     (let (authors)
       (dolist (a (lm-header-multiline "authors?"))
 	(when a
@@ -493,20 +470,18 @@ full name, the cdr is an email address."
       (nreverse authors))))
 
 (defun elx-maintainer (&optional file)
-  "Return the maintainer of file FILE.
-Or of the current buffer if FILE is equal to `buffer-file-name' or is nil.
+  "Return the maintainer of file FILE, or current buffer if FILE is nil.
 The return value has the form (NAME . ADDRESS)."
-  (elx-with-file file
+  (lm-with-file file
     (let ((maint (lm-header "maintainer")))
       (if maint
 	  (elx-crack-address maint)
 	(car (elx-authors))))))
 
 (defun elx-adapted-by (&optional file)
-  "Return the adapter of file FILE.
-Or of the current buffer if FILE is equal to `buffer-file-name' or is nil.
+  "Return the adapter of file FILE, or current buffer if FILE is nil.
 The return value has the form (NAME . ADDRESS)."
-  (elx-with-file file
+  (lm-with-file file
     (let ((adapter (lm-header "adapted-by")))
       (when adapter
 	(elx-crack-address adapter)))))

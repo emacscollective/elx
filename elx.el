@@ -39,15 +39,6 @@
   :group 'maint
   :link '(url-link :tag "Homepage" "https://github.com/tarsius/elx"))
 
-;;; Extract Various.
-
-(defun elx-package (&optional file)
-  "Return the package of file FILE, or current buffer if FILE is nil."
-  (lm-with-file file
-    (let ((p (lm-header "package")))
-      (when p
-	(intern p)))))
-
 (defun elx-summary (&optional file raw)
   "Return the summary of file FILE, or current buffer if FILE is nil.
 Trailing period is removed and first word is upcases unless optional RAW

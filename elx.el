@@ -145,6 +145,7 @@ whitespace are converted to empty lines."
 				    (car elt) (cdr elt) commentary)))
 		'(("^;+ ?"        . "")
 		  ("^\\\\("       . "(")
+		  ("^\n"        . "")
 		  ("^[\n\t\s]\n$" . "\n")
 		  ("\\`[\n\t\s]*" . "")
 		  ("[\n\t\s]*\\'" . "")))

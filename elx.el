@@ -102,20 +102,6 @@ the cadr."
 	       (add-to-list 'keywords keyword))))
       (sort keywords 'string<))))
 
-(defsubst elx-commentary-start (&optional afterp)
-  "Return the buffer location of the `Commentary' start marker.
-If optional AFTERP is non-nil return the locations after the
-commentary header itself."
-  (lm-section-start lm-commentary-header t))
-
-(defsubst elx-commentary-end ()
-  "Return the buffer location of the `Commentary' section end.
-This even works when no other section follows the commentary section
-like when the actual code is not prefixed with the \"Code\" section tag."
-  (goto-char (elx-commentary-start t))
-  (min (lm-section-end lm-commentary-header)
-       (1- (or (re-search-forward "^[\s\t]*[^;\n]" nil t) (point-max)))))
-
 (defun elx-commentary (&optional file)
   "Return the commentary in file FILE, or current buffer if FILE is nil.
 
@@ -127,10 +113,11 @@ the leading semicolons and exactly one space are removed, likewise
 leading \"\(\" is replaced with just \"(\".  Lines consisting only of
 whitespace are converted to empty lines."
   (lm-with-file file
-    (let ((start (elx-commentary-start t)))
+    (let ((start (lm-section-start lm-commentary-header t)))
       (when start
+	(goto-char start)
 	(let ((commentary (buffer-substring-no-properties
-			   start (elx-commentary-end))))
+			   start (lm-commentary-end))))
 	  (mapc (lambda (elt)
 		  (setq commentary (replace-regexp-in-string
 				    (car elt) (cdr elt) commentary)))

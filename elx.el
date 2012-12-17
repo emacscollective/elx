@@ -130,16 +130,6 @@ whitespace are converted to empty lines."
 	  (when (string-match "[^\s\t\n]" commentary)
 	    (concat commentary "\n")))))))
 
-;;; Extract Pages.
-
-(defun elx-homepage (&optional file)
-  "Extract the homepage of the specified package."
-  (let ((page (lm-with-file file
-		(lm-header "\\(?:x-\\)?\\(?:homepage\\|url\\)"))))
-    (if (and page (string-match "^<.+>$" page))
-	(substring page 1 -1)
-      page)))
-
 (defun elx-wikipage (&optional file)
   "Extract the Emacswiki page of the specified package."
   (let ((page (lm-with-file file

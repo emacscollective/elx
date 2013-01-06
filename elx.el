@@ -39,34 +39,37 @@
   :group 'maint
   :link '(url-link :tag "Homepage" "https://github.com/tarsius/elx"))
 
-(defun elx-summary (&optional file raw)
-  "Return the summary of file FILE, or current buffer if FILE is nil.
-Trailing period is removed and first word is upcases unless optional RAW
-is non-nil."
-  (let ((summary (lm-with-file file
-		   (or (elx-summary-1)
-		       ;; some people put it on the second or third line
-		       (progn (forward-line) (elx-summary-1))
-		       (progn (forward-line) (elx-summary-1))))))
-    (when (and summary (not (equal summary "")))
-      (unless raw
-	(when (string-match "\\.$" summary)
-	  (setq summary (substring summary 0 -1)))
-	(when (string-match "^[a-z]" summary)
-	  (setq summary
-		(concat (upcase (substring summary 0 1))
-			(substring summary 1)))))
-      summary)))
-
-(defun elx-summary-1 ()
-  (when (and (looking-at lm-header-prefix)
-	     (progn (goto-char (match-end 0))
-		    ;; lm-summary requires at least two dashes instead
-		    (looking-at "[^ ]+[ \t]+-+[ \t]+\\(.*\\)")))
-    (let ((summary (match-string-no-properties 1)))
-      (if (string-match "[ \t]*-\\*-.*-\\*-" summary)
-	  (substring summary 0 (match-beginning 0))
-	summary))))
+(defun elx-summary (&optional file standardize)
+  "Return the one-line summary of file FILE, or current buffer if FILE is nil.
+When optional STANDARDIZE is non-nil a trailing period is removed
+and the first word is upcases."
+  (lm-with-file file
+    (let ((summary-match
+	   (lambda ()
+	     (and (looking-at lm-header-prefix)
+		  (progn (goto-char (match-end 0))
+			 ;; There should be three dashes after the
+			 ;; filename but often there are only two or
+			 ;; even just one.
+			 (looking-at "[^ ]+[ \t]+-+[ \t]+\\(.*\\)"))))))
+      (if (or (funcall summary-match)
+	      ;; Some people put the -*- specification on a separate
+	      ;; line, pushing the summary to the second or third line.
+	      (progn (forward-line) (funcall summary-match))
+	      (progn (forward-line) (funcall summary-match)))
+	  (let ((summary (match-string-no-properties 1)))
+	    (unless (equal summary "")
+	      ;; Strip off -*- specifications.
+	      (when (string-match "[ \t]*-\\*-.*-\\*-" summary)
+		(setq summary (substring summary 0 (match-beginning 0))))
+	      (when standardize
+		(when (string-match "\\.$" summary)
+		  (setq summary (substring summary 0 -1)))
+		(when (string-match "^[a-z]" summary)
+		  (setq summary
+			(concat (upcase (substring summary 0 1))
+				(substring summary 1)))))
+	      summary))))))
 
 (defcustom elx-remap-keywords nil
   "List of keywords that should be replaced or dropped by `elx-keywords'.

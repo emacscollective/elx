@@ -74,11 +74,11 @@ removed and the first word is upcases."
 
 (defcustom elx-remap-keywords nil
   "List of keywords that should be replaced or dropped by `elx-keywords'.
-If function `elx-keywords' is called with a non-nil SANITIZE argument it
-checks this variable to determine if keywords should be dropped from the
-return value or replaced by another.  If the cdr of an entry is nil then
-the keyword is dropped; otherwise it will be replaced with the keyword in
-the cadr."
+If function `elx-keywords' is called with a non-nil SANITIZE
+argument it checks this variable to determine if keywords should
+be dropped from the return value or replaced by another.  If the
+cdr of an entry is nil then the keyword is dropped; otherwise it
+will be replaced with the keyword in the cadr."
   :group 'elx
   :type '(repeat (list string (choice (const  :tag "drop" nil)
 				      (string :tag "replacement")))))

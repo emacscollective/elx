@@ -101,12 +101,11 @@ remove some keywords according to option `elx-remap-keywords'."
 				    "[ \t]+")
 				  "\\|[ \t]+and[ \t]+\\)")
 			  t))
-	  (setq keyword (intern keyword))
 	  (when sanitize
 	    (let ((remap (assoc keyword elx-remap-keywords)))
 	      (and remap (setq keyword (cadr remap))))
 	    (and keyword
-		 (string-match elx-keywords-regexp (symbol-name keyword))
+		 (string-match elx-keywords-regexp keyword)
 		 (add-to-list 'keywords keyword)))))
       (sort keywords 'string<))))
 

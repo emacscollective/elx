@@ -110,33 +110,39 @@ remove some keywords according to option `elx-remap-keywords'."
 		 (add-to-list 'keywords keyword)))))
       (sort keywords 'string<))))
 
-(defun elx-commentary (&optional file)
+(defun elx-commentary (&optional file sanitize)
   "Return the commentary in file FILE, or current buffer if FILE is nil.
+Return the value as a string.  In the file, the commentary
+section starts with the tag `Commentary' or `Documentation' and
+ends just before the next section.  If the commentary section is
+absent, return nil.
 
-Return the commentary as a normalized string.  The commentary section
-starts with the tag `Commentary' or `Documentation' and ends just before
-the next section.  Leading and trailing whitespace is removed from the
-returned value but it always ends with exactly one newline. On each line
-the leading semicolons and exactly one space are removed, likewise
-leading \"\(\" is replaced with just \"(\".  Lines consisting only of
-whitespace are converted to empty lines."
+If optional SANITIZE is non-nil cleanup the returned string.
+Leading and trailing whitespace is removed from the returned
+value but it always ends with exactly one newline.  On each line
+the leading semicolons and exactly one space are removed,
+likewise leading \"\(\" is replaced with just \"(\".  Lines
+consisting only of whitespace are converted to empty lines."
   (lm-with-file file
     (let ((start (lm-section-start lm-commentary-header t)))
       (when start
 	(goto-char start)
 	(let ((commentary (buffer-substring-no-properties
 			   start (lm-commentary-end))))
-	  (mapc (lambda (elt)
-		  (setq commentary (replace-regexp-in-string
-				    (car elt) (cdr elt) commentary)))
-		'(("^;+ ?"        . "")
-		  ("^\\\\("       . "(")
-		  ("^\n"        . "")
-		  ("^[\n\t\s]\n$" . "\n")
-		  ("\\`[\n\t\s]*" . "")
-		  ("[\n\t\s]*\\'" . "")))
-	  (when (string-match "[^\s\t\n]" commentary)
-	    (concat commentary "\n")))))))
+	  (when sanitize
+	    (mapc (lambda (elt)
+		    (setq commentary (replace-regexp-in-string
+				      (car elt) (cdr elt) commentary)))
+		  '(("^;+ ?"        . "")
+		    ("^\\\\("       . "(")
+		    ("^\n"        . "")
+		    ("^[\n\t\s]\n$" . "\n")
+		    ("\\`[\n\t\s]*" . "")
+		    ("[\n\t\s]*\\'" . "")))
+	    (setq commentary
+		  (when (string-match "[^\s\t\n]" commentary)
+		    (concat commentary "\n"))))
+	  commentary)))))
 
 (defun elx-wikipage (&optional file)
   "Extract the Emacswiki page of the specified package."

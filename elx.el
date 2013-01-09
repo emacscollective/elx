@@ -39,10 +39,11 @@
   :group 'maint
   :link '(url-link :tag "Homepage" "https://github.com/tarsius/elx"))
 
-(defun elx-summary (&optional file standardize)
-  "Return the one-line summary of file FILE, or current buffer if FILE is nil.
-When optional STANDARDIZE is non-nil a trailing period is removed
-and the first word is upcases."
+(defun elx-summary (&optional file sanitize)
+  "Return the one-line summary of file FILE.
+If optional FILE is nil return the summary of the current buffer
+instead.  When optional SANITIZE is non-nil a trailing period is
+removed and the first word is upcases."
   (lm-with-file file
     (let ((summary-match
 	   (lambda ()
@@ -62,7 +63,7 @@ and the first word is upcases."
 	      ;; Strip off -*- specifications.
 	      (when (string-match "[ \t]*-\\*-.*-\\*-" summary)
 		(setq summary (substring summary 0 (match-beginning 0))))
-	      (when standardize
+	      (when sanitize
 		(when (string-match "\\.$" summary)
 		  (setq summary (substring summary 0 -1)))
 		(when (string-match "^[a-z]" summary)

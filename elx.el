@@ -84,7 +84,7 @@ the cadr."
 
 (defvar elx-keywords-regexp "^[- a-z]+$")
 
-(defun elx-keywords (&optional file)
+(defun elx-keywords-list (&optional file)
   "Return list of keywords given in file FILE, or current buffer if FILE is nil."
   (lm-with-file file
     (let (keywords)

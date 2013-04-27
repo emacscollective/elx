@@ -1,10 +1,10 @@
 ;;; elx.el --- extract information from Emacs Lisp libraries
 
-;; Copyright (C) 2008-2012  Jonas Bernoulli
+;; Copyright (C) 2008-2013  Jonas Bernoulli
 
 ;; Author: Jonas Bernoulli <jonas@bernoul.li>
 ;; Created: 20081202
-;; Version: 0.8.3
+;; Version: 0.9.0
 ;; Homepage: https://github.com/tarsius/elx
 ;; Keywords: docs, libraries, packages
 

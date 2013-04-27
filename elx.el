@@ -32,6 +32,16 @@
 
 ;;; Code:
 
+;; The version of `lisp-mnt' in Emacs-24.3.50 contains some changes
+;; which we depend upon, so that version is bundled with this package
+;; in a directory which isn't on the `load-path' by default.
+(when (version< emacs-version "24.3.50")
+  (add-to-list 'load-path
+	       (expand-file-name
+		"compat"
+		(file-name-directory
+		 (or buffer-file-name load-file-name)))))
+
 (require 'lisp-mnt)
 
 (defgroup elx nil

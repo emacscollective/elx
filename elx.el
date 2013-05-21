@@ -4,7 +4,7 @@
 
 ;; Author: Jonas Bernoulli <jonas@bernoul.li>
 ;; Created: 20081202
-;; Version: 0.9.0
+;; Version: 0.9.1
 ;; Homepage: https://github.com/tarsius/elx
 ;; Keywords: docs, libraries, packages
 
@@ -49,6 +49,8 @@
   :group 'maint
   :link '(url-link :tag "Homepage" "https://github.com/tarsius/elx"))
 
+;;; Extract Summary
+
 (defun elx-summary (&optional file sanitize)
   "Return the one-line summary of file FILE.
 If optional FILE is nil return the summary of the current buffer
@@ -81,6 +83,8 @@ removed and the first word is upcases."
 			(concat (upcase (substring summary 0 1))
 				(substring summary 1)))))
 	      summary))))))
+
+;;; Extract Keywords
 
 (defcustom elx-remap-keywords nil
   "List of keywords that should be replaced or dropped by `elx-keywords'.
@@ -118,6 +122,8 @@ remove some keywords according to option `elx-remap-keywords'."
 		 (string-match elx-keywords-regexp keyword)
 		 (add-to-list 'keywords keyword)))))
       (sort keywords 'string<))))
+
+;;; Extract Commentary
 
 (defun elx-commentary (&optional file sanitize)
   "Return the commentary in file FILE, or current buffer if FILE is nil.
@@ -163,7 +169,7 @@ consisting only of whitespace are converted to empty lines."
 	  page)
 	 (match-string 1 page))))
 
-;;; Extract License.
+;;; Extract License
 
 (defcustom elx-license-search
   (let* ((r "[\s\t\n;]+")
@@ -293,7 +299,7 @@ The license is looked up in the variable `elx-license-url'.
 If no matching entry exists return nil."
   (cdr (assoc license elx-license-url)))
 
-;;; Extract Dates.
+;;; Extract Dates
 
 (defun elx-created (&optional file)
   (lm-with-file file
@@ -355,7 +361,7 @@ If no matching entry exists return nil."
     (when (lm-copyright-mark)
       (cadr (lm-crack-copyright)))))
 
-;;; Extract Version.
+;;; Extract Version
 
 (declare-function vcomp-version-p "vcomp" (string))
 (declare-function vcomp-normalize "vcomp" (version))
@@ -383,7 +389,7 @@ using function `vcomp-normalize' (which see)."
 		   (setq version (vcomp-prefixed-version-p version)))
 	  (vcomp-normalize version))))))
 
-;;; Extract People.
+;;; Extract People
 
 (defcustom elx-remap-names nil
   "List of names that should be replaced or dropped by `elx-crack-address'.

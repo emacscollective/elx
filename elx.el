@@ -159,6 +159,8 @@ consisting only of whitespace are converted to empty lines."
 		    (concat commentary "\n"))))
 	  commentary)))))
 
+;;; Extract Pages
+
 (defun elx-wikipage (&optional file)
   "Extract the Emacswiki page of the specified package."
   (let ((page (lm-with-file file

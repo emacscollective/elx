@@ -89,7 +89,8 @@ removed and the first word is upcases."
 		  (setq summary
 			(concat (upcase (substring summary 0 1))
 				(substring summary 1)))))
-	      summary))))))
+	      (unless (equal summary "")
+		summary)))))))
 
 ;;; Extract Keywords
 

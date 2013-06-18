@@ -4,7 +4,7 @@
 
 ;; Author: Jonas Bernoulli <jonas@bernoul.li>
 ;; Created: 20081202
-;; Version: 0.9.2
+;; Version: 0.9.3
 ;; Homepage: https://github.com/tarsius/elx
 ;; Keywords: docs, libraries, packages
 
@@ -463,28 +463,35 @@ The value is a cons of the form (FULLNAME . ADDRESS)."
     (when (or name mail)
       (cons name mail))))
 
+(defun elx-people (header file)
+  (lm-with-file file
+    (let (people)
+      (dolist (p (lm-header-multiline "people?"))
+	(when p
+	  (setq p (elx-crack-address p))
+	  (when p
+	    (push p people))))
+      (nreverse people))))
+
 (defun elx-authors (&optional file)
   "Return the author list of file FILE.
 Or of the current buffer if FILE is equal to `buffer-file-name'
 or is nil.  Each element of the list is a cons; the car is the
 full name, the cdr is an email address."
-  (lm-with-file file
-    (let (authors)
-      (dolist (a (lm-header-multiline "authors?"))
-	(when a
-	  (setq a (elx-crack-address a))
-	  (when a
-	    (setq authors (cons a authors)))))
-      (nreverse authors))))
+  (elx-people "authors?" file))
+
+(defun elx-maintainers (&optional file)
+  "Return the maintainer list of file FILE.
+Or of the current buffer if FILE is equal to `buffer-file-name'
+or is nil.  Each element of the list is a cons; the car is the
+full name, the cdr is an email address.  If there is no
+maintainer list then return the author list."
+  (or (elx-people "maintainers?" file)
+      (elx-authors file)))
 
 (defun elx-maintainer (&optional file)
-  "Return the maintainer of file FILE, or current buffer if FILE is nil.
-The return value has the form (NAME . ADDRESS)."
-  (lm-with-file file
-    (let ((maint (lm-header "maintainer")))
-      (if maint
-	  (elx-crack-address maint)
-	(car (elx-authors))))))
+  (car (elx-maintainers file)))
+(make-obsolete 'elx-maintainer 'elx-maintainers "0.9.3")
 
 (defun elx-adapted-by (&optional file)
   "Return the adapter of file FILE, or current buffer if FILE is nil.

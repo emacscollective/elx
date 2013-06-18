@@ -4,7 +4,7 @@
 
 ;; Author: Jonas Bernoulli <jonas@bernoul.li>
 ;; Created: 20081202
-;; Version: 0.9.3
+;; Version: 0.9.4
 ;; Homepage: https://github.com/tarsius/elx
 ;; Keywords: docs, libraries, packages
 
@@ -466,7 +466,7 @@ The value is a cons of the form (FULLNAME . ADDRESS)."
 (defun elx-people (header file)
   (lm-with-file file
     (let (people)
-      (dolist (p (lm-header-multiline "people?"))
+      (dolist (p (lm-header-multiline header))
 	(when p
 	  (setq p (elx-crack-address p))
 	  (when p

@@ -494,12 +494,11 @@ maintainer list then return the author list."
 (make-obsolete 'elx-maintainer 'elx-maintainers "0.9.3")
 
 (defun elx-adapted-by (&optional file)
-  "Return the adapter of file FILE, or current buffer if FILE is nil.
-The return value has the form (NAME . ADDRESS)."
-  (lm-with-file file
-    (let ((adapter (lm-header "adapted-by")))
-      (when adapter
-	(elx-crack-address adapter)))))
+  "Return the list of people who adapter of file FILE
+Or of the current buffer if FILE is equal to `buffer-file-name'
+or is nil.  Each element of the list is a cons; the car is the
+full name, the cdr is an email address."
+  (elx-people "adapted-by" file))
 
 (provide 'elx)
 ;;; elx.el ends here

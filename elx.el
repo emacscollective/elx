@@ -5,6 +5,7 @@
 ;; Author: Jonas Bernoulli <jonas@bernoul.li>
 ;; Created: 20081202
 ;; Version: 0.9.4
+;; Package-Requires: ((emacs "24.3.50"))
 ;; Homepage: https://github.com/tarsius/elx
 ;; Keywords: docs, libraries, packages
 

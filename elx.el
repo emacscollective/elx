@@ -312,14 +312,26 @@ If no matching entry exists return nil."
 ;;; Extract Dates
 
 (defun elx-created (&optional file)
+  "Return the created date given in file FILE.
+Or of the current buffer if FILE is equal to `buffer-file-name'
+or is nil.  The date is returned as YYYYMMDD or if not enough
+information is available YYYYMM or YYYY.  The date is taken from
+the \"Created\" header keyword, or if that doesn't work from the
+copyright line."
   (lm-with-file file
     (or (elx--date-1 (lm-creation-date))
 	(elx--date-1 (elx--date-copyright)))))
 
 (defun elx-updated (&optional file)
+  "Return the updated date given in file FILE.
+Or of the current buffer if FILE is equal to `buffer-file-name'
+or is nil.  The date is returned as YYYYMMDD or if not enough
+information is available YYYYMM or YYYY.  The date is taken from
+the \"Updated\" or \"Last-Updated\" header keyword."
   (lm-with-file file
     (elx--date-1 (lm-header "\\(last-\\)?updated"))))
 
+;; Yes, I know.
 (defun elx--date-1 (string)
   (when (stringp string)
     (let ((ymd "\
@@ -412,6 +424,7 @@ the cadr."
   :type '(repeat (list string (choice (const  :tag "drop" nil)
 				      (string :tag "replacement")))))
 
+;; Yes, I know.
 (defun elx-crack-address (x)
   "Split up an email address X into full name and real email address.
 The value is a cons of the form (FULLNAME . ADDRESS)."
@@ -491,6 +504,7 @@ maintainer list then return the author list."
 
 (defun elx-maintainer (&optional file)
   (car (elx-maintainers file)))
+
 (make-obsolete 'elx-maintainer 'elx-maintainers "0.9.3")
 
 (defun elx-adapted-by (&optional file)

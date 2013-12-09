@@ -37,24 +37,24 @@
 
 ;;; Code:
 
+(require 'lisp-mnt)
+
 ;; The version of `lisp-mnt' in Emacs-24.3.50 contains some changes
 ;; which we depend upon.  For older (released) Emacsen that version
-;; is bundled with this package.
-(when (version< emacs-version "24.3.50")
+;; is bundled in this repository, but not in the Melpa package.
+(when (and (version< emacs-version "24.3.50")
+	   (not (fboundp 'lm-homepage))) ; new in 24.3.50
   ;; The bundled `lisp-mnt.el' is located in a separate directory
   ;; also containing a file `.nosearch' to protect it from being
   ;; added to the `load-path' by accident (e.g. when on Emacs-trunk).
   (let ((p (expand-file-name "compat"
 			     (file-name-directory
 			      (or buffer-file-name load-file-name)))))
-    (when (and (featurep 'lisp-mnt)
-	       (not (member p load-path)))
-      ;; Unload the old version.
-      (unload-feature 'lisp-mnt))
-    ;; Add new version to `load-path'.
-    (add-to-list 'load-path p)))
-;; Load the new version.
-(require 'lisp-mnt)
+    (unless (file-exists-p p)
+      (error "`elx' requires `lisp-mnt' from Emacs >= 24.3.50"))
+    (unload-feature 'lisp-mnt)
+    (add-to-list 'load-path p)
+    (require 'lisp-mnt)))
 
 (defgroup elx nil
   "Extract information from Emacs Lisp libraries."

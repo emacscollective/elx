@@ -4,7 +4,7 @@
 
 ;; Author: Jonas Bernoulli <jonas@bernoul.li>
 ;; Created: 20081202
-;; Package-Requires: ((emacs "24.3.50"))
+;; Package-Requires: ((emacs "24.4"))
 ;; Homepage: https://github.com/tarsius/elx
 ;; Keywords: docs, libraries, packages
 
@@ -37,23 +37,6 @@
 ;;; Code:
 
 (require 'lisp-mnt)
-
-;; The version of `lisp-mnt' in Emacs-24.3.50 contains some changes
-;; which we depend upon.  For older (released) Emacsen that version
-;; is bundled in this repository, but not in the Melpa package.
-(when (and (version< emacs-version "24.3.50")
-	   (not (fboundp 'lm-homepage))) ; new in 24.3.50
-  ;; The bundled `lisp-mnt.el' is located in a separate directory
-  ;; also containing a file `.nosearch' to protect it from being
-  ;; added to the `load-path' by accident (e.g. when on Emacs-trunk).
-  (let ((p (expand-file-name "compat"
-			     (file-name-directory
-			      (or buffer-file-name load-file-name)))))
-    (unless (file-exists-p p)
-      (error "`elx' requires `lisp-mnt' from Emacs >= 24.3.50"))
-    (unload-feature 'lisp-mnt)
-    (add-to-list 'load-path p)
-    (require 'lisp-mnt)))
 
 (defgroup elx nil
   "Extract information from Emacs Lisp libraries."

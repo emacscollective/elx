@@ -1,6 +1,6 @@
 ;;; elx.el --- extract information from Emacs Lisp libraries
 
-;; Copyright (C) 2008-2013  Jonas Bernoulli
+;; Copyright (C) 2008-2015  Jonas Bernoulli
 
 ;; Author: Jonas Bernoulli <jonas@bernoul.li>
 ;; Created: 20081202
@@ -372,34 +372,6 @@ the \"Updated\" or \"Last-Updated\" header keyword."
   (let ((lm-copyright-prefix "^\\(;+[ \t]\\)+Copyright \\((C) \\)?"))
     (when (lm-copyright-mark)
       (cadr (lm-crack-copyright)))))
-
-;;; Extract Version
-
-(declare-function vcomp-version-p "vcomp" (string))
-(declare-function vcomp-normalize "vcomp" (version))
-(declare-function vcomp-prefixed-version-p "vcomp" (string &optional prefix))
-
-(defun elx-version (&optional file raw)
-  "Return the version of file FILE.
-Or of the current buffer if FILE is equal to `buffer-file-name' or nil.
-
-Return the value of header \"Version\".  If header \"Update\\( #\\)?\" is
-also defined append it's value after a period.  If \"Update\\( #\\)?\" is
-defined but \"Version\" is not assume 0 for \"Version\".
-
-Unless optional RAW is non-nil verify and possible convert the version
-using function `vcomp-normalize' (which see)."
-  (require 'vcomp)
-  (lm-with-file file
-    (let ((version (lm-header "version"))
-	  (update  (lm-header "update\\( #\\)?")))
-      (when update
-	(setq version (concat (or version "0") "." update)))
-      (if raw
-	  version
-	(when (and version
-		   (setq version (vcomp-prefixed-version-p version)))
-	  (vcomp-normalize version))))))
 
 ;;; Extract People
 

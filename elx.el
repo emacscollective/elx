@@ -94,11 +94,13 @@ will be replaced with the keyword in the cadr."
 
 (defvar elx-keywords-regexp "^[- a-z]+$")
 
-(defun elx-keywords-list (&optional file sanitize)
+(defun elx-keywords-list (&optional file sanitize symbols)
   "Return list of keywords given in file FILE.
 If optional FILE is nil return keywords given in the current
-buffer instead.  When optional SANITIZE is non-nil replace or
-remove some keywords according to option `elx-remap-keywords'."
+buffer instead.  If optional SANITIZE is non-nil replace or
+remove some keywords according to option `elx-remap-keywords'.
+If optional SYMBOLS is non-nil return keywords as symbols,
+else as strings."
   (lm-with-file file
     (let (keywords)
       (dolist (line (lm-header-multiline "keywords"))
@@ -116,7 +118,8 @@ remove some keywords according to option `elx-remap-keywords'."
 	    (and keyword
 		 (string-match elx-keywords-regexp keyword)
 		 (add-to-list 'keywords keyword)))))
-      (sort keywords 'string<))))
+      (setq keywords (sort keywords 'string<))
+      (if symbols (mapcar #'intern keywords) keywords))))
 
 ;;; Extract Commentary
 

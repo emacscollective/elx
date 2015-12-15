@@ -353,8 +353,8 @@ the \"Updated\" or \"Last-Updated\" header keyword."
 
 (defun elx--date-3 (string)
   (let ((time (mapcar (lambda (e) (or e 0))
-		      (butlast (parse-time-string string)))))
-    (unless (= (nth 5 time) 0)
+		      (butlast (ignore-errors (parse-time-string string))))))
+    (when (and time (not (= (nth 5 time) 0)))
       (format-time-string
        (if (and (> (nth 4 time) 0)
 		(> (nth 3 time) 0))

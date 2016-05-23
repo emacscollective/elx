@@ -1,6 +1,6 @@
 ;;; elx.el --- extract information from Emacs Lisp libraries
 
-;; Copyright (C) 2008-2015  Jonas Bernoulli
+;; Copyright (C) 2008-2016  Jonas Bernoulli
 
 ;; Author: Jonas Bernoulli <jonas@bernoul.li>
 ;; Created: 20081202
@@ -52,12 +52,12 @@
   (goto-char (point-min))
   (let ((case-fold-search t))
     (when (and (re-search-forward (lm-get-header-re header) (lm-code-mark) t)
-	       ;;   RCS ident likes format "$identifier: data$"
-	       (looking-at
-		(if (save-excursion
-		      (skip-chars-backward "^$" (match-beginning 0))
-		      (= (point) (match-beginning 0)))
-		    "[^\n]+" "[^$\n]+")))
+               ;;   RCS ident likes format "$identifier: data$"
+               (looking-at
+                (if (save-excursion
+                      (skip-chars-backward "^$" (match-beginning 0))
+                      (= (point) (match-beginning 0)))
+                    "[^\n]+" "[^$\n]+")))
       (match-string-no-properties 0))))
 
 ;;; Extract Summary
@@ -69,32 +69,32 @@ instead.  When optional SANITIZE is non-nil a trailing period is
 removed and the first word is upcases."
   (lm-with-file file
     (let ((summary-match
-	   (lambda ()
-	     (and (looking-at lm-header-prefix)
-		  (progn (goto-char (match-end 0))
-			 ;; There should be three dashes after the
-			 ;; filename but often there are only two or
-			 ;; even just one.
-			 (looking-at "[^ ]+[ \t]+-+[ \t]+\\(.*\\)"))))))
+           (lambda ()
+             (and (looking-at lm-header-prefix)
+                  (progn (goto-char (match-end 0))
+                         ;; There should be three dashes after the
+                         ;; filename but often there are only two or
+                         ;; even just one.
+                         (looking-at "[^ ]+[ \t]+-+[ \t]+\\(.*\\)"))))))
       (if (or (funcall summary-match)
-	      ;; Some people put the -*- specification on a separate
-	      ;; line, pushing the summary to the second or third line.
-	      (progn (forward-line) (funcall summary-match))
-	      (progn (forward-line) (funcall summary-match)))
-	  (let ((summary (match-string-no-properties 1)))
-	    (unless (equal summary "")
-	      ;; Strip off -*- specifications.
-	      (when (string-match "[ \t]*-\\*-.*-\\*-" summary)
-		(setq summary (substring summary 0 (match-beginning 0))))
-	      (when sanitize
-		(when (string-match "\\.$" summary)
-		  (setq summary (substring summary 0 -1)))
-		(when (string-match "^[a-z]" summary)
-		  (setq summary
-			(concat (upcase (substring summary 0 1))
-				(substring summary 1)))))
-	      (unless (equal summary "")
-		summary)))))))
+              ;; Some people put the -*- specification on a separate
+              ;; line, pushing the summary to the second or third line.
+              (progn (forward-line) (funcall summary-match))
+              (progn (forward-line) (funcall summary-match)))
+          (let ((summary (match-string-no-properties 1)))
+            (unless (equal summary "")
+              ;; Strip off -*- specifications.
+              (when (string-match "[ \t]*-\\*-.*-\\*-" summary)
+                (setq summary (substring summary 0 (match-beginning 0))))
+              (when sanitize
+                (when (string-match "\\.$" summary)
+                  (setq summary (substring summary 0 -1)))
+                (when (string-match "^[a-z]" summary)
+                  (setq summary
+                        (concat (upcase (substring summary 0 1))
+                                (substring summary 1)))))
+              (unless (equal summary "")
+                summary)))))))
 
 ;;; Extract Keywords
 
@@ -107,7 +107,7 @@ cdr of an entry is nil then the keyword is dropped; otherwise it
 will be replaced with the keyword in the cadr."
   :group 'elx
   :type '(repeat (list string (choice (const  :tag "drop" nil)
-				      (string :tag "replacement")))))
+                                      (string :tag "replacement")))))
 
 (defvar elx-keywords-regexp "^[- a-z]+$")
 
@@ -121,20 +121,20 @@ else as strings."
   (lm-with-file file
     (let (keywords)
       (dolist (line (lm-header-multiline "keywords"))
-	(dolist (keyword (split-string
-			  (downcase line)
-			  (concat "\\("
-				  (if (string-match-p "," line)
-				      ",[ \t]*"
-				    "[ \t]+")
-				  "\\|[ \t]+and[ \t]+\\)")
-			  t))
-	  (when sanitize
-	    (let ((remap (assoc keyword elx-remap-keywords)))
-	      (and remap (setq keyword (cadr remap))))
-	    (and keyword
-		 (string-match elx-keywords-regexp keyword)
-		 (add-to-list 'keywords keyword)))))
+        (dolist (keyword (split-string
+                          (downcase line)
+                          (concat "\\("
+                                  (if (string-match-p "," line)
+                                      ",[ \t]*"
+                                    "[ \t]+")
+                                  "\\|[ \t]+and[ \t]+\\)")
+                          t))
+          (when sanitize
+            (let ((remap (assoc keyword elx-remap-keywords)))
+              (and remap (setq keyword (cadr remap))))
+            (and keyword
+                 (string-match elx-keywords-regexp keyword)
+                 (add-to-list 'keywords keyword)))))
       (setq keywords (sort keywords 'string<))
       (if symbols (mapcar #'intern keywords) keywords))))
 
@@ -156,45 +156,45 @@ consisting only of whitespace are converted to empty lines."
   (lm-with-file file
     (let ((start (lm-section-start lm-commentary-header t)))
       (when start
-	(goto-char start)
-	(let ((commentary (buffer-substring-no-properties
-			   start (lm-commentary-end))))
-	  (when sanitize
-	    (mapc (lambda (elt)
-		    (setq commentary (replace-regexp-in-string
-				      (car elt) (cdr elt) commentary)))
-		  '(("^;+ ?"        . "")
-		    ("^\\\\("       . "(")
-		    ("^\n"        . "")
-		    ("^[\n\t\s]\n$" . "\n")
-		    ("\\`[\n\t\s]*" . "")
-		    ("[\n\t\s]*\\'" . "")))
-	    (setq commentary
-		  (when (string-match "[^\s\t\n]" commentary)
-		    (concat commentary "\n"))))
-	  commentary)))))
+        (goto-char start)
+        (let ((commentary (buffer-substring-no-properties
+                           start (lm-commentary-end))))
+          (when sanitize
+            (mapc (lambda (elt)
+                    (setq commentary (replace-regexp-in-string
+                                      (car elt) (cdr elt) commentary)))
+                  '(("^;+ ?"        . "")
+                    ("^\\\\("       . "(")
+                    ("^\n"        . "")
+                    ("^[\n\t\s]\n$" . "\n")
+                    ("\\`[\n\t\s]*" . "")
+                    ("[\n\t\s]*\\'" . "")))
+            (setq commentary
+                  (when (string-match "[^\s\t\n]" commentary)
+                    (concat commentary "\n"))))
+          commentary)))))
 
 ;;; Extract Pages
 
 (defun elx-wikipage (&optional file)
   "Extract the Emacswiki page of the specified package."
   (let ((page (lm-with-file file
-		(lm-header "Doc URL"))))
+                (lm-header "Doc URL"))))
     (and page
-	 (string-match
-	  "^<?http://\\(?:www\\.\\)?emacswiki\\.org.*?\\([^/]+\\)>?$"
-	  page)
-	 (match-string 1 page))))
+         (string-match
+          "^<?http://\\(?:www\\.\\)?emacswiki\\.org.*?\\([^/]+\\)>?$"
+          page)
+         (match-string 1 page))))
 
 ;;; Extract License
 
 (defcustom elx-license-search
   (let* ((r "[\s\t\n;]+")
-	 (l "^;\\{1,4\\} ")
-	 (g (concat " General Public Licen[sc]e"
-		    "\\( as published by the Free Software Foundation\\)?.?"))
-	 (c (concat g " \\(either \\)?version"))
-	 (d "Documentation"))
+         (l "^;\\{1,4\\} ")
+         (g (concat " General Public Licen[sc]e"
+                    "\\( as published by the Free Software Foundation\\)?.?"))
+         (c (concat g " \\(either \\)?version"))
+         (d "Documentation"))
     `(("GPL-3"      . ,(replace-regexp-in-string " " r (concat "GNU" c " 3")))
       ("GPL-2"      . ,(replace-regexp-in-string " " r (concat "GNU" c " 2")))
       ("GPL-1"      . ,(replace-regexp-in-string " " r (concat "GNU" c " 1")))
@@ -206,23 +206,23 @@ consisting only of whitespace are converted to empty lines."
       ("FDL-2.1"    . ,(replace-regexp-in-string " " r (concat "GNU Free " d c " 1.2")))
       ("FDL-1.1"    . ,(replace-regexp-in-string " " r (concat "GNU Free " d c " 1.1")))
       ("EPL-1.1"    . ,(replace-regexp-in-string " " r
-			"Erlang Public License,? Version 1.1"))
+                        "Erlang Public License,? Version 1.1"))
       ("Apache-2.0" . ,(replace-regexp-in-string " " r
-			"Apache License, Version 2.0"))
+                        "Apache License, Version 2.0"))
       ("GPL"        . ,(replace-regexp-in-string " " r (concat
-			"Everyone is granted permission to copy, modify and redistribute "
-			".*, but only under the conditions described in the "
-			"GNU Emacs General Public License.")))
+                        "Everyone is granted permission to copy, modify and redistribute "
+                        ".*, but only under the conditions described in the "
+                        "GNU Emacs General Public License.")))
       ("GPL"        . ,(concat l "GPL'ed as under the GNU license"))
       ("GPL"        . ,(concat l "GPL'ed under GNU's public license"))
       ("GPL-2"      . ,(concat l ".* GPL v2 applies."))
       ("GPL-2"      . ,(concat l "The same license/disclaimer for "
-				 "XEmacs also applies to this package."))
+                                 "XEmacs also applies to this package."))
       ("GPL-3"      . ,(concat l "Licensed under the same terms as Emacs."))
       ("MIT"        . ,(concat l ".* mit license"))
       ("as-is"      . ,(concat l ".* \\(provided\\|distributed\\) "
-				 "\\(by the author \\)?"
-				 "[\"`']\\{0,2\\}as[- ]is[\"`']\\{0,2\\}"))
+                                 "\\(by the author \\)?"
+                                 "[\"`']\\{0,2\\}as[- ]is[\"`']\\{0,2\\}"))
       ("public-domain" . ,(concat l ".*in\\(to\\)? the public[- ]domain"))
       ("public-domain" . "^;+ +Public domain.")))
   "List of regexp to common license string mappings.
@@ -232,7 +232,7 @@ Unambitious expressions should come first and those that might produce
 false positives last."
   :group 'elx
   :type '(repeat (cons (string :tag "use")
-		       (regexp :tag "for regexp"))))
+                       (regexp :tag "for regexp"))))
 
 (defcustom elx-license-replace
   '(("GPL-3"      .  "gpl[- ]?v?3")
@@ -255,7 +255,7 @@ Used by function `elx-license'.  Each entry has the form
 \(LICENSE . REGEXP) where LICENSE is used instead of matches of REGEXP."
   :group 'elx
   :type '(repeat (cons (string :tag "use")
-		       (regexp :tag "for regexp"))))
+                       (regexp :tag "for regexp"))))
 
 (defun elx-license (&optional file)
   "Return the license of file FILE, or current buffer if FILE is nil.
@@ -270,22 +270,22 @@ return nil."
   (lm-with-file file
     (let ((license (lm-header "License")))
       (unless license
-	(let ((regexps elx-license-search)
-	      (case-fold-search t)
-	      (elt))
-	  (while (and (not license)
-		      (setq elt (pop regexps)))
-	    (when (re-search-forward (cdr elt) (lm-code-start) t)
-	      (setq license (car elt)
-		    regexps nil)))))
+        (let ((regexps elx-license-search)
+              (case-fold-search t)
+              (elt))
+          (while (and (not license)
+                      (setq elt (pop regexps)))
+            (when (re-search-forward (cdr elt) (lm-code-start) t)
+              (setq license (car elt)
+                    regexps nil)))))
       (when license
-	(let (elt (mappings elx-license-replace))
-	  (while (setq elt (pop mappings))
-	    (when (string-match (cdr elt) license)
-	      (setq license (car elt)
-		    mappings nil))))
-	(when (string-match "^[-_.a-zA-Z0-9]+$" license)
-	  license)))))
+        (let (elt (mappings elx-license-replace))
+          (while (setq elt (pop mappings))
+            (when (string-match (cdr elt) license)
+              (setq license (car elt)
+                    mappings nil))))
+        (when (string-match "^[-_.a-zA-Z0-9]+$" license)
+          license)))))
 
 (defcustom elx-license-url
   '(("GPL-3"         . "http://www.fsf.org/licensing/licenses/gpl.html")
@@ -308,7 +308,7 @@ and URL the canonical url to the license.  Where no canonical url is known
 use a page on the Emacsmirror instead."
   :group 'elx
   :type '(repeat (cons (string :tag "License")
-		       (string :tag "URL"))))
+                       (string :tag "URL"))))
 
 (defun elx-license-url (license)
   "Return the canonical url to LICENSE.
@@ -327,7 +327,7 @@ the \"Created\" header keyword, or if that doesn't work from the
 copyright line."
   (lm-with-file file
     (or (elx--date-1 (lm-creation-date))
-	(elx--date-1 (elx--date-copyright)))))
+        (elx--date-1 (elx--date-copyright)))))
 
 (defun elx-updated (&optional file)
   "Return the updated date given in file FILE.
@@ -345,42 +345,42 @@ the \"Updated\" or \"Last-Updated\" header keyword."
 \\([0-9]\\{4,4\\}\\)\\(?:[-/.]?\
 \\([0-9]\\{1,2\\}\\)\\(?:[-/.]?\
 \\([0-9]\\{1,2\\}\\)?\\)?\\)")
-	  (dmy "\
+          (dmy "\
 \\(?3:[0-9]\\{1,2\\}\\)\\(?:[-/.]?\\)\
 \\(?2:[0-9]\\{1,2\\}\\)\\(?:[-/.]?\\)\
 \\(?1:[0-9]\\{4,4\\}\\)"))
       (or (elx--date-2 string ymd t)
-	  (elx--date-2 string dmy t)
-	  (let ((a (elx--date-3 string))
-		(b (or (elx--date-2 string ymd nil)
-		       (elx--date-2 string dmy nil))))
-	    (cond ((not a) b)
-		  ((not b) a)
-		  ((> (length a) (length b)) a)
-		  ((> (length b) (length a)) b)
-		  (t a)))))))
+          (elx--date-2 string dmy t)
+          (let ((a (elx--date-3 string))
+                (b (or (elx--date-2 string ymd nil)
+                       (elx--date-2 string dmy nil))))
+            (cond ((not a) b)
+                  ((not b) a)
+                  ((> (length a) (length b)) a)
+                  ((> (length b) (length a)) b)
+                  (t a)))))))
   
 (defun elx--date-2 (string regexp anchored)
   (when (string-match (if anchored (format "^%s$" regexp) regexp) string)
     (let ((m  (match-string 2 string))
-	  (d  (match-string 3 string)))
+          (d  (match-string 3 string)))
       (concat (match-string 1 string)
-	      (and m d (concat (if (= (length m) 2) m (concat "0" m))
-			       (if (= (length d) 2) d (concat "0" d))))))))
+              (and m d (concat (if (= (length m) 2) m (concat "0" m))
+                               (if (= (length d) 2) d (concat "0" d))))))))
 
 (defun elx--date-3 (string)
   (let ((time (mapcar (lambda (e) (or e 0))
-		      (butlast (ignore-errors (parse-time-string string))))))
+                      (butlast (ignore-errors (parse-time-string string))))))
     (when (and time (not (= (nth 5 time) 0)))
       (format-time-string
        (if (and (> (nth 4 time) 0)
-		(> (nth 3 time) 0))
-	   "%Y%m%d"
-	 ;; (format-time-string "%Y" (encode-time x x x 0 0 2012))
-	 ;; => "2011"
-	 (setcar (nthcdr 3 time) 1)
-	 (setcar (nthcdr 4 time) 1)
-	 "%Y")
+                (> (nth 3 time) 0))
+           "%Y%m%d"
+         ;; (format-time-string "%Y" (encode-time x x x 0 0 2012))
+         ;; => "2011"
+         (setcar (nthcdr 3 time) 1)
+         (setcar (nthcdr 4 time) 1)
+         "%Y")
        (apply 'encode-time time)
        t))))
 
@@ -401,7 +401,7 @@ the keyword is dropped; otherwise it will be replaced with the keyword in
 the cadr."
   :group 'elx
   :type '(repeat (list string (choice (const  :tag "drop" nil)
-				      (string :tag "replacement")))))
+                                      (string :tag "replacement")))))
 
 ;; Yes, I know.
 (defun elx-crack-address (x)
@@ -409,49 +409,49 @@ the cadr."
 The value is a cons of the form (FULLNAME . ADDRESS)."
   (let (name mail)
     (cond ((string-match (concat "\\(.+\\) "
-				 "?[(<]\\(\\S-+@\\S-+\\)[>)]") x)
-	   (setq name (match-string 1 x)
-		 mail (match-string 2 x)))
-	  ((string-match (concat "\\(.+\\) "
-				 "[(<]\\(?:\\(\\S-+\\) "
-				 "\\(?:\\*?\\(?:AT\\|[.*]\\)\\*?\\) "
-				 "\\(\\S-+\\) "
-				 "\\(?:\\*?\\(?:DOT\\|[.*]\\)\\*? \\)?"
-				 "\\(\\S-+\\)\\)[>)]") x)
-	   (setq name (match-string 1 x)
-		 mail (concat (match-string 2 x) "@"
-			      (match-string 3 x) "."
-			      (match-string 4 x))))
-	  ((string-match (concat "\\(.+\\) "
-				 "[(<]\\(?:\\(\\S-+\\) "
-				 "\\(?:\\*?\\(?:AT\\|[.*]\\)\\*?\\) "
-				 "\\(\\S-+\\)[>)]\\)") x)
-	   (setq name (match-string 1 x)
-		 mail (concat (match-string 2 x) "@"
-			      (match-string 3 x))))
-	  ((string-match (concat "\\(\\S-+@\\S-+\\) "
-				 "[(<]\\(.*\\)[>)]") x)
-	   (setq name (match-string 2 x)
-		 mail (match-string 1 x)))
-	  ((string-match "\\S-+@\\S-+" x)
-	   (setq mail x))
-	  (t
-	   (setq name x)))
+                                 "?[(<]\\(\\S-+@\\S-+\\)[>)]") x)
+           (setq name (match-string 1 x)
+                 mail (match-string 2 x)))
+          ((string-match (concat "\\(.+\\) "
+                                 "[(<]\\(?:\\(\\S-+\\) "
+                                 "\\(?:\\*?\\(?:AT\\|[.*]\\)\\*?\\) "
+                                 "\\(\\S-+\\) "
+                                 "\\(?:\\*?\\(?:DOT\\|[.*]\\)\\*? \\)?"
+                                 "\\(\\S-+\\)\\)[>)]") x)
+           (setq name (match-string 1 x)
+                 mail (concat (match-string 2 x) "@"
+                              (match-string 3 x) "."
+                              (match-string 4 x))))
+          ((string-match (concat "\\(.+\\) "
+                                 "[(<]\\(?:\\(\\S-+\\) "
+                                 "\\(?:\\*?\\(?:AT\\|[.*]\\)\\*?\\) "
+                                 "\\(\\S-+\\)[>)]\\)") x)
+           (setq name (match-string 1 x)
+                 mail (concat (match-string 2 x) "@"
+                              (match-string 3 x))))
+          ((string-match (concat "\\(\\S-+@\\S-+\\) "
+                                 "[(<]\\(.*\\)[>)]") x)
+           (setq name (match-string 2 x)
+                 mail (match-string 1 x)))
+          ((string-match "\\S-+@\\S-+" x)
+           (setq mail x))
+          (t
+           (setq name x)))
     (setq name (and (stringp name)
-		    (string-match "^ *\\([^:0-9<@>]+?\\) *$" name)
-		    (match-string 1 name)))
+                    (string-match "^ *\\([^:0-9<@>]+?\\) *$" name)
+                    (match-string 1 name)))
     (setq mail (and (stringp mail)
-		    (string-match
-		     (concat "^\\s-*\\("
-			     "[a-z0-9!#$%&'*+/=?^_`{|}~-]+"
-			     "\\(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+\\)*@"
-			     "\\(?:[a-z0-9]\\(?:[a-z0-9-]*[a-z0-9]\\)?\.\\)+"
-			     "[a-z0-9]\\(?:[a-z0-9-]*[a-z0-9]\\)?"
-			     "\\)\\s-*$") mail)
-		    (downcase (match-string 1 mail))))
+                    (string-match
+                     (concat "^\\s-*\\("
+                             "[a-z0-9!#$%&'*+/=?^_`{|}~-]+"
+                             "\\(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+\\)*@"
+                             "\\(?:[a-z0-9]\\(?:[a-z0-9-]*[a-z0-9]\\)?\.\\)+"
+                             "[a-z0-9]\\(?:[a-z0-9-]*[a-z0-9]\\)?"
+                             "\\)\\s-*$") mail)
+                    (downcase (match-string 1 mail))))
     (let ((elt (assoc name elx-remap-names)))
       (when elt
-	(setq name (cadr elt))))
+        (setq name (cadr elt))))
     (when (or name mail)
       (cons name mail))))
 
@@ -459,10 +459,10 @@ The value is a cons of the form (FULLNAME . ADDRESS)."
   (lm-with-file file
     (let (people)
       (dolist (p (lm-header-multiline header))
-	(when p
-	  (setq p (elx-crack-address p))
-	  (when p
-	    (push p people))))
+        (when p
+          (setq p (elx-crack-address p))
+          (when p
+            (push p people))))
       (nreverse people))))
 
 (defun elx-authors (&optional file)
@@ -494,4 +494,7 @@ full name, the cdr is an email address."
   (elx-people "adapted-by" file))
 
 (provide 'elx)
+;; Local Variables:
+;; indent-tabs-mode: nil
+;; End:
 ;;; elx.el ends here

@@ -481,11 +481,6 @@ maintainer list then return the author list."
   (or (elx-people "maintainers?" file)
       (elx-authors file)))
 
-(defun elx-maintainer (&optional file)
-  (car (elx-maintainers file)))
-
-(make-obsolete 'elx-maintainer 'elx-maintainers "0.9.3")
-
 (defun elx-adapted-by (&optional file)
   "Return the list of people who have adapted file FILE
 Or of the current buffer if FILE is equal to `buffer-file-name'

@@ -287,7 +287,7 @@ return nil."
         (when (string-match "^[-_.a-zA-Z0-9]+$" license)
           license)))))
 
-(defcustom elx-license-url
+(defcustom elx-license-url-alist
   '(("GPL-3"         . "http://www.fsf.org/licensing/licenses/gpl.html")
     ("GPL-2"         . "http://www.gnu.org/licenses/old-licenses/gpl-2.0.html")
     ("GPL-1"         . "http://www.gnu.org/licenses/old-licenses/gpl-1.0.html")
@@ -314,7 +314,7 @@ use a page on the Emacsmirror instead."
   "Return the canonical url to LICENSE.
 The license is looked up in the variable `elx-license-url'.
 If no matching entry exists return nil."
-  (cdr (assoc license elx-license-url)))
+  (cdr (assoc license elx-license-url-alist)))
 
 ;;; Extract Dates
 

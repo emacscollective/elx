@@ -188,104 +188,97 @@ consisting only of whitespace are converted to empty lines."
 
 ;;; Extract License
 
-(defcustom elx-license-search
-  (let* ((r "[\s\t\n;]+")
-         (l "^;\\{1,4\\} ")
-         (g (concat " General Public Licen[sc]e"
-                    "\\( as published by the Free Software Foundation\\)?.?"))
-         (c (concat g " \\(either \\)?version"))
-         (d "Documentation"))
-    `(("GPL-3"      . ,(replace-regexp-in-string " " r (concat "GNU" c " 3")))
-      ("GPL-2"      . ,(replace-regexp-in-string " " r (concat "GNU" c " 2")))
-      ("GPL-1"      . ,(replace-regexp-in-string " " r (concat "GNU" c " 1")))
-      ("GPL"        . ,(replace-regexp-in-string " " r (concat "GNU" g)))
-      ("LGPL-3"     . ,(replace-regexp-in-string " " r (concat "GNU Lesser"  c " 3")))
-      ("LGPL-2.1"   . ,(replace-regexp-in-string " " r (concat "GNU Lesser"  c " 2.1")))
-      ("LGPL-2"     . ,(replace-regexp-in-string " " r (concat "GNU Library" c " 2")))
-      ("AGPL-3"     . ,(replace-regexp-in-string " " r (concat "GNU Affero"  c " 3")))
-      ("FDL-2.1"    . ,(replace-regexp-in-string " " r (concat "GNU Free " d c " 1.2")))
-      ("FDL-1.1"    . ,(replace-regexp-in-string " " r (concat "GNU Free " d c " 1.1")))
-      ("EPL-1.1"    . ,(replace-regexp-in-string " " r
-                        "Erlang Public License,? Version 1.1"))
-      ("Apache-2.0" . ,(replace-regexp-in-string " " r
-                        "Apache License, Version 2.0"))
-      ("GPL"        . ,(replace-regexp-in-string " " r (concat
-                        "Everyone is granted permission to copy, modify and redistribute "
-                        ".*, but only under the conditions described in the "
-                        "GNU Emacs General Public License.")))
-      ("GPL"        . ,(concat l "GPL'ed as under the GNU license"))
-      ("GPL"        . ,(concat l "GPL'ed under GNU's public license"))
-      ("GPL-2"      . ,(concat l ".* GPL v2 applies."))
-      ("GPL-2"      . ,(concat l "The same license/disclaimer for "
-                                 "XEmacs also applies to this package."))
-      ("GPL-3"      . ,(concat l "Licensed under the same terms as Emacs."))
-      ("MIT"        . ,(concat l ".* mit license"))
-      ("as-is"      . ,(concat l ".* \\(provided\\|distributed\\) "
-                                 "\\(by the author \\)?"
-                                 "[\"`']\\{0,2\\}as[- ]is[\"`']\\{0,2\\}"))
-      ("public-domain" . ,(concat l ".*in\\(to\\)? the public[- ]domain"))
-      ("public-domain" . "^;+ +Public domain.")))
-  "List of regexp to common license string mappings.
-Used by function `elx-license'.  Each entry has the form
-\(LICENSE . REGEXP) where LICENSE is used instead of matches of REGEXP.
-Unambitious expressions should come first and those that might produce
-false positives last."
-  :group 'elx
-  :type '(repeat (cons (string :tag "use")
-                       (regexp :tag "for regexp"))))
+(defconst elx-gnu-permission-statement-regexp
+  (replace-regexp-in-string
+   "\s" "[\s\t\n;]+"
+   ;; is free software[.,:;]? \
+   ;; you can redistribute it and/or modify it under the terms of the \
+   "\
+GNU \\(?1:Lesser \\| Library \\|Affero \\|Free \\)?\
+General Public Licen[sc]e[.,:;]? \
+\\(?:as published by the \\(?:Free Software Foundation\\|FSF\\)[.,:;]? \\)?\
+\\(?:either \\)?\
+\\(?:GPL \\)?\
+version \\(?2:[0-9.]*[0-9]\\)[.,:;]?\
+\\(?: of the Licen[sc]e[.,:;]?\\)?\
+\\(?3: or \\(?:(at your option) \\)?any later version\\)?"))
 
-(defcustom elx-license-replace
-  '(("GPL-3"      .  "gpl[- ]?v?3")
-    ("GPL-2"      .  "gpl[- ]?v?2")
-    ("GPL-1"      .  "gpl[- ]?v?1")
-    ("GPL"        .  "gpl")
-    ("LGPL-3"     . "lgpl[- ]?v?3")
-    ("LGPL-2.1"   . "lgpl[- ]?v?2.1")
-    ("AGPL-3"     . "agpl[- ]?v?3")
-    ("FDL-2.1"    .  "fdl[- ]?v?2.1")
-    ("FDL-2.1"    .  "fdl[- ]?v?2.1")
-    ("EPL-1.1"    .  "epl[- ]?v?1.1")
-    ("EPL-1.1"    .  "erlang-1.1")
-    ("Apache-2.0" .  "apache-2.0")
-    ("MIT"        .  "mit")
-    ("as-is"      .  "as-?is")
-    ("public-domain" . "public[- ]domain"))
-  "List of string to common license string mappings.
-Used by function `elx-license'.  Each entry has the form
-\(LICENSE . REGEXP) where LICENSE is used instead of matches of REGEXP."
-  :group 'elx
-  :type '(repeat (cons (string :tag "use")
-                       (regexp :tag "for regexp"))))
+(defconst elx-gnu-license-keyword-regexp "\
+\\(?:GNU \\(?1:Lesser \\| Library \\|Affero \\|Free \\)? General Public Licen[sc]e\
+\\|\\(?4:[laf]?gpl\\)[- ]?\
+\\)\
+\\(?:\\(?:v\\|version \\)?\\(?2:[0-9.]*[0-9]\\)\\)?\
+\\(?3: or \\(?:(at your option) \\)?\\(?:any \\)?later\\(?: version\\)?\\)?")
+
+(defconst elx-non-gnu-license-keyword-alist
+  '(("Apache-2.0"    .  "apache-2\\.0")
+    ("MIT"           .  "mit")
+    ("as-is"         .  "as-?is")
+    ("public-domain" . "public[- ]domain")))
+
+(defconst elx-non-gnu-license-keyword-regexp "\
+\\`\\(?4:[a-z]+\\)\\(?:\\(?:v\\|version \\)?\\(?2:[0-9.]*[0-9]\\)\\)?\\'")
+
+(defconst elx-non-gnu-permission-statement-alist
+  `(("Apache-2.0"    . "^;.* Apache License, Version 2\\.0")
+    ("MIT"           . "^;.* mit license")
+    ("public-domain" . "^;.*in\\(to\\)? the public[- ]domain")
+    ("public-domain" . "^;+ +Public domain\\.")
+    ("as-is"         . "^;.* \\(provided\\|distributed\\) \
+\\(by the author \\)?[\"`']\\{0,2\\}as[- ]is[\"`']\\{0,2\\}")))
 
 (defun elx-license (&optional file)
-  "Return the license of file FILE, or current buffer if FILE is nil.
+  "Attempt to return the license used for the file FILE.
+Or the license used for the file that is being visited in the
+current buffer if FILE is nil.
 
-The license is extracted from the \"License\" header or if that is missing
-by searching the file header for text matching entries in `elx-license-regexps'.
+This function completely ignores and \"LICENSE\" or similar file
+in the proximity of FILE.  The returned value is solely based on
+the contents of FILE itself.
 
-The extracted license string might be modified using `elx-license-mappings'
-before it is returned ensuring that each known license is always represented
-the same.  If the extracted license does not match \"^[-_.a-zA-Z0-9]+$\"
-return nil."
+The license is determined from the permission statement, if any.
+Otherwise the value of the \"License\" header keyword is
+considered.  An effort is made to normalize the returned value."
   (lm-with-file file
-    (let ((license (lm-header "License")))
-      (unless license
-        (let ((regexps elx-license-search)
-              (case-fold-search t)
-              (elt))
-          (while (and (not license)
-                      (setq elt (pop regexps)))
-            (when (re-search-forward (cdr elt) (lm-code-start) t)
-              (setq license (car elt)
-                    regexps nil)))))
-      (when license
-        (let (elt (mappings elx-license-replace))
-          (while (setq elt (pop mappings))
-            (when (string-match (cdr elt) license)
-              (setq license (car elt)
-                    mappings nil))))
-        (when (string-match "^[-_.a-zA-Z0-9]+$" license)
-          license)))))
+    (cl-flet ((format-gnu-abbrev
+               (&optional object)
+               (let ((abbrev  (match-string 1 object))
+                     (version (match-string 2 object))
+                     (later   (match-string 3 object))
+                     (prefix  (match-string 4 object)))
+                 (concat (if prefix
+                             (upcase prefix)
+                           (pcase abbrev
+                             ("Lesser "  "LGPL")
+                             ("Library " "LGBL")
+                             ("Affero "  "AGPL")
+                             ("Free "    "FDL")
+                             (`nil       "GPL")))
+                         (and version (concat "-" version))
+                         (and later "+")))))
+      (let ((bound (lm-code-start))
+            (case-fold-search t))
+        (or (and (re-search-forward elx-gnu-permission-statement-regexp bound t)
+                 (format-gnu-abbrev))
+            (-when-let (license (lm-header "Licen[sc]e"))
+              (or (and (string-match elx-gnu-license-keyword-regexp license)
+                       (format-gnu-abbrev license))
+                  (car (cl-find-if (pcase-lambda (`(,_ . ,re))
+                                     (string-match re license))
+                                   elx-non-gnu-license-keyword-alist))
+                  (and (string-match elx-non-gnu-license-keyword-regexp license)
+                       (format-gnu-abbrev license))))
+            (and (re-search-forward
+                  "^;\\{1,4\\} Licensed under the same terms as Emacs" bound t)
+                 "GPL-3+")
+            (and ;; Some libraries are releases "under the *GPL and
+                 ;; "<other license>", while the GPL is mentioned in
+                 ;; a way the above code does not recognize.  Return
+                 ;; nil instead of "<other license>" in such cases.
+                 (not (re-search-forward elx-gnu-license-keyword-regexp bound t))
+                 (car (cl-find-if (pcase-lambda (`(,_ . ,re))
+                                    (re-search-forward re bound t))
+                                  elx-non-gnu-permission-statement-alist))))))))
 
 (defcustom elx-license-url-alist
   '(("GPL-3"         . "http://www.fsf.org/licensing/licenses/gpl.html")

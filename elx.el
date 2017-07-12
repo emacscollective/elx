@@ -232,13 +232,29 @@ version \\(?2:[0-9.]*[0-9]\\)[.,:;]?\
 Or the license used for the file that is being visited in the
 current buffer if FILE is nil.
 
+*** A value is returned in the hope that it will be useful, but
+*** WITHOUT ANY WARRANTY; without even the implied warranty of
+*** MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
 This function completely ignores and \"LICENSE\" or similar file
 in the proximity of FILE.  The returned value is solely based on
 the contents of FILE itself.
 
 The license is determined from the permission statement, if any.
 Otherwise the value of the \"License\" header keyword is
-considered.  An effort is made to normalize the returned value."
+considered.  An effort is made to normalize the returned value.
+
+*** However this function does not always return the correct
+*** value and the returned value is not legal advice.
+
+Note in particular that if this function returns nil, then that
+merely merely means that it is not known what license applies.
+This may be because the library lacks a permission statement
+altogether (possibly because an accompanying \"LICENSE\" file
+is considered sufficient by the upstream), but it may also be
+because this function does not attempt to detect the used
+non-standard and/or non-fsf permission statement, or because
+of typos in the statement, or for a number of other reasons."
   (lm-with-file file
     (cl-flet ((format-gnu-abbrev
                (&optional object)

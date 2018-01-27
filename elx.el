@@ -528,16 +528,27 @@ An effort is made to normalize the returned value."
                   (car (cl-find-if (pcase-lambda (`(,_ . ,re))
                                      (re-search-forward re bound t))
                                    elx-permission-statement-alist)))))
-        (cond ((equal license "GPL-3.0")
-               "GPL-3")
-              ((and (equal license "GPL-2")
-                    (equal package-name "ahk-mode"))
-               "GPL-3") ; "either GPL version 2 or 3"
-              ((and (equal license "GPL-2")
-                    (equal package-name "rhtml-mode"))
-               "LGPL-2.1") ; MPL 1.1/GPL 2.0/LGPL 2.1
-              (t
-               license))))))
+        (pcase (list license package-name)
+          (`("GPL-3.0" ,_)          "GPL-3")
+          (`("GPL-2" "akh-mode")    "GPL-3")        ; "either GPL version 2 or 3"
+          (`("GPL-2" "rhtml-mode")  "LGPL-2.1")     ; "MPL 1.1/GPL 2.0/LGPL 2.1"
+          (`(nil "clang-format")    "UIUC")         ; http://llvm.org/svn/llvm-project/cfe/trunk/LICENSE.TXT
+          (`(nil "cython-mode")     "Apache-2.0")   ; https://github.com/cython/cython/blob/master/LICENSE.txt
+          (`(nil "edit-at-point")   "MIT")          ; https://github.com/enoson/edit-at-point.el/blob/master/README.md
+          (`(nil "emacs-setup")     "GPL-3+")       ; https://github.com/echosa/emacs-setup/blob/master/LICENSE
+          (`(nil "eno")             "MIT")          ; https://github.com/enoson/eno.el/blob/master/README.md
+          (`(nil "glsl-mode")       "GPL-1+")       ; https://github.com/jimhourihan/glsl-mode/issues/8
+          (`(nil "golint")          "BSD-3-clause") ; https://github.com/golang/lint/blob/master/LICENSE
+          (`(nil "llvm-mode")       "UIUC")         ; http://llvm.org/viewvc/llvm-project/llvm/trunk/LICENSE.TXT
+          (`(nil "manued")          "GPL-3+")       ; https://github.com/yamauchih/manued/blob/master/README.md
+          (`(nil "nm")              "GPL-3+")       ; https://github.com/tjim/nevermore/blob/master/COPYING
+          (`(nil "redshank")        "GPL")          ; http://www.foldr.org/~michaelw/projects/gitweb?p=redshank.git
+          (`(nil "trr")             "GPL-1+")       ; https://github.com/kawabata/emacs-trr/blob/master/README.rst
+          (`(nil "tumblesocks")     "as-is")        ; https://github.com/gcr/tumblesocks/blob/master/COPYING
+          (`(nil "ruby-additional") "BSD-3-clause") ; https://svn.ruby-lang.org/repos/ruby/trunk/COPYING
+          (`(nil "uni-confusables") "as-is")        ; http://git.savannah.gnu.org/cgit/emacs/elpa.git/tree/packages/uni-confusables/copyright.html
+          (_ license))))))
+
 
 (defun elx-licensee (&optional directory-or-file)
   (let* ((lines (ignore-errors

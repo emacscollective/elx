@@ -1,4 +1,4 @@
-;;; elx.el --- extract information from Emacs Lisp libraries
+;;; elx.el --- extract information from Emacs Lisp libraries  -*- lexical-binding: t -*-
 
 ;; Copyright (C) 2008-2018  Jonas Bernoulli
 
@@ -118,7 +118,7 @@ else as strings."
               (and remap (setq keyword (cadr remap))))
             (and keyword
                  (string-match elx-keywords-regexp keyword)
-                 (add-to-list 'keywords keyword)))))
+                 (push keyword keywords)))))
       (setq keywords (sort keywords 'string<))
       (if symbols (mapcar #'intern keywords) keywords))))
 

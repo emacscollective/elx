@@ -44,23 +44,6 @@
   :group 'maint
   :link '(url-link :tag "Homepage" "https://github.com/tarsius/elx"))
 
-;; Redefine to undo bug introduced in Emacs
-;; bf3f6a961f378f35a292c41c0bfbdae88ee1b1b9
-;; https://debbugs.gnu.org/cgi/bugreport.cgi?bug=22510
-(defun lm-header (header)
-  "Return the contents of the header named HEADER."
-  ;; This breaks `lm-header-multiline': (save-excursion
-  (goto-char (point-min))
-  (let ((case-fold-search t))
-    (when (and (re-search-forward (lm-get-header-re header) (lm-code-mark) t)
-               ;;   RCS ident likes format "$identifier: data$"
-               (looking-at
-                (if (save-excursion
-                      (skip-chars-backward "^$" (match-beginning 0))
-                      (= (point) (match-beginning 0)))
-                    "[^\n]+" "[^$\n]+")))
-      (match-string-no-properties 0))))
-
 ;;; Extract Summary
 
 (defun elx-summary (&optional file sanitize)

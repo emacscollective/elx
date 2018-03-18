@@ -751,6 +751,7 @@ or is nil.  Each element of the list is a cons; the car is the
 full name, the cdr is an email address."
   (elx-people "adapted-by" file))
 
+;;; _
 (provide 'elx)
 ;; Local Variables:
 ;; indent-tabs-mode: nil

@@ -4,7 +4,7 @@
 
 ;; Author: Jonas Bernoulli <jonas@bernoul.li>
 ;; Created: 20081202
-;; Package-Requires: ((emacs "24.4"))
+;; Package-Requires: ((emacs "26"))
 ;; Homepage: https://github.com/emacscollective/elx
 ;; Keywords: docs, libraries, packages
 
@@ -37,6 +37,7 @@
 ;;; Code:
 
 (require 'lisp-mnt)
+(require 'subr-x)
 
 (defgroup elx nil
   "Extract information from Emacs Lisp libraries."
@@ -510,7 +511,7 @@ An effort is made to normalize the returned value."
                                  version)))
                   (and (re-search-forward elx-wtf-permission-statement-regexp bound t)
                        "WTFPL-2")
-                  (-when-let (license (lm-header "Licen[sc]e"))
+                  (and-let* ((license (lm-header "Licen[sc]e")))
                     (and (not (equal license ""))
                          ;; TEMP for ensime
                          (not (string-match "https?://www\\.gnu\\.org/licenses/gpl\\.html"
@@ -521,7 +522,7 @@ An effort is made to normalize the returned value."
                   (car (cl-find-if (pcase-lambda (`(,_ . ,re))
                                      (re-search-forward re bound t))
                                    elx-gnu-non-standard-permission-statement-alist))
-                  (-when-let (license (lm-header "Licen[sc]e"))
+                  (and-let* ((license (lm-header "Licen[sc]e")))
                     (or (car (cl-find-if (pcase-lambda (`(,_ . ,re))
                                            (string-match re license))
                                          elx-non-gnu-license-keyword-alist))

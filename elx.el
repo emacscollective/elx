@@ -119,7 +119,7 @@ else as strings."
             (and keyword
                  (string-match elx-keywords-regexp keyword)
                  (push keyword keywords)))))
-      (setq keywords (sort keywords 'string<))
+      (setq keywords (delete-dups (sort keywords 'string<)))
       (if symbols (mapcar #'intern keywords) keywords))))
 
 ;;; Extract Commentary

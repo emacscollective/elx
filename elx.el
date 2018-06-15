@@ -42,7 +42,7 @@
 (defgroup elx nil
   "Extract information from Emacs Lisp libraries."
   :group 'maint
-  :link '(url-link :tag "Homepage" "https://github.com/tarsius/elx"))
+  :link '(url-link :tag "Homepage" "https://github.com/emacscollective/elx"))
 
 ;;; Extract Summary
 

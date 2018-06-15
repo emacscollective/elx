@@ -525,6 +525,9 @@ An effort is made to normalize the returned value."
           (`(nil "edit-at-point")   "MIT")          ; https://github.com/enoson/edit-at-point.el/blob/master/README.md
           (`(nil "emacs-setup")     "GPL-3+")       ; https://github.com/echosa/emacs-setup/blob/master/LICENSE
           (`(nil "eno")             "MIT")          ; https://github.com/enoson/eno.el/blob/master/README.md
+          (`(nil "evil-mc")         "MIT")          ; PENDING https://github.com/gabesoft/evil-mc/issues/80
+          (`(nil "evil-mc-extras")  "MIT")          ; PENDING https://github.com/gabesoft/evil-mc/issues/80
+          (`(nil "flow-minor-mode") "BSD-3-clause") ; PENDING https://github.com/an-sh/flow-minor-mode/issues/18
           (`(nil "glsl-mode")       "GPL-1+")       ; https://github.com/jimhourihan/glsl-mode/issues/8
           (`(nil "golint")          "BSD-3-clause") ; https://github.com/golang/lint/blob/master/LICENSE
           (`(nil "llvm-mode")       "UIUC")         ; http://llvm.org/viewvc/llvm-project/llvm/trunk/LICENSE.TXT

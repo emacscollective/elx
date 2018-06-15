@@ -545,6 +545,8 @@ An effort is made to normalize the returned value."
          (file (cl-find-if (lambda (s) (string-prefix-p "License file: " s)) lines))
          (file (and file (substring file 14))))
     (cond
+     ((equal license "No-license") ; e.g. heroku
+      (setq license nil))
      ((and (equal license "ISC License") file)
       (with-temp-buffer
         (insert-file-contents file)

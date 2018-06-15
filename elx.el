@@ -544,13 +544,14 @@ An effort is made to normalize the returned value."
          (license (and license (substring license 9)))
          (file (cl-find-if (lambda (s) (string-prefix-p "License file: " s)) lines))
          (file (and file (substring file 14))))
-    (when (and (equal license "ISC License") file)
+    (cond
+     ((and (equal license "ISC License") file)
       (with-temp-buffer
         (insert-file-contents file)
         (re-search-forward
          "Permission to use, copy, modify,? and\\(/or\\)? distribute")
         (setq license
-              (if (match-beginning 1) "ISC (and/or)" "ISC (and)"))))
+              (if (match-beginning 1) "ISC (and/or)" "ISC (and)")))))
     (if-let ((elt (assoc license elx-licensee-abbreviation-alist)))
         (cdr elt)
       (and (not (equal license "")) license))))

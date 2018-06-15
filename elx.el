@@ -52,19 +52,19 @@ If optional FILE is nil return the summary of the current buffer
 instead.  When optional SANITIZE is non-nil a trailing period is
 removed and the first word is upcases."
   (lm-with-file file
-    (let ((summary-match
-           (lambda ()
-             (and (looking-at lm-header-prefix)
-                  (progn (goto-char (match-end 0))
-                         ;; There should be three dashes after the
-                         ;; filename but often there are only two or
-                         ;; even just one.
-                         (looking-at "[^ ]+[ \t]+-+[ \t]+\\(.*\\)"))))))
-      (if (or (funcall summary-match)
+    (cl-flet ((summary-match
+               ()
+               (and (looking-at lm-header-prefix)
+                    (progn (goto-char (match-end 0))
+                           ;; There should be three dashes after the
+                           ;; filename but often there are only two or
+                           ;; even just one.
+                           (looking-at "[^ ]+[ \t]+-+[ \t]+\\(.*\\)")))))
+      (if (or (summary-match)
               ;; Some people put the -*- specification on a separate
               ;; line, pushing the summary to the second or third line.
-              (progn (forward-line) (funcall summary-match))
-              (progn (forward-line) (funcall summary-match)))
+              (progn (forward-line) (summary-match))
+              (progn (forward-line) (summary-match)))
           (let ((summary (match-string-no-properties 1)))
             (unless (equal summary "")
               ;; Strip off -*- specifications.

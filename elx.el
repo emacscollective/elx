@@ -114,11 +114,10 @@ else as strings."
                                   "\\|[ \t]+and[ \t]+\\)")
                           t))
           (when sanitize
-            (let ((remap (assoc keyword elx-remap-keywords)))
-              (and remap (setq keyword (cadr remap))))
-            (and keyword
-                 (string-match elx-keywords-regexp keyword)
-                 (push keyword keywords)))))
+            (when-let ((remap (assoc keyword elx-remap-keywords)))
+              (setq keyword (cadr remap)))
+            (when (and keyword (string-match elx-keywords-regexp keyword))
+              (push keyword keywords)))))
       (setq keywords (delete-dups (sort keywords 'string<)))
       (if symbols (mapcar #'intern keywords) keywords))))
 

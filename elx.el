@@ -539,26 +539,30 @@ An effort is made to normalize the returned value."
 
 
 (defun elx-licensee (&optional directory-or-file)
-  (let* ((lines (ignore-errors
-                  (process-lines "licensee"
-                                 (or directory-or-file default-directory))))
-         (license (cl-find-if (lambda (s) (string-prefix-p "License: " s)) lines))
-         (license (and license (substring license 9)))
-         (file (cl-find-if (lambda (s) (string-prefix-p "License file: " s)) lines))
-         (file (and file (substring file 14))))
-    (cond
-     ((equal license "No-license") ; e.g. heroku
-      (setq license nil))
-     ((and (equal license "ISC License") file)
-      (with-temp-buffer
-        (insert-file-contents file)
-        (re-search-forward
-         "Permission to use, copy, modify,? and\\(/or\\)? distribute")
-        (setq license
-              (if (match-beginning 1) "ISC (and/or)" "ISC (and)")))))
-    (if-let ((elt (assoc license elx-licensee-abbreviation-alist)))
-        (cdr elt)
-      (and (not (equal license "")) license))))
+  (save-match-data
+    (let* ((lines (ignore-errors
+                    (process-lines "licensee"
+                                   (or directory-or-file default-directory))))
+           (license (or (cl-find-if (lambda (s) (string-match "  License: " s)) lines)
+                        ;; ^ Use the first of several found licenses.
+                        ;; v Use the only found license.
+                        (cl-find-if (lambda (s) (string-match "License: " s)) lines)))
+           (license (and license (substring license (match-end 0))))
+           (file (cl-find-if (lambda (s) (string-prefix-p "License file: " s)) lines))
+           (file (and file (substring file 14))))
+      (cond
+       ((equal license "No-license") ; e.g. heroku
+        (setq license nil))
+       ((and (equal license "ISC License") file)
+        (with-temp-buffer
+          (insert-file-contents file)
+          (re-search-forward
+           "Permission to use, copy, modify,? and\\(/or\\)? distribute")
+          (setq license
+                (if (match-beginning 1) "ISC (and/or)" "ISC (and)")))))
+      (if-let ((elt (assoc license elx-licensee-abbreviation-alist)))
+          (cdr elt)
+        (and (not (equal license "")) license)))))
 
 (defcustom elx-license-url-alist
   '(("GPL-3"         . "http://www.fsf.org/licensing/licenses/gpl.html")

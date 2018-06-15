@@ -551,8 +551,9 @@ An effort is made to normalize the returned value."
          "Permission to use, copy, modify,? and\\(/or\\)? distribute")
         (setq license
               (if (match-beginning 1) "ISC (and/or)" "ISC (and)"))))
-    (or (cdr (assoc license elx-licensee-abbreviation-alist))
-        (and (not (equal license "")) license))))
+    (if-let ((elt (assoc license elx-licensee-abbreviation-alist)))
+        (cdr elt)
+      (and (not (equal license "")) license))))
 
 (defcustom elx-license-url-alist
   '(("GPL-3"         . "http://www.fsf.org/licensing/licenses/gpl.html")

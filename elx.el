@@ -685,29 +685,29 @@ The value is a cons of the form (FULLNAME . ADDRESS)."
   (let (name mail)
     (cond ((string-match (concat "\\(.+\\) "
                                  "?[(<]\\(\\S-+@\\S-+\\)[>)]") x)
-           (setq name (match-string 1 x)
-                 mail (match-string 2 x)))
+           (setq name (match-string 1 x))
+           (setq mail (match-string 2 x)))
           ((string-match (concat "\\(.+\\) "
                                  "[(<]\\(?:\\(\\S-+\\) "
                                  "\\(?:\\*?\\(?:AT\\|[.*]\\)\\*?\\) "
                                  "\\(\\S-+\\) "
                                  "\\(?:\\*?\\(?:DOT\\|[.*]\\)\\*? \\)?"
                                  "\\(\\S-+\\)\\)[>)]") x)
-           (setq name (match-string 1 x)
-                 mail (concat (match-string 2 x) "@"
+           (setq name (match-string 1 x))
+           (setq mail (concat (match-string 2 x) "@"
                               (match-string 3 x) "."
                               (match-string 4 x))))
           ((string-match (concat "\\(.+\\) "
                                  "[(<]\\(?:\\(\\S-+\\) "
                                  "\\(?:\\*?\\(?:AT\\|[.*]\\)\\*?\\) "
                                  "\\(\\S-+\\)[>)]\\)") x)
-           (setq name (match-string 1 x)
-                 mail (concat (match-string 2 x) "@"
+           (setq name (match-string 1 x))
+           (setq mail (concat (match-string 2 x) "@"
                               (match-string 3 x))))
           ((string-match (concat "\\(\\S-+@\\S-+\\) "
                                  "[(<]\\(.*\\)[>)]") x)
-           (setq name (match-string 2 x)
-                 mail (match-string 1 x)))
+           (setq name (match-string 2 x))
+           (setq mail (match-string 1 x)))
           ((string-match "\\S-+@\\S-+" x)
            (setq mail x))
           (t

@@ -456,11 +456,11 @@ An effort is made to normalize the returned value."
                      (prefix  (match-string 4 object)))
                  (concat (if prefix
                              (upcase prefix)
-                           (pcase abbrev
-                             ("Lesser "  "LGPL")
-                             ("Library " "LGBL")
-                             ("Affero "  "AGPL")
-                             ("Free "    "FDL")
+                           (pcase (downcase abbrev)
+                             ("lesser "  "LGPL")
+                             ("library " "LGBL")
+                             ("affero "  "AGPL")
+                             ("free "    "FDL")
                              (`nil       "GPL")))
                          (and version (concat "-" version))
                          (and later "+")))))

@@ -456,7 +456,7 @@ An effort is made to normalize the returned value."
                      (prefix  (match-string 4 object)))
                  (concat (if prefix
                              (upcase prefix)
-                           (pcase (downcase abbrev)
+                           (pcase (and abbrev (downcase abbrev))
                              ("lesser "  "LGPL")
                              ("library " "LGBL")
                              ("affero "  "AGPL")

@@ -408,28 +408,6 @@ Public License as published by the Free Software Foundation\\.")) ; lmselect, ti
     ("CC BY-NC-SA 3.0" . "^;; \\[CC BY-NC-SA 3\\.0\\](http://creativecommons\\.org/licenses/by-nc-sa/3\\.0/)") ; vimgolf
     ))
 
-(defconst elx-licensee-abbreviation-alist
-  '(("Apache License 2.0"                          . "Apache-2.0")
-    ("Artistic License 2.0"                        . "Artistic-2.0")
-    ("BSD 2-clause \"Simplified\" License"         . "BSD-2-clause")
-    ("BSD 2-Clause \"Simplified\" License"         . "BSD-2-clause")
-    ("BSD 3-clause \"New\" or \"Revised\" License" . "BSD-3-clause")
-    ("BSD 3-Clause \"New\" or \"Revised\" License" . "BSD-3-clause")
-    ("Creative Commons Zero v1.0 Universal"        . "CC0 1.0")
-    ("Do What The F*ck You Want To Public License" . "WTFPL")
-    ("Eclipse Public License 1.0"                  . "EPL-1.0")
-    ("GNU Affero General Public License v3.0"      . "AGPL-3")
-    ("GNU General Public License v2.0"             . "GPL-2")
-    ("GNU General Public License v3.0"             . "GPL-3")
-    ("GNU Lesser General Public License v2.1"      . "LGPL-2.1")
-    ("GNU Lesser General Public License v3.0"      . "LGPL-3")
-    ("ISC License"                                 . "ISC")
-    ("MIT License"                                 . "MIT")
-    ("Mozilla Public License 2.0"                  . "MPL-2")
-    ("The Unlicense"                               . "unlicense")
-    ("Other"                                       . nil)
-    (""                                            . nil))) ; bug
-
 (defun elx-license (&optional file dir package-name)
   "Attempt to return the license used for the file FILE.
 Or the license used for the file that is being visited in the
@@ -516,6 +494,12 @@ An effort is made to normalize the returned value."
                                    elx-permission-statement-alist)))))
         (pcase (list license package-name)
           (`("GPL-3.0" ,_)          "GPL-3")
+          (`("GPL-2.0" ,_)          "GPL-2")
+          (`("BSD-3-Clause" ,_)     "BSD-3-clause")
+          (`("BSD-2-Clause" ,_)     "BSD-2-clause")
+          (`("LGPL-3.0" ,_)         "LGPL-3")
+          (`("MPL-2.0" ,_)          "MPL-2")
+          (`("Unlicense" ,_)        "unlicense")
           (`("GPL-2" "ahk-mode")    "GPL-3")        ; "either GPL version 2 or 3"
           (`("GPL-2" "rhtml-mode")  "LGPL-2.1")     ; "MPL 1.1/GPL 2.0/LGPL 2.1"
           (`(nil "clang-format")    "UIUC")         ; http://llvm.org/svn/llvm-project/cfe/trunk/LICENSE.TXT
@@ -541,29 +525,34 @@ An effort is made to normalize the returned value."
 
 (defun elx-licensee (&optional directory-or-file)
   (save-match-data
-    (let* ((lines (ignore-errors
-                    (process-lines "licensee"
-                                   (or directory-or-file default-directory))))
-           (license (or (cl-find-if (lambda (s) (string-match "  License: " s)) lines)
-                        ;; ^ Use the first of several found licenses.
-                        ;; v Use the only found license.
-                        (cl-find-if (lambda (s) (string-match "License: " s)) lines)))
-           (license (and license (substring license (match-end 0))))
-           (file (cl-find-if (lambda (s) (string-prefix-p "License file: " s)) lines))
-           (file (and file (substring file 14))))
-      (cond
-       ((equal license "No-license") ; e.g. heroku
-        (setq license nil))
-       ((and (equal license "ISC License") file)
-        (with-temp-buffer
-          (insert-file-contents file)
-          (re-search-forward
-           "Permission to use, copy, modify,? and\\(/or\\)? distribute")
-          (setq license
-                (if (match-beginning 1) "ISC (and/or)" "ISC (and)")))))
-      (if-let ((elt (assoc license elx-licensee-abbreviation-alist)))
-          (cdr elt)
-        (and (not (equal license "")) license)))))
+    (let* ((match
+            (with-temp-buffer
+              (save-excursion
+                (call-process "licensee" nil '(t nil) nil "detect" "--json"
+                              (or directory-or-file default-directory)))
+              (car (cl-sort
+                    (cdr (assq 'matched_files
+                               (let ((json-object-type 'alist)
+                                     (json-array-type  'list)
+                                     (json-key-type    'symbol)
+                                     (json-false       nil)
+                                     (json-null        nil))
+                                 (json-read))))
+                    #'>
+                    :key (lambda (elt) (or (let-alist elt .matcher.confidence)) 0)))))
+           (license (cdr (assq 'matched_license match)))
+           (file    (cdr (assq 'filename match))))
+      (pcase license
+        (""            nil) ; haven't seen this lately
+        ("NONE"        nil) ; unable to detect a license
+        ("NOASSERTION" nil) ; almost able to detect a licence
+        ("ISC License"
+         (with-temp-buffer
+           (insert-file-contents file)
+           (re-search-forward
+            "Permission to use, copy, modify,? and\\(/or\\)? distribute")
+           (if (match-beginning 1) "ISC (and/or)" "ISC (and)")))
+        (_ license)))))
 
 (defcustom elx-license-url-alist
   '(("GPL-3"         . "http://www.fsf.org/licensing/licenses/gpl.html")

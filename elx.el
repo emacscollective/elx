@@ -36,6 +36,7 @@
 
 ;;; Code:
 
+(require 'json)
 (require 'lisp-mnt)
 (require 'subr-x)
 

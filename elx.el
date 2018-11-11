@@ -4,7 +4,7 @@
 
 ;; Author: Jonas Bernoulli <jonas@bernoul.li>
 ;; Created: 20081202
-;; Package-Requires: ((emacs "26"))
+;; Package-Requires: ((emacs "25.1"))
 ;; Homepage: https://github.com/emacscollective/elx
 ;; Keywords: docs, libraries, packages
 
@@ -139,7 +139,7 @@ the leading semicolons and exactly one space are removed,
 likewise leading \"\(\" is replaced with just \"(\".  Lines
 consisting only of whitespace are converted to empty lines."
   (lm-with-file file
-    (and-let* ((start (lm-section-start lm-commentary-header t)))
+    (when-let ((start (lm-section-start lm-commentary-header t)))
       (progn
         (goto-char start)
         (let ((commentary (buffer-substring-no-properties
@@ -163,7 +163,7 @@ consisting only of whitespace are converted to empty lines."
 
 (defun elx-wikipage (&optional file)
   "Extract the Emacswiki page of the specified package."
-  (and-let* ((page (lm-with-file file (lm-header "Doc URL"))))
+  (when-let ((page (lm-with-file file (lm-header "Doc URL"))))
     (and (string-match
           "^<?http://\\(?:www\\.\\)?emacswiki\\.org.*?\\([^/]+\\)>?$"
           page)
@@ -473,7 +473,7 @@ An effort is made to normalize the returned value."
                                  version)))
                   (and (re-search-forward elx-wtf-permission-statement-regexp bound t)
                        "WTFPL-2")
-                  (and-let* ((license (lm-header "Licen[sc]e")))
+                  (when-let ((license (lm-header "Licen[sc]e")))
                     (and (not (equal license ""))
                          ;; TEMP for ensime
                          (not (string-match "https?://www\\.gnu\\.org/licenses/gpl\\.html"
@@ -484,7 +484,7 @@ An effort is made to normalize the returned value."
                   (car (cl-find-if (pcase-lambda (`(,_ . ,re))
                                      (re-search-forward re bound t))
                                    elx-gnu-non-standard-permission-statement-alist))
-                  (and-let* ((license (lm-header "Licen[sc]e")))
+                  (when-let ((license (lm-header "Licen[sc]e")))
                     (or (car (cl-find-if (pcase-lambda (`(,_ . ,re))
                                            (string-match re license))
                                          elx-non-gnu-license-keyword-alist))

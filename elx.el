@@ -1,6 +1,6 @@
 ;;; elx.el --- extract information from Emacs Lisp libraries  -*- lexical-binding: t -*-
 
-;; Copyright (C) 2008-2018  Jonas Bernoulli
+;; Copyright (C) 2008-2019  Jonas Bernoulli
 
 ;; Author: Jonas Bernoulli <jonas@bernoul.li>
 ;; Created: 20081202
@@ -383,6 +383,7 @@ Public License as published by the Free Software Foundation\\.")) ; lmselect, ti
     ("BSD-3-clause"  . "^;; 3-clause \"new bsd\"")
     ("BSD-3-clause"  . "freely distributable under the terms of a new BSD licence") ; tinysegmenter
     ("BSD-3-clause"  . "^; Distributed under the OSI-approved BSD 3-Clause License") ; cmake-mode
+    ("BSD-3-clause"  . "Licensed under the BSD-3-clause license\\.$") ; gsettings, gvariant
     ("Artistic-2.0"  . "^;; .*Artistic Licen[sc]e 2\\.0")
     ("CeCILL-B"      . "^;; It is a free software under the CeCILL-B license\\.$")
     ("MS-PL"         . "^;; This code is distributed under the MS-Public License")

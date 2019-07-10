@@ -524,14 +524,16 @@ An effort is made to normalize the returned value."
           (`(nil "uni-confusables") "as-is")        ; http://git.savannah.gnu.org/cgit/emacs/elpa.git/tree/packages/uni-confusables/copyright.html
           (_ license))))))
 
-
 (defun elx-licensee (&optional directory-or-file)
   (save-match-data
     (let* ((match
             (with-temp-buffer
               (save-excursion
-                (call-process "licensee" nil '(t nil) nil "detect" "--json"
-                              (or directory-or-file default-directory)))
+                (unless (eq (call-process
+                             "licensee" nil t nil "detect" "--json"
+                             (or directory-or-file default-directory))
+                            0)
+                  (error "licensee failed: %S" (buffer-string))))
               (car (cl-sort
                     (cdr (assq 'matched_files
                                (let ((json-object-type 'alist)
@@ -539,7 +541,9 @@ An effort is made to normalize the returned value."
                                      (json-key-type    'symbol)
                                      (json-false       nil)
                                      (json-null        nil))
-                                 (json-read))))
+                                 (condition-case nil (json-read)
+                                   (error (error "licensee failed: %S"
+                                                 (buffer-string)))))))
                     #'>
                     :key (lambda (elt) (or (let-alist elt .matcher.confidence)) 0)))))
            (license (cdr (assq 'matched_license match)))

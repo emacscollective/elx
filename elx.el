@@ -529,11 +529,8 @@ An effort is made to normalize the returned value."
     (let* ((match
             (with-temp-buffer
               (save-excursion
-                (unless (eq (call-process
-                             "licensee" nil t nil "detect" "--json"
-                             (or directory-or-file default-directory))
-                            0)
-                  (error "licensee failed: %S" (buffer-string))))
+                (call-process "licensee" nil '(t nil) nil "detect" "--json"
+                              (or directory-or-file default-directory)))
               (car (cl-sort
                     (cdr (assq 'matched_files
                                (let ((json-object-type 'alist)

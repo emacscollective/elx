@@ -172,7 +172,7 @@ consisting only of whitespace are converted to empty lines."
 ;;; Extract License
 
 (defconst elx-gnu-permission-statement-regexp
-  ;; The stray "n?" is for https://github.com/myuhe/...
+  ;; The stray "n?" is for https://github.com/myuhe/inlineR.el/pull/3
   (replace-regexp-in-string
    "\s" "[\s\t\n;]+"
    ;; is free software[.,:;]? \
@@ -477,9 +477,6 @@ An effort is made to normalize the returned value."
                        "WTFPL-2")
                   (when-let ((license (lm-header "\\(?:Licen[sc]e\\|SPDX-License-Identifier\\)")))
                     (and (not (equal license ""))
-                         ;; TEMP for ensime
-                         (not (string-match "https?://www\\.gnu\\.org/licenses/gpl\\.html"
-                                            license))
                          (string-match elx-gnu-license-keyword-regexp license)
                          (format-gnu-abbrev license)))
                   (elx-licensee dir)
@@ -503,23 +500,10 @@ An effort is made to normalize the returned value."
           (`("LGPL-3.0" ,_)         "LGPL-3")
           (`("MPL-2.0" ,_)          "MPL-2")
           (`("Unlicense" ,_)        "unlicense")
-          (`("GPL-2" "ahk-mode")    "GPL-3")        ; "either GPL version 2 or 3"
-          (`("GPL-2" "rhtml-mode")  "LGPL-2.1")     ; "MPL 1.1/GPL 2.0/LGPL 2.1"
-          (`(nil "clang-format")    "UIUC")         ; http://llvm.org/svn/llvm-project/cfe/trunk/LICENSE.TXT
-          (`(nil "cython-mode")     "Apache-2.0")   ; https://github.com/cython/cython/blob/master/LICENSE.txt
-          (`(nil "edit-at-point")   "MIT")          ; https://github.com/enoson/edit-at-point.el/blob/master/README.md
-          (`(nil "emacs-setup")     "GPL-3+")       ; https://github.com/echosa/emacs-setup/blob/master/LICENSE
-          (`(nil "eno")             "MIT")          ; https://github.com/enoson/eno.el/blob/master/README.md
-          (`(nil "glsl-mode")       "GPL-1+")       ; https://github.com/jimhourihan/glsl-mode/issues/8
-          (`(nil "golint")          "BSD-3-clause") ; https://github.com/golang/lint/blob/master/LICENSE
-          (`(nil "llvm-mode")       "UIUC")         ; http://llvm.org/viewvc/llvm-project/llvm/trunk/LICENSE.TXT
-          (`(nil "manued")          "GPL-3+")       ; https://github.com/yamauchih/manued/blob/master/README.md
-          (`(nil "nm")              "GPL-3+")       ; https://github.com/tjim/nevermore/blob/master/COPYING
-          (`(nil "tablegen-mode")   "UIUC")         ; http://llvm.org/viewvc/llvm-project/llvm/trunk/LICENSE.TXT
-          (`(nil "trr")             "GPL-1+")       ; https://github.com/kawabata/emacs-trr/blob/master/README.rst
-          (`(nil "tumblesocks")     "as-is")        ; https://github.com/gcr/tumblesocks/blob/master/COPYING
-          (`(nil "ruby-additional") "BSD-3-clause") ; https://svn.ruby-lang.org/repos/ruby/trunk/COPYING
-          (`(nil "uni-confusables") "as-is")        ; http://git.savannah.gnu.org/cgit/emacs/elpa.git/tree/packages/uni-confusables/copyright.html
+          (`("GPL-2" "ahk-mode")    "GPL-3")        ; pr & email  https://github.com/ralesi/ahk-mode/pull/28
+          (`(nil "edit-at-point")   "MIT")          ; pr & email  https://github.com/enoson/edit-at-point.el/pull/2
+          (`(nil "eno")             "MIT")          ; pr & email  https://github.com/enoson/eno.el/pull/6
+          (`(nil "nm")              "GPL-3+")       ; pr & email  https://github.com/tjim/nevermore/pull/8
           (_ license))))))
 
 (defun elx-licensee (&optional directory-or-file)

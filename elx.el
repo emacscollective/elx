@@ -475,7 +475,7 @@ An effort is made to normalize the returned value."
                                  version)))
                   (and (re-search-forward elx-wtf-permission-statement-regexp bound t)
                        "WTFPL-2")
-                  (when-let ((license (lm-header "Licen[sc]e")))
+                  (when-let ((license (lm-header "\\(?:Licen[sc]e\\|SPDX-License-Identifier\\)")))
                     (and (not (equal license ""))
                          ;; TEMP for ensime
                          (not (string-match "https?://www\\.gnu\\.org/licenses/gpl\\.html"
@@ -486,7 +486,7 @@ An effort is made to normalize the returned value."
                   (car (cl-find-if (pcase-lambda (`(,_ . ,re))
                                      (re-search-forward re bound t))
                                    elx-gnu-non-standard-permission-statement-alist))
-                  (when-let ((license (lm-header "Licen[sc]e")))
+                  (when-let ((license (lm-header "\\(?:Licen[sc]e\\|SPDX-License-Identifier\\)")))
                     (or (car (cl-find-if (pcase-lambda (`(,_ . ,re))
                                            (string-match re license))
                                          elx-non-gnu-license-keyword-alist))

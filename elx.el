@@ -172,7 +172,6 @@ consisting only of whitespace are converted to empty lines."
 ;;; Extract License
 
 (defconst elx-gnu-permission-statement-regexp
-  ;; The stray "n?" is for https://github.com/myuhe/inlineR.el/pull/3
   (replace-regexp-in-string
    "\s" "[\s\t\n;]+"
    ;; is free software[.,:;]? \
@@ -180,7 +179,7 @@ consisting only of whitespace are converted to empty lines."
    "\
 GNU \\(?1:Lesser \\| Library \\|Affero \\|Free \\)?\
 General Public Licen[sc]e[.,:;]? \
-\\(?:as published byn? the \\(?:Free Software Foundation\\|FSF\\)[.,:;]? \\)?\
+\\(?:as published by the \\(?:Free Software Foundation\\|FSF\\)[.,:;]? \\)?\
 \\(?:either \\)?\
 \\(?:GPL \\)?\
 version \\(?2:[0-9.]*[0-9]\\)[.,:;]?\
@@ -500,10 +499,6 @@ An effort is made to normalize the returned value."
           (`("LGPL-3.0" ,_)         "LGPL-3")
           (`("MPL-2.0" ,_)          "MPL-2")
           (`("Unlicense" ,_)        "unlicense")
-          (`("GPL-2" "ahk-mode")    "GPL-3")        ; pr & email  https://github.com/ralesi/ahk-mode/pull/28
-          (`(nil "edit-at-point")   "MIT")          ; pr & email  https://github.com/enoson/edit-at-point.el/pull/2
-          (`(nil "eno")             "MIT")          ; pr & email  https://github.com/enoson/eno.el/pull/6
-          (`(nil "nm")              "GPL-3+")       ; pr & email  https://github.com/tjim/nevermore/pull/8
           (_ license))))))
 
 (defun elx-licensee (&optional directory-or-file)

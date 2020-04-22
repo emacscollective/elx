@@ -1,6 +1,6 @@
 ;;; elx.el --- extract information from Emacs Lisp libraries  -*- lexical-binding: t -*-
 
-;; Copyright (C) 2008-2019  Jonas Bernoulli
+;; Copyright (C) 2008-2020  Jonas Bernoulli
 
 ;; Author: Jonas Bernoulli <jonas@bernoul.li>
 ;; Created: 20081202
@@ -349,6 +349,7 @@ Public License as published by the Free Software Foundation\\.")) ; lmselect, ti
     ("public-domain" . "public[- ]domain")
     ("WTFPL-2"       . "WTFPL .+?http://sam\\.zoy\\.org/wtfpl")
     ("WTFPL"         . "WTFPL")
+    ("CeCILL"        . "CeCILL")
     ("CeCILL-B"      . "CeCILL-B")
     ("MS-PL"         . "MS-PL")
     ("unlicense"     . "Unlicense")

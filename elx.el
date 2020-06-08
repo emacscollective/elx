@@ -493,6 +493,8 @@ An effort is made to normalize the returned value."
                                      (re-search-forward re bound t))
                                    elx-permission-statement-alist)))))
         (pcase (list license package-name)
+          (`("GPL-3.0+" ,_)         "GPL-3+")
+          (`("GPL-2.0+" ,_)         "GPL-2+")
           (`("GPL-3.0" ,_)          "GPL-3")
           (`("GPL-2.0" ,_)          "GPL-2")
           (`("BSD-3-Clause" ,_)     "BSD-3-clause")

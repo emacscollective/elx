@@ -505,37 +505,38 @@ An effort is made to normalize the returned value."
           (_ license))))))
 
 (defun elx-licensee (&optional directory-or-file)
-  (save-match-data
-    (let* ((match
-            (with-temp-buffer
-              (save-excursion
-                (call-process "licensee" nil '(t nil) nil "detect" "--json"
-                              (or directory-or-file default-directory)))
-              (car (cl-sort
-                    (cdr (assq 'matched_files
-                               (let ((json-object-type 'alist)
-                                     (json-array-type  'list)
-                                     (json-key-type    'symbol)
-                                     (json-false       nil)
-                                     (json-null        nil))
-                                 (condition-case nil (json-read)
-                                   (error (error "licensee failed: %S"
-                                                 (buffer-string)))))))
-                    #'>
-                    :key (lambda (elt) (or (let-alist elt .matcher.confidence)) 0)))))
-           (license (cdr (assq 'matched_license match)))
-           (file    (cdr (assq 'filename match))))
-      (pcase license
-        (""            nil) ; haven't seen this lately
-        ("NONE"        nil) ; unable to detect a license
-        ("NOASSERTION" nil) ; almost able to detect a licence
-        ("ISC License"
-         (with-temp-buffer
-           (insert-file-contents file)
-           (re-search-forward
-            "Permission to use, copy, modify,? and\\(/or\\)? distribute")
-           (if (match-beginning 1) "ISC (and/or)" "ISC (and)")))
-        (_ license)))))
+  (when (executable-find "licensee")
+    (save-match-data
+      (let* ((match
+              (with-temp-buffer
+                (save-excursion
+                  (call-process "licensee" nil '(t nil) nil "detect" "--json"
+                                (or directory-or-file default-directory)))
+                (car (cl-sort
+                      (cdr (assq 'matched_files
+                                 (let ((json-object-type 'alist)
+                                       (json-array-type  'list)
+                                       (json-key-type    'symbol)
+                                       (json-false       nil)
+                                       (json-null        nil))
+                                   (condition-case nil (json-read)
+                                     (error (error "licensee failed: %S"
+                                                   (buffer-string)))))))
+                      #'>
+                      :key (lambda (elt) (or (let-alist elt .matcher.confidence)) 0)))))
+             (license (cdr (assq 'matched_license match)))
+             (file    (cdr (assq 'filename match))))
+        (pcase license
+          (""            nil)                     ; haven't seen this lately
+          ("NONE"        nil)                     ; unable to detect a license
+          ("NOASSERTION" nil)           ; almost able to detect a licence
+          ("ISC License"
+           (with-temp-buffer
+             (insert-file-contents file)
+             (re-search-forward
+              "Permission to use, copy, modify,? and\\(/or\\)? distribute")
+             (if (match-beginning 1) "ISC (and/or)" "ISC (and)")))
+          (_ license))))))
 
 (defcustom elx-license-url-alist
   '(("GPL-3"         . "http://www.fsf.org/licensing/licenses/gpl.html")
@@ -605,7 +606,7 @@ the \"Updated\" or \"Last-Updated\" header keyword."
                      ((> (length a) (length b)) a)
                      ((> (length b) (length a)) b)
                      (t a)))))))
-  
+
 (defun elx--date-2 (string regexp anchored)
   (and (string-match (if anchored (format "^%s$" regexp) regexp) string)
        (let ((m  (match-string 2 string))

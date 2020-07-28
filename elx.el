@@ -411,6 +411,11 @@ Public License as published by the Free Software Foundation\\.")) ; lmselect, ti
     ("CC BY-NC-SA 3.0" . "^;; \\[CC BY-NC-SA 3\\.0\\](http://creativecommons\\.org/licenses/by-nc-sa/3\\.0/)") ; vimgolf
     ))
 
+(defcustom elx-license-use-licensee t
+  "Whether `elx-license' used the \"licensee\" executable."
+  :group 'elx
+  :type 'boolean)
+
 (defun elx-license (&optional file dir package-name)
   "Attempt to return the license used for the file FILE.
 Or the license used for the file that is being visited in the
@@ -420,11 +425,12 @@ current buffer if FILE is nil.
 *** WITHOUT ANY WARRANTY; without even the implied warranty of
 *** MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
-The license is determined from the permission statement, if any.
-Otherwise the value of the \"License\" header keyword is
-considered.  If a \"LICENSE\" file or similar exits in the
-proximity of FILE then that is considered also, using
-`licensee' (http://ben.balter.com/licensee).
+The license is determined from the permission statement, if
+any.  Otherwise the value of the \"License\" header keyword
+is considered.  If a \"LICENSE\" file or similar exits in
+the proximity of FILE then that is considered also, using
+`licensee' (https://github.com/licensee/licensee), provided
+`elx-license-use-licensee' is non-nil.
 
 An effort is made to normalize the returned value."
   (lm-with-file file
@@ -479,7 +485,8 @@ An effort is made to normalize the returned value."
                     (and (not (equal license ""))
                          (string-match elx-gnu-license-keyword-regexp license)
                          (format-gnu-abbrev license)))
-                  (elx-licensee dir)
+                  (and elx-license-use-licensee
+                       (elx-licensee dir))
                   (car (cl-find-if (pcase-lambda (`(,_ . ,re))
                                      (re-search-forward re bound t))
                                    elx-gnu-non-standard-permission-statement-alist))

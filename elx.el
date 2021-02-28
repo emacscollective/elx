@@ -1,6 +1,6 @@
 ;;; elx.el --- extract information from Emacs Lisp libraries  -*- lexical-binding: t -*-
 
-;; Copyright (C) 2008-2020  Jonas Bernoulli
+;; Copyright (C) 2008-2021  Jonas Bernoulli
 
 ;; Author: Jonas Bernoulli <jonas@bernoul.li>
 ;; Created: 20081202
@@ -363,6 +363,7 @@ Public License as published by the Free Software Foundation\\.")) ; lmselect, ti
   `(("Apache-2.0"    . "^;.* Apache Licen[sc]e, Version 2\\.0")
     ("MIT"           . "^;.* mit licen[sc]e")
     ("MIT"           . "^;; This file is free software (MIT License)$")
+    ("MIT-0"         . "^;; terms of the MIT No Attribution license\\.") ; logpad
     ("GPL-3+"        . "^;; Licensed under the same terms as Emacs\\.$")
     ("GPL-3+"        . "^;; This file may be distributed under the same terms as GNU Emacs\\.$")
     ("GPL-3+"        . "^;; Licensed under the same terms as Org-mode")
@@ -399,6 +400,7 @@ Public License as published by the Free Software Foundation\\.")) ; lmselect, ti
     ("as-is"         . "\"as is\"*")
     ("as-is"         . "\\*as is\\*")
     ("as-is"         . "‘as-is’")
+    ("as-is"         . "^;;; ada-ref-man\\.el --- Ada Reference Manual 2012$") ; ada-ref-man
     ("as-is"         . "^;.* \\(\\(this\\|the\\) \\(software\\|file\\) is \\)\
 \\(provided\\|distributed\\) \
 \\(by the \\(author?\\|team\\|copyright holders\\)\\( and contributors\\)? \\)?\
@@ -409,6 +411,7 @@ Public License as published by the Free Software Foundation\\.")) ; lmselect, ti
     ("CC BY-SA 4.0"  . "^;; This file is distributed under the Creative Commons
 ;; Attribution-ShareAlike 4\\.0 International Public License") ; sicp-info
     ("CC BY-NC-SA 3.0" . "^;; \\[CC BY-NC-SA 3\\.0\\](http://creativecommons\\.org/licenses/by-nc-sa/3\\.0/)") ; vimgolf
+    ("Unicode TOS"   . "covered by the Unicode copyright terms") ; uni-confusables
     ))
 
 (defcustom elx-license-use-licensee t

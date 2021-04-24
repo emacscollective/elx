@@ -484,8 +484,7 @@ An effort is made to normalize the returned value."
                   (and (re-search-forward elx-wtf-permission-statement-regexp bound t)
                        "WTFPL-2")
                   (when-let ((license (lm-header "\\(?:Licen[sc]e\\|SPDX-License-Identifier\\)")))
-                    (and (not (equal license ""))
-                         (string-match elx-gnu-license-keyword-regexp license)
+                    (and (string-match elx-gnu-license-keyword-regexp license)
                          (format-gnu-abbrev license)))
                   (and elx-license-use-licensee
                        (elx-licensee dir))

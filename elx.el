@@ -501,6 +501,7 @@ An effort is made to normalize the returned value."
                   (car (cl-find-if (pcase-lambda (`(,_ . ,re))
                                      (re-search-forward re bound t))
                                    elx-permission-statement-alist)))))
+        (set-text-properties 0 (length license) nil license)
         (pcase (list license package-name)
           (`("GPL-3.0+" ,_)         "GPL-3+")
           (`("GPL-2.0+" ,_)         "GPL-2+")

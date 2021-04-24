@@ -322,75 +322,88 @@ To Public License, Version 2, as published by Sam Hocevar\\."))
 \\)\\)?")
 
 (defconst elx-gnu-non-standard-permission-statement-alist
-  `(("GPL-3+"        . "^;\\{1,4\\} Licensed under the same terms as Emacs")
-    ("GPL-2+"        . "^;;   :licence:  GPL 2 or later (free software)")
-    ("GPL"           . "^;; Copyright (c) [-0-9]+ Jason Milkins (GNU/GPL Licence)")
-    ("GPL"           . "^;; GPL'ed under GNU'S public license")
-    ("GPL-2"         . ,(replace-regexp-in-string "\s" "[\s\n;]+" "\
+  `(;; SPDX:
+    ("GPL-3.0-or-later" . "^;\\{1,4\\} Licensed under the same terms as Emacs")
+    ("GPL-2.0-or-later" . "^;;   :licence:  GPL 2 or later (free software)")
+    ("GPL-2.0-only"     . ,(replace-regexp-in-string "\s" "[\s\n;]+" "\
 This file is free software; you can redistribute it and/or \
 modify it under the terms of version 2 of the GNU General \
 Public License as published by the Free Software Foundation\\.")) ; lmselect, tiger
+    ;; non-SPDX:
+    ("GPL"              . "^;; Copyright (c) [-0-9]+ Jason Milkins (GNU/GPL Licence)")
+    ("GPL"              . "^;; GPL'ed under GNU'S public license")
     ))
 
 (defconst elx-non-gnu-license-keyword-alist
-  '(("Apache-2.0"    . "apache-2\\.0")
+  '(;; SPDX:
+    ("Apache-2.0"    . "apache-2\\.0")
     ("Artistic-1.0"  . "Artistic-1.0")
-    ("BSD-3-clause"  . "BSD Licen[sc]e 2\\.0")
-    ("BSD-3-clause"  . "\\(Revised\\|New\\|Modified\\) BSD\\( Licen[sc]e\\)?")
-    ("BSD-3-clause"  . "BSD[-v]?3")
-    ("BSD-3-clause"  . "BSD[- ]3-clause\\( license\\)?")
-    ("BSD-2-clause"  . "BSD[-v]?2")
-    ("BSD-2-clause"  . "BSD[- ]2-clause\\( license\\)?")
-    ("BSD-2-clause"  . "Simplified BSD\\( Licen[sc]e\\)?")
-    ("BSD-2-clause"  . "The same license terms as Ruby")
+    ("BSD-3-Clause"  . "BSD Licen[sc]e 2\\.0")
+    ("BSD-3-Clause"  . "\\(Revised\\|New\\|Modified\\) BSD\\( Licen[sc]e\\)?")
+    ("BSD-3-Clause"  . "BSD[-v]?3")
+    ("BSD-3-Clause"  . "BSD[- ]3-clause\\( license\\)?")
+    ("BSD-2-Clause"  . "BSD[-v]?2")
+    ("BSD-2-Clause"  . "BSD[- ]2-clause\\( license\\)?")
+    ("BSD-2-Clause"  . "Simplified BSD\\( Licen[sc]e\\)?")
+    ("BSD-2-Clause"  . "The same license terms as Ruby")
     ("MIT"           . "mit")
+    ("WTFPL"         . "WTFPL .+?http://sam\\.zoy\\.org/wtfpl")
+    ("WTFPL"         . "WTFPL")
+    ("CeCILL-B"      . "CeCILL-B")
+    ("MS-PL"         . "MS-PL")
+    ("Unlicense"     . "Unlicense")
+    ("Beerware"      . "BEER-WARE")
+    ;; non-SPDX:
+    ("CeCILL"        . "CeCILL")
     ("as-is"         . "as-?is")
     ("as-is"         . "free for all usages/modifications/distributions/whatever.") ; darkroom-mode, w32-fullscreen
     ("public-domain" . "public[- ]domain")
-    ("WTFPL-2"       . "WTFPL .+?http://sam\\.zoy\\.org/wtfpl")
-    ("WTFPL"         . "WTFPL")
-    ("CeCILL"        . "CeCILL")
-    ("CeCILL-B"      . "CeCILL-B")
-    ("MS-PL"         . "MS-PL")
-    ("unlicense"     . "Unlicense")
-    ("BEER-WARE"     . "BEER-WARE")
     ))
 
 (defconst elx-non-gnu-license-keyword-regexp "\
 \\`\\(?4:[a-z]+\\)\\(?:\\(?:v\\|version \\)?\\(?2:[0-9.]*[0-9]\\)\\)?\\'")
 
 (defconst elx-permission-statement-alist
-  `(("Apache-2.0"    . "^;.* Apache Licen[sc]e, Version 2\\.0")
+  `(;; SPDX:
+    ("Apache-2.0"    . "^;.* Apache Licen[sc]e, Version 2\\.0")
     ("MIT"           . "^;.* mit licen[sc]e")
     ("MIT"           . "^;; This file is free software (MIT License)$")
     ("MIT-0"         . "^;; terms of the MIT No Attribution license\\.") ; logpad
-    ("GPL-3+"        . "^;; Licensed under the same terms as Emacs\\.$")
-    ("GPL-3+"        . "^;; This file may be distributed under the same terms as GNU Emacs\\.$")
-    ("GPL-3+"        . "^;; Licensed under the same terms as Org-mode")
-    ("GPL-3+"        . "^;; Standard GPL v3 or higher license applies\\.")
-    ("GPL-3"         . "^;; This file is free software (GPLv3 License)$")
-    ("GPL-3"         . "^;; This software is licensed under the GPL version 3")
-    ("GPL-3"         . "^;; This software can be redistributed\\. GPL v3 applies\\.$")
-    ("GPL-3"         . "^;; This file is licensed under GPLv3\\.$") ; metapost-mode+
-    ("GPL-2+"        . "^;; choice of the GNU General Public License (version 2 or later),$") ; uuid
-    ("GPL-2"         . "^;; This software can be redistributed\\. GPL v2 applies\\.$")
-    ("GPL"           . "^;; Released under the GPL")
-    ("GPL"           . "^;; Licensed under the GPL")
-    ("WTFPL-2"       . "do what the fuck you want to public licen[sc]e,? version 2")
+    ("GPL-3.0-or-later" . "^;; Licensed under the same terms as Emacs\\.$")
+    ("GPL-3.0-or-later" . "^;; This file may be distributed under the same terms as GNU Emacs\\.$")
+    ("GPL-3.0-or-later" . "^;; Licensed under the same terms as Org-mode")
+    ("GPL-3.0-or-later" . "^;; Standard GPL v3 or higher license applies\\.")
+    ("GPL-3.0-only"     . "^;; This file is free software (GPLv3 License)$")
+    ("GPL-3.0-only"     . "^;; This software is licensed under the GPL version 3")
+    ("GPL-3.0-only"     . "^;; This software can be redistributed\\. GPL v3 applies\\.$")
+    ("GPL-3.0-only"     . "^;; This file is licensed under GPLv3\\.$") ; metapost-mode+
+    ("GPL-2.0-or-later" . "^;; choice of the GNU General Public License (version 2 or later),$") ; uuid
+    ("GPL-2.0-only"     . "^;; This software can be redistributed\\. GPL v2 applies\\.$")
+    ("WTFPL"         . "do what the fuck you want to public licen[sc]e,? version 2")
     ("WTFPL"         . "do what the fuck you want to")
     ("WTFPL"         . "wtf public licen[sc]e")
-    ("BSD-2-clause"  . "^;; Simplified BSD Licen[sc]e$")
-    ("BSD-2-clause"  . "This software can be treated with: ``The 2-Clause BSD License''") ; yatex
-    ("BSD-3-clause"  . "^;; 3-clause \"new bsd\"")
-    ("BSD-3-clause"  . "freely distributable under the terms of a new BSD licence") ; tinysegmenter
-    ("BSD-3-clause"  . "^; Distributed under the OSI-approved BSD 3-Clause License") ; cmake-mode
-    ("BSD-3-clause"  . "Licensed under the BSD-3-[cC]lause [lL]icense\\.$") ; gsettings, gvariant
-    ("BSD-3-clause"  . "Licensed under the 3-[cC]lause BSD [lL]icense\\.$") ; balanced-windows
+    ("BSD-2-Clause"  . "^;; Simplified BSD Licen[sc]e$")
+    ("BSD-2-Clause"  . "This software can be treated with: ``The 2-Clause BSD License''") ; yatex
+    ("BSD-3-Clause"  . "^;; 3-clause \"new bsd\"")
+    ("BSD-3-Clause"  . "freely distributable under the terms of a new BSD licence") ; tinysegmenter
+    ("BSD-3-Clause"  . "^; Distributed under the OSI-approved BSD 3-Clause License") ; cmake-mode
+    ("BSD-3-Clause"  . "Licensed under the BSD-3-[cC]lause [lL]icense\\.$") ; gsettings, gvariant
+    ("BSD-3-Clause"  . "Licensed under the 3-[cC]lause BSD [lL]icense\\.$") ; balanced-windows
     ("Artistic-2.0"  . "^;; .*Artistic Licen[sc]e 2\\.0")
     ("CeCILL-B"      . "^;; It is a free software under the CeCILL-B license\\.$")
     ("MS-PL"         . "^;; This code is distributed under the MS-Public License")
     ("MS-PL"         . "licensed under the Ms-PL")
     ("Ruby"          . "^;;; Use and distribution subject to the terms of the Ruby license\\.$") ; rcodetools
+    ("Beerware"      . "^;; If you like this package and we meet in the future, you can buy me a
+;; beer\\. Otherwise, if we don't meet, drink a beer anyway\\.") ; distel-completion-lib
+    ("CC-BY-SA-4.0"  . "^;; This file is distributed under the Creative Commons
+;; Attribution-ShareAlike 4\\.0 International Public License") ; sicp-info
+    ("CC-BY-NC-SA-3.0" . "^;; \\[CC BY-NC-SA 3\\.0\\](http://creativecommons\\.org/licenses/by-nc-sa/3\\.0/)") ; vimgolf
+    ("Unicode-TOU"   . "covered by the Unicode copyright terms") ; uni-confusables
+    ;; non-SPDX:
+    ("GPL"           . "^;; Released under the GPL")
+    ("GPL"           . "^;; Licensed under the GPL")
+    ("COPYLOVE"      . "^;; Copying is an act of love, please copy\\.")
     ("public-domain" . "^;.*in\\(to\\)? the public[- ]domain")
     ("public-domain" . "^;+ +Public domain")
     ("public-domain" . "^;+ This program belongs to the public domain")
@@ -405,13 +418,6 @@ Public License as published by the Free Software Foundation\\.")) ; lmselect, ti
 \\(provided\\|distributed\\) \
 \\(by the \\(author?\\|team\\|copyright holders\\)\\( and contributors\\)? \\)?\
 [\"'`]*as\\(\n;;\\)?[- ]is[\"'`]*")
-    ("BEER-WARE"     . "^;; If you like this package and we meet in the future, you can buy me a
-;; beer\\. Otherwise, if we don't meet, drink a beer anyway\\.") ; distel-completion-lib
-    ("COPYLOVE"      . "^;; Copying is an act of love, please copy\\.")
-    ("CC BY-SA 4.0"  . "^;; This file is distributed under the Creative Commons
-;; Attribution-ShareAlike 4\\.0 International Public License") ; sicp-info
-    ("CC BY-NC-SA 3.0" . "^;; \\[CC BY-NC-SA 3\\.0\\](http://creativecommons\\.org/licenses/by-nc-sa/3\\.0/)") ; vimgolf
-    ("Unicode TOS"   . "covered by the Unicode copyright terms") ; uni-confusables
     ))
 
 (defcustom elx-license-use-licensee t
@@ -440,17 +446,16 @@ An effort is made to normalize the returned value."
     (let* ((case-fold-search t)
            (license
             (or (and (re-search-forward elx-gnu-permission-statement-regexp nil t)
-                     (elx--format-license))
+                     (elx--format-license nil t))
                 (and (re-search-forward elx-bsd-permission-statement-regexp nil t)
-                     (format "BSD-%s-clause"
+                     (format "BSD-%s-Clause"
                              (cond ((match-string 4) 4)
                                    ((match-string 3) 3)
                                    (t                2))))
                 (and (re-search-forward elx-mit-permission-statement-regexp nil t)
                      (if (match-string 1) "X11" "MIT"))
                 (and (re-search-forward elx-isc-permission-statement-regexp nil t)
-                     (format "ISC (%s)"
-                             (if (match-string 1) "and/or" "and")))
+                     "ISC")
                 (and (re-search-forward elx-cc-permission-statement-regexp nil t)
                      (let ((license (match-string 1))
                            (version (match-string 2)))
@@ -464,42 +469,41 @@ An effort is made to normalize the returned value."
                                  ("Attribution-NonCommercial-NoDerivs"   "BY-NC-ND"))
                                version)))
                 (and (re-search-forward elx-wtf-permission-statement-regexp nil t)
-                     "WTFPL-2")
-                (elx--header-license elx-gnu-license-keyword-regexp)
+                     "WTFPL")
+                (elx--header-license elx-gnu-license-keyword-regexp nil t t)
                 (and elx-license-use-licensee
                      (elx-licensee dir))
                 (car (cl-find-if (pcase-lambda (`(,_ . ,re))
                                    (re-search-forward re nil t))
                                  elx-gnu-non-standard-permission-statement-alist))
+                (elx--header-license elx-gnu-license-keyword-regexp nil t)
                 (elx--header-license elx-non-gnu-license-keyword-regexp
                                      elx-non-gnu-license-keyword-alist)
                 (car (cl-find-if (pcase-lambda (`(,_ . ,re))
                                    (re-search-forward re nil t))
                                  elx-permission-statement-alist)))))
       (set-text-properties 0 (length license) nil license)
-      (pcase (list license package-name)
-        (`("GPL-3.0+" ,_)         "GPL-3+")
-        (`("GPL-2.0+" ,_)         "GPL-2+")
-        (`("GPL-3.0" ,_)          "GPL-3")
-        (`("GPL-2.0" ,_)          "GPL-2")
-        (`("BSD-3-Clause" ,_)     "BSD-3-clause")
-        (`("BSD-2-Clause" ,_)     "BSD-2-clause")
-        (`("LGPL-3.0" ,_)         "LGPL-3")
-        (`("MPL-2.0" ,_)          "MPL-2")
-        (`("Unlicense" ,_)        "unlicense")
-        (_ license)))))
+      license)))
 
-(defun elx--header-license (regexp &optional alist)
+(defun elx--header-license (regexp &optional alist gnu-suffix-style gnu-require-spdx)
   (let ((value (lm-header "\\(?:Licen[sc]e\\|SPDX-License-Identifier\\)")))
     (and value
          (or (and alist
                   (car (cl-find-if (pcase-lambda (`(,_ . ,re))
                                      (string-match re value))
                                    alist)))
-             (and (string-match regexp value)
-                  (elx--format-license value))))))
+             (let ((value (and (string-match regexp value)
+                               (elx--format-license value gnu-suffix-style))))
+               (and value
+                    (or (not gnu-require-spdx)
+                        (string-match-p
+                         (concat "\\`\\([AL]?GPL\\|FDL\\)"
+                                 "-[0-9]+\\.[0-9]+"
+                                 "-\\(only\\|or-later\\)\\'")
+                         value))
+                    value))))))
 
-(defun elx--format-license (&optional value)
+(defun elx--format-license (value &optional gnu-suffix-style)
   (let ((abbrev  (match-string 1 value))
         (version (match-string 2 value))
         (later   (or (match-string 3 value)
@@ -514,8 +518,17 @@ An effort is made to normalize the returned value."
          ("affero "  "AGPL")
          ("free "    "FDL")
          (`nil       "GPL")))
-     (and version (concat "-" version))
-     (and later "+"))))
+     (and version
+          (if (and gnu-suffix-style
+                   (not (string-match-p
+                         "\\`[0-9]+\\.[0-9]+\\'"
+                         version)))
+              (concat "-" version ".0")
+            (concat "-" version)))
+     (and version
+          (if gnu-suffix-style
+              (if later "-or-later" "-only")
+            (and later "+"))))))
 
 (defun elx-licensee (&optional directory-or-file)
   (save-match-data
@@ -536,18 +549,16 @@ An effort is made to normalize the returned value."
                                                  (buffer-string)))))))
                     #'>
                     :key (lambda (elt) (or (let-alist elt .matcher.confidence)) 0)))))
-           (license (cdr (assq 'matched_license match)))
-           (file    (cdr (assq 'filename match))))
+           (license (cdr (assq 'matched_license match))))
       (pcase license
+        ('nil          nil)
         (""            nil) ; haven't seen this lately
         ("NONE"        nil) ; unable to detect a license
         ("NOASSERTION" nil) ; almost able to detect a licence
-        ("ISC License"
-         (with-temp-buffer
-           (insert-file-contents file)
-           (re-search-forward
-            "Permission to use, copy, modify,? and\\(/or\\)? distribute")
-           (if (match-beginning 1) "ISC (and/or)" "ISC (and)")))
+        ("ISC License" "ISC")
+        ((guard (string-match-p "\\`\\([AL]?GPL\\|FDL\\)-[0-9]+\\.[0-9]+\\'"
+                                license))
+         (concat license "-only"))
         (_ license)))))
 
 ;;; Extract Dates

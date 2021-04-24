@@ -448,7 +448,7 @@ An effort is made to normalize the returned value."
                              (upcase prefix)
                            (pcase (and abbrev (downcase abbrev))
                              ("lesser "  "LGPL")
-                             ("library " "LGBL")
+                             ("library " "LGPL")
                              ("affero "  "AGPL")
                              ("free "    "FDL")
                              (`nil       "GPL")))

@@ -421,6 +421,19 @@ Public License as published by the Free Software Foundation\\.")) ; lmselect, ti
 [\"'`]*as\\(\n;;\\)?[- ]is[\"'`]*")
     ))
 
+(defcustom elx-license-substitutions nil
+  "License substitutions performed `elx-license'.
+
+A list of the form ((NAME STRING SUBSTITUTE)...).  Each element
+is tried in order.  If NAME is nil or the PACKAGE-NAME argument
+is NAME, and the license that would be returned is STRING, then
+`elx-license' returns SUBSTITUTE instead."
+  :group 'elx
+  :type '(repeat (list (choice (string :tag "Package")
+                               (const  :tag "All packages" nil))
+                       (string :tag "Replace string")
+                       (string :tag "Substitute"))))
+
 (defcustom elx-license-use-licensee t
   "Whether `elx-license' used the \"licensee\" executable."
   :group 'elx
@@ -441,6 +454,8 @@ is considered.  If a \"LICENSE\" file or similar exists in
 the proximity of FILE then that is considered also, using
 `licensee' (https://github.com/licensee/licensee), provided
 `elx-license-use-licensee' is non-nil.
+
+`elx-license-substitutions' may affect the returned value.
 
 An effort is made to normalize the returned value."
   (lm-with-file file
@@ -484,7 +499,13 @@ An effort is made to normalize the returned value."
                                    (re-search-forward re nil t))
                                  elx-permission-statement-alist)))))
       (set-text-properties 0 (length license) nil license)
-      license)))
+      (or (cl-some (pcase-lambda (`(,pkg ,src ,dst))
+                     (and (or (not pkg)
+                              (equal package-name pkg))
+                          (equal license src)
+                          dst))
+                   elx-license-substitutions)
+          license))))
 
 (defun elx--header-license (regexp &optional alist gnu-suffix-style gnu-require-spdx)
   (let ((value (lm-header "\\(?:Licen[sc]e\\|SPDX-License-Identifier\\)")))

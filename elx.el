@@ -547,31 +547,6 @@ An effort is made to normalize the returned value."
            (if (match-beginning 1) "ISC (and/or)" "ISC (and)")))
         (_ license)))))
 
-(defcustom elx-license-url-alist
-  '(("GPL-3"         . "http://www.fsf.org/licensing/licenses/gpl.html")
-    ("GPL-2"         . "http://www.gnu.org/licenses/old-licenses/gpl-2.0.html")
-    ("GPL-1"         . "http://www.gnu.org/licenses/old-licenses/gpl-1.0.html")
-    ("LGPL-3"        . "http://www.fsf.org/licensing/licenses/lgpl.html")
-    ("LGPL-2.1"      . "http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html")
-    ("LGPL-2.0"      . "http://www.gnu.org/licenses/old-licenses/lgpl-2.0.html")
-    ("AGPL-3"        . "http://www.fsf.org/licensing/licenses/agpl.html")
-    ("FDL-1.2"       . "http://www.gnu.org/licenses/old-licenses/fdl-1.2.html")
-    ("FDL-1.1"       . "http://www.gnu.org/licenses/old-licenses/fdl-1.1.html"))
-  "List of FSF license to canonical license url mappings.
-Each entry has the form (LICENSE . URL) where LICENSE is the
-abbreviation of a license published by the Free Software
-Foundation in the form \"<ABBREV>-<VERSION>\" and URL the
-canonical url to the license."
-  :group 'elx
-  :type '(repeat (cons (string :tag "License")
-                       (string :tag "URL"))))
-
-(defun elx-license-url (license)
-  "Return the canonical url to the FSF license LICENSE.
-The license is looked up in the variable `elx-license-url'.
-If no matching entry exists then return nil."
-  (cdr (assoc license elx-license-url-alist)))
-
 ;;; Extract Dates
 
 (defun elx-created (&optional file)

@@ -465,20 +465,14 @@ An effort is made to normalize the returned value."
                                version)))
                 (and (re-search-forward elx-wtf-permission-statement-regexp nil t)
                      "WTFPL-2")
-                (when-let ((license (lm-header "\\(?:Licen[sc]e\\|SPDX-License-Identifier\\)")))
-                  (and (string-match elx-gnu-license-keyword-regexp license)
-                       (elx--format-license license)))
+                (elx--header-license elx-gnu-license-keyword-regexp)
                 (and elx-license-use-licensee
                      (elx-licensee dir))
                 (car (cl-find-if (pcase-lambda (`(,_ . ,re))
                                    (re-search-forward re nil t))
                                  elx-gnu-non-standard-permission-statement-alist))
-                (when-let ((license (lm-header "\\(?:Licen[sc]e\\|SPDX-License-Identifier\\)")))
-                  (or (car (cl-find-if (pcase-lambda (`(,_ . ,re))
-                                         (string-match re license))
-                                       elx-non-gnu-license-keyword-alist))
-                      (and (string-match elx-non-gnu-license-keyword-regexp license)
-                           (elx--format-license license))))
+                (elx--header-license elx-non-gnu-license-keyword-regexp
+                                     elx-non-gnu-license-keyword-alist)
                 (car (cl-find-if (pcase-lambda (`(,_ . ,re))
                                    (re-search-forward re nil t))
                                  elx-permission-statement-alist)))))
@@ -494,6 +488,16 @@ An effort is made to normalize the returned value."
         (`("MPL-2.0" ,_)          "MPL-2")
         (`("Unlicense" ,_)        "unlicense")
         (_ license)))))
+
+(defun elx--header-license (regexp &optional alist)
+  (let ((value (lm-header "\\(?:Licen[sc]e\\|SPDX-License-Identifier\\)")))
+    (and value
+         (or (and alist
+                  (car (cl-find-if (pcase-lambda (`(,_ . ,re))
+                                     (string-match re value))
+                                   alist)))
+             (and (string-match regexp value)
+                  (elx--format-license value))))))
 
 (defun elx--format-license (&optional value)
   (let ((abbrev  (match-string 1 value))

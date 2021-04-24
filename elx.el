@@ -7,6 +7,7 @@
 ;; Package-Requires: ((emacs "25.1"))
 ;; Homepage: https://github.com/emacscollective/elx
 ;; Keywords: docs, libraries, packages
+;; SPDX-License-Identifier: GPL-3.0-or-later
 
 ;; This file is not part of GNU Emacs.
 

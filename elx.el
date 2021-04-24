@@ -465,8 +465,7 @@ An effort is made to normalize the returned value."
                                      ((match-string 3) 3)
                                      (t                2))))
                   (and (re-search-forward elx-mit-permission-statement-regexp bound t)
-                       (format "MIT (%s)"
-                               (if (match-string 1) "expat" "x11")))
+                       (if (match-string 1) "X11" "MIT"))
                   (and (re-search-forward elx-isc-permission-statement-regexp bound t)
                        (format "ISC (%s)"
                                (if (match-string 1) "and/or" "and")))

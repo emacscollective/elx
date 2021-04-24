@@ -430,7 +430,7 @@ current buffer if FILE is nil.
 
 The license is determined from the permission statement, if
 any.  Otherwise the value of the \"License\" header keyword
-is considered.  If a \"LICENSE\" file or similar exits in
+is considered.  If a \"LICENSE\" file or similar exists in
 the proximity of FILE then that is considered also, using
 `licensee' (https://github.com/licensee/licensee), provided
 `elx-license-use-licensee' is non-nil.

@@ -58,10 +58,7 @@ removed and the first word is upcases."
                     ()
                     (and (looking-at lm-header-prefix)
                          (progn (goto-char (match-end 0))
-                                ;; There should be three dashes after the
-                                ;; filename but often there are only two or
-                                ;; even just one.
-                                (looking-at "[^ ]+[ \t]+-+[ \t]+\\(.*\\)")))))
+		                (looking-at "[^ ]+[ \t]+--+[ \t]+\\(.*\\)")))))
            (or (summary-match)
                ;; Some people put the -*- specification on a separate
                ;; line, pushing the summary to the second or third line.

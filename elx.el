@@ -58,7 +58,7 @@ removed and the first word is upcases."
                     ()
                     (and (looking-at lm-header-prefix)
                          (progn (goto-char (match-end 0))
-		                (looking-at "[^ ]+[ \t]+--+[ \t]+\\(.*\\)")))))
+                                (looking-at "[^ ]+[ \t]+--+[ \t]+\\(.*\\)")))))
            (or (summary-match)
                ;; Some people put the -*- specification on a separate
                ;; line, pushing the summary to the second or third line.
@@ -624,7 +624,7 @@ the \"Updated\" or \"Last-Updated\" header keyword."
                      ((> (length a) (length b)) a)
                      ((> (length b) (length a)) b)
                      (t a)))))))
-  
+
 (defun elx--date-2 (string regexp anchored)
   (and (string-match (if anchored (format "^%s$" regexp) regexp) string)
        (let ((m  (match-string 2 string))

@@ -568,7 +568,7 @@ An effort is made to normalize the returned value."
                                    (error (error "licensee failed: %S"
                                                  (buffer-string)))))))
                     #'>
-                    :key (lambda (elt) (or (let-alist elt .matcher.confidence)) 0)))))
+                    :key (lambda (elt) (or (let-alist elt .matcher.confidence) 0))))))
            (license (cdr (assq 'matched_license match))))
       (pcase license
         ('nil          nil)

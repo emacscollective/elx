@@ -344,15 +344,16 @@ Public License as published by the Free Software Foundation\\.")) ; lmselect, ti
     ("BSD-2-Clause"  . "BSD[- ]2-clause\\( license\\)?")
     ("BSD-2-Clause"  . "Simplified BSD\\( Licen[sc]e\\)?")
     ("BSD-2-Clause"  . "The same license terms as Ruby")
+    ("CC0-1.0"       . "CC0")
     ("MIT"           . "mit")
     ("WTFPL"         . "WTFPL .+?http://sam\\.zoy\\.org/wtfpl")
     ("WTFPL"         . "WTFPL")
-    ("CeCILL-B"      . "CeCILL-B")
+    ("CECILL-2.1"    . "CeCILL Free Software License Agreement v2.1") ; lambdapi-mode
+    ("CECILL-B"      . "CeCILL-B")
     ("MS-PL"         . "MS-PL")
     ("Unlicense"     . "Unlicense")
     ("Beerware"      . "BEER-WARE")
     ;; non-SPDX:
-    ("CeCILL"        . "CeCILL")
     ("as-is"         . "as-?is")
     ("as-is"         . "free for all usages/modifications/distributions/whatever.") ; darkroom-mode, w32-fullscreen
     ("public-domain" . "public[- ]domain")

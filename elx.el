@@ -1,6 +1,6 @@
 ;;; elx.el --- extract information from Emacs Lisp libraries  -*- lexical-binding: t -*-
 
-;; Copyright (C) 2008-2021  Jonas Bernoulli
+;; Copyright (C) 2008-2022  Jonas Bernoulli
 
 ;; Author: Jonas Bernoulli <jonas@bernoul.li>
 ;; Created: 20081202
@@ -912,14 +912,15 @@ Public License as published by the Free Software Foundation\\.")) ; lmselect, ti
 (defcustom elx-license-substitutions nil
   "License substitutions performed `elx-license'.
 
-A list of the form ((NAME STRING SUBSTITUTE)...).  Each element
+A list of the form ((NAME FOUND SUBSTITUTE)...).  Each element
 is tried in order.  If NAME is nil or the PACKAGE-NAME argument
-is NAME, and the license that would be returned is STRING, then
+is NAME, and the license that would be returned is FOUND, then
 `elx-license' returns SUBSTITUTE instead."
   :group 'elx
   :type '(repeat (list (choice (string :tag "Package")
                                (const  :tag "All packages" nil))
-                       (string :tag "Replace string")
+                       (choice (string :tag "Replace license")
+                               (const  :tag "No license"))
                        (string :tag "Substitute"))))
 
 (defcustom elx-license-use-licensee t

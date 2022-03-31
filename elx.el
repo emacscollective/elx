@@ -54,11 +54,10 @@ If optional FILE is nil return the summary of the current buffer
 instead.  When optional SANITIZE is non-nil a trailing period is
 removed and the first word is upcases."
   (lm-with-file file
-    (and (cl-flet ((summary-match
-                    ()
-                    (and (looking-at lm-header-prefix)
-                         (progn (goto-char (match-end 0))
-                                (looking-at "[^ ]+[ \t]+--+[ \t]+\\(.*\\)")))))
+    (and (cl-flet ((summary-match ()
+                     (and (looking-at lm-header-prefix)
+                          (progn (goto-char (match-end 0))
+                                 (looking-at "[^ ]+[ \t]+--+[ \t]+\\(.*\\)")))))
            (or (summary-match)
                ;; Some people put the -*- specification on a separate
                ;; line, pushing the summary to the second or third line.

@@ -70,7 +70,7 @@ removed and the first word is upcases."
                   (when (string-match "[ \t]*-\\*-.*-\\*-" summary)
                     (setq summary (substring summary 0 (match-beginning 0))))
                   (when sanitize
-                    (when (string-match "\\.$" summary)
+                    (when (string-suffix-p "." summary)
                       (setq summary (substring summary 0 -1)))
                     (when (string-match "^[a-z]" summary)
                       (setq summary

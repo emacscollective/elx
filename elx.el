@@ -1,31 +1,30 @@
-;;; elx.el --- extract information from Emacs Lisp libraries  -*- lexical-binding: t -*-
+;;; elx.el --- Extract information from Emacs Lisp libraries  -*- lexical-binding:t -*-
 
-;; Copyright (C) 2008-2022  Jonas Bernoulli
+;; Copyright (C) 2008-2022 Jonas Bernoulli
 
 ;; Includes code from Emacs, which is
 ;; Copyright (C) 1985-2022 Free Software Foundation, Inc.
 
 ;; Author: Jonas Bernoulli <jonas@bernoul.li>
-;; Created: 20081202
-;; Package-Requires: ((emacs "25.1") (compat "28.1.1.0")
 ;; Homepage: https://github.com/emacscollective/elx
-;; Keywords: docs, libraries, packages
+;; Keywords: docs libraries packages
+
+;; Package-Requires: ((emacs "25.1") (compat "28.1.1.0")
+
 ;; SPDX-License-Identifier: GPL-3.0-or-later
 
-;; This file is not part of GNU Emacs.
-
-;; This file is free software; you can redistribute it and/or modify
-;; it under the terms of the GNU General Public License as published by
-;; the Free Software Foundation; either version 3, or (at your option)
-;; any later version.
-
+;; This file is free software: you can redistribute it and/or modify
+;; it under the terms of the GNU General Public License as published
+;; by the Free Software Foundation, either version 3 of the License,
+;; or (at your option) any later version.
+;;
 ;; This file is distributed in the hope that it will be useful,
 ;; but WITHOUT ANY WARRANTY; without even the implied warranty of
 ;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 ;; GNU General Public License for more details.
-
+;;
 ;; You should have received a copy of the GNU General Public License
-;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
+;; along with this file.  If not, see <https://www.gnu.org/licenses/>.
 
 ;;; Commentary:
 

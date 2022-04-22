@@ -170,7 +170,7 @@ consisting only of whitespace are converted to empty lines."
 ;;; Extract License
 
 (defconst elx-gnu-permission-statement-regexp
-  (replace-regexp-in-string
+  (string-replace
    "\s" "[\s\t\n;]+"
    ;; is free software[.,:;]? \
    ;; you can redistribute it and/or modify it under the terms of the \
@@ -185,9 +185,9 @@ version \\(?2:[0-9.]*[0-9]\\)[.,:;]?\
 \\(?3: or \\(?:(?at your option)? \\)?any later version\\)?"))
 
 (defconst elx-bsd-permission-statement-regexp
-  (replace-regexp-in-string
+  (string-replace
    "%" "[-0-4).*\s\t\n;]+"
-   (replace-regexp-in-string
+   (string-replace
     "\s" "[\s\t\n;]+"
     ;; Copyright (c) <year>, <copyright holder>
     ;; All rights reserved.
@@ -228,7 +228,7 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT \
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE\\.")))
 
 (defconst elx-mit-permission-statement-regexp
-  (replace-regexp-in-string
+  (string-replace
    "\s" "[\s\t\n;]+"
    ;; Copyright (c) <year> <copyright holders>
    ;;
@@ -261,7 +261,7 @@ this Software without prior written authorization\\)?"
    ))
 
 (defconst elx-isc-permission-statement-regexp
-  (replace-regexp-in-string
+  (string-replace
    "\s" "[\s\t\n;]+"
    ;; Copyright <YEAR> <OWNER>
    ;;
@@ -281,7 +281,7 @@ OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF \
 OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE\\."))
 
 (defconst elx-cc-permission-statement-regexp
-  (replace-regexp-in-string
+  (string-replace
    "\s" "[\s\t\n;]+"
    ;; This work is
    "\
@@ -298,7 +298,7 @@ licensed under the Creative Commons \
    ))
 
 (defconst elx-wtf-permission-statement-regexp
-  (replace-regexp-in-string
+  (string-replace
    "\s" "[\s\t\n;]+"
    ;; This program is
    "\
@@ -323,7 +323,7 @@ To Public License, Version 2, as published by Sam Hocevar\\."))
   `(;; SPDX:
     ("GPL-3.0-or-later" . "^;\\{1,4\\} Licensed under the same terms as Emacs")
     ("GPL-2.0-or-later" . "^;;   :licence:  GPL 2 or later (free software)")
-    ("GPL-2.0-only"     . ,(replace-regexp-in-string "\s" "[\s\n;]+" "\
+    ("GPL-2.0-only"     . ,(string-replace "\s" "[\s\n;]+" "\
 This file is free software; you can redistribute it and/or \
 modify it under the terms of version 2 of the GNU General \
 Public License as published by the Free Software Foundation\\.")) ; lmselect, tiger

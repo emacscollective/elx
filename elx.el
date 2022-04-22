@@ -4,7 +4,7 @@
 
 ;; Author: Jonas Bernoulli <jonas@bernoul.li>
 ;; Created: 20081202
-;; Package-Requires: ((emacs "25.1"))
+;; Package-Requires: ((emacs "25.1") (compat "28.1.1.0")
 ;; Homepage: https://github.com/emacscollective/elx
 ;; Keywords: docs, libraries, packages
 ;; SPDX-License-Identifier: GPL-3.0-or-later
@@ -37,6 +37,7 @@
 
 ;;; Code:
 
+(require 'compat)
 (require 'json)
 (require 'lisp-mnt)
 (require 'subr-x)

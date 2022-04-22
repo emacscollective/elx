@@ -108,7 +108,7 @@ else as strings."
         (dolist (keyword (split-string
                           (downcase line)
                           (concat "\\("
-                                  (if (string-match-p "," line)
+                                  (if (string-search "," line)
                                       ",[ \t]*"
                                     "[ \t]+")
                                   "\\|[ \t]+and[ \t]+\\)")

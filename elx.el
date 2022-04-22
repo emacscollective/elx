@@ -1025,7 +1025,7 @@ An effort is made to normalize the returned value."
         (prefix  (match-string 4 value)))
     (concat
      (if prefix
-         (cond ((string-match-p "\\`zlib\\'" prefix) "Zlib")
+         (cond ((equal prefix "zlib") "Zlib")
                (t (upcase prefix)))
        (pcase (and abbrev (downcase abbrev))
          ("lesser "  "LGPL")

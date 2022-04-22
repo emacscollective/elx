@@ -137,8 +137,8 @@ the leading semicolons and exactly one space are removed,
 likewise leading \"\(\" is replaced with just \"(\".  Lines
 consisting only of whitespace are converted to empty lines."
   (lm-with-file file
-    (when-let ((start (lm-section-start lm-commentary-header t)))
-      (progn
+    (and-let* ((start (lm-section-start lm-commentary-header t)))
+      (progn ; debbugs#31840
         (goto-char start)
         (let ((commentary (buffer-substring-no-properties
                            start (lm-commentary-end))))

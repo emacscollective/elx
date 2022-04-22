@@ -1117,8 +1117,8 @@ the \"Updated\" or \"Last-Updated\" header keyword."
                           (elx--date-2 string dmy nil))))
                (cond ((not a) b)
                      ((not b) a)
-                     ((> (length a) (length b)) a)
-                     ((> (length b) (length a)) b)
+                     ((length> a (length b)) a)
+                     ((length> b (length a)) b)
                      (t a)))))))
 
 (defun elx--date-2 (string regexp anchored)
@@ -1126,8 +1126,8 @@ the \"Updated\" or \"Last-Updated\" header keyword."
        (let ((m  (match-string 2 string))
              (d  (match-string 3 string)))
          (concat (match-string 1 string)
-                 (and m d (concat (if (= (length m) 2) m (concat "0" m))
-                                  (if (= (length d) 2) d (concat "0" d))))))))
+                 (and m d (concat (if (length= m 2) m (concat "0" m))
+                                  (if (length= d 2) d (concat "0" d))))))))
 
 (defun elx--date-3 (string)
   (let ((time (mapcar (lambda (e) (or e 0))

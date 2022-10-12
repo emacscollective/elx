@@ -160,15 +160,55 @@ consisting only of whitespace are converted to empty lines."
                        (concat commentary "\n"))))
           commentary)))))
 
-;;; Extract Package-Requires
+;;; Extract and Update Package-Requires
 
-(defun elx-package-requires (&optional file)
-  "Extract the value of the Package-Requires header of the specified package."
-  (and-let* ((require-lines
-              (lm-with-file file
-                (lm-header-multiline "package-requires"))))
-    (package--prepare-dependencies
-     (package-read-from-string (mapconcat #'identity require-lines " ")))))
+(defun elx-package-requires (&optional file extra)
+  "Extract the value of the Package-Requires header of the specified package
+If optional EXTRA is non-nil, then return (VALUE BEG END INDENT),
+where INDENT is either nil, if the value was specified on a
+single line, or the prefix used on continuation lines."
+  (pcase-let ((`(,lines ,beg ,end ,indent)
+               (lm-with-file file
+                 (elx--header-multiline "package-requires" t))))
+    (and-let* ((lines lines)
+               (value (package--prepare-dependencies
+                       (package-read-from-string
+                        (mapconcat #'identity lines " ")))))
+      (if extra (list value beg end indent) value))))
+
+(defun elx-update-package-requires (&optional file updates indent noerror)
+  (pcase-let* ((`(,value ,beg ,end ,i) (elx-package-requires file t))
+               (indent (or i (and indent (make-string indent ?\s)))))
+    (if (not value)
+        (unless noerror
+          (error "Cannot update Package-Requires; cannot be found"))
+      (setq value (elx--update-dependencies value updates))
+      (save-excursion
+        (goto-char beg)
+        (delete-region beg end)
+        (insert ";; Package-Requires: (")
+        (setq value (mapcar (##format "%S" %) value))
+        (if (not indent)
+            (insert (mapconcat #'identity value " ") ")\n")
+          (insert "\n")
+          (let (line)
+            (while (setq line (pop value))
+              (insert ";;" indent line (if value "\n" ")\n")))))))))
+
+(defun elx--update-dependencies (value updates)
+  (pcase-dolist (`(,pkg ,ver) updates)
+    (when (alist-get pkg value)
+      (setf (alist-get pkg value)
+            (list ver))))
+  (cl-sort value
+           (lambda (a b)
+             (pcase (list a b)
+               (`(emacs ,_) t)
+               (`(,_ emacs) nil)
+               (`(compat ,_) t)
+               (`(,_ compat) nil)
+               (_ (string< a b))))
+           :key #'car))
 
 ;;; Extract Pages
 
@@ -1259,6 +1299,33 @@ Or of the current buffer if FILE is equal to `buffer-file-name'
 or is nil.  Each element of the list is a cons; the car is the
 full name, the cdr is an email address."
   (elx-people "adapted-by" file))
+
+;;; Utilities
+
+(defun elx--header-multiline (header &optional extra)
+  "Return the contents of the header named HEADER, with continuation lines.
+The returned value is a list of strings, one per line.
+
+If optional EXTRA is non-nil, then return (LINES BEG END INDENT),
+where INDENT is either nil, if the value was specified on a
+single line, or the prefix used on continuation lines."
+  (save-excursion
+    (goto-char (point-min))
+    (let ((lines (lm-header header))
+          (beg (line-beginning-position))
+          (end (1+ (line-end-position)))
+          (indent nil))
+      (when lines
+	(setq lines (list lines))
+	(forward-line 1)
+	(while (looking-at "^;+\\(\t\\|[\t\s]\\{2,\\}\\)\\(.+\\)")
+	  (push (match-string-no-properties 2) lines)
+          (unless indent
+            (setq indent (match-string-no-properties 1)))
+	  (forward-line 1)
+          (setq end (point)))
+        (setq lines (nreverse lines))
+        (if extra (list lines beg end indent) lines)))))
 
 ;;; _
 (provide 'elx)

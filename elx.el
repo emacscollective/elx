@@ -44,6 +44,7 @@
 (require 'lisp-mnt)
 (require 'llama)
 (require 'package)
+(require 'seq)
 (require 'subr-x)
 
 (defgroup elx nil
@@ -1392,8 +1393,14 @@ library.  If a file lacks an expected feature then loading it using
 ;;; List Files
 
 (defun elx--byte-compile-source-p (file)
-  (string-match-p (format "\\.el%s\\'" (regexp-opt load-file-rep-suffixes))
-                  file))
+  (string-match-p
+   (concat (regexp-opt (seq-filter (lambda (s)
+                                     (and (not (equal s ".elc"))
+                                          (string-prefix-p ".el" s)))
+                                   load-suffixes))
+           (regexp-opt load-file-rep-suffixes)
+           "\\'")
+   file))
 
 (defun elx--ignore-directory-p (directory)
   (or (string-prefix-p "." (file-name-nondirectory

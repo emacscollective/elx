@@ -6,6 +6,7 @@ ELS   = $(PKG).el
 ELCS  = $(ELS:.el=.elc)
 
 DEPS  = compat
+DEPS += llama
 
 EMACS      ?= emacs
 EMACS_ARGS ?=

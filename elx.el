@@ -1301,6 +1301,224 @@ or is nil.  Each element of the list is a cons; the car is the
 full name, the cdr is an email address."
   (elx-people "adapted-by" file))
 
+;;; Extract Features
+
+(defconst elx-provided-regexp "\
+\(\\(?:cc-\\|silentcomp-\\)?provide[\s\t\n]+'\
+\\([^(),\s\t\n]+\\)\\(?:[\s\t\n]+'\
+\(\\([^(),]+\\))\\)?)")
+
+(defun elx-provided ()
+  (let (features)
+    (save-excursion
+      (goto-char (point-min))
+      (while (re-search-forward elx-provided-regexp nil t)
+        (unless (save-match-data
+                  (or (nth 3 (syntax-ppss))   ; in string
+                      (nth 4 (syntax-ppss)))) ; in comment
+          (dolist (feature (cons (match-string 1)
+                                 (let ((f (match-string 2)))
+                                   (and f (split-string f " " t)))))
+            (push (intern feature) features)))))
+    (or features
+        (and (goto-char (point-min))
+             (re-search-forward
+              "^(provide-theme[\s\t\n]+'\\([^)]+\\))" nil t)
+             (list (intern (concat (match-string 1)
+                                   "-theme"))))
+        (and (goto-char (point-min))
+             (re-search-forward
+              "^(provide-me\\(?:[\s\t\n]+\"\\(.+\\)\"\\)?)" nil t)
+             (list (intern (concat (match-string 1)
+                                   (file-name-sans-extension
+                                    (file-name-nondirectory
+                                     buffer-file-name)))))))))
+
+(defun elx-library-feature (file)
+  "Return the first valid feature actually provided by FILE.
+
+Here valid means that requiring that feature would actually load FILE.
+Normally that is the case when the feature matches the filename, e.g.
+when \"foo.el\" provides `foo'.  But if \"foo.el\"s parent directory's
+filename is \"bar\" then `bar/foo' would also be valid.  Of course this
+depends on the actual value of `load-path', here we just assume that it
+allows for file to be found.
+
+This can be used to determine if an Emacs lisp file should be considered
+a library.  Not every Emacs lisp file has to provide a feature / be a
+library.  If a file lacks an expected feature then loading it using
+`require' still succeeds but causes an error."
+  (let* ((file (expand-file-name file))
+         (sans (file-name-sans-extension (file-name-sans-extension file)))
+         (last (file-name-nondirectory sans)))
+    (cl-find-if (lambda (feature)
+                  (setq feature (symbol-name feature))
+                  (or (equal feature last)
+                      (string-suffix-p (concat "/" feature) sans)))
+                (save-match-data
+                  (if (and file (not (equal file buffer-file-name)))
+                      (with-temp-buffer
+                        (insert-file-contents file)
+                        (setq buffer-file-name file)
+                        (set-buffer-modified-p nil)
+                        (with-syntax-table emacs-lisp-mode-syntax-table
+                          (elx-provided)))
+                    (save-excursion
+                      (goto-char (point-min))
+                      (with-syntax-table emacs-lisp-mode-syntax-table
+                        (elx-provided))))))))
+
+(defconst elx-required-regexp "\
+\(\\(?:cc-\\)?require[\s\t\n]+'\
+\\([^(),\s\t\n\"]+\\)\
+\\(?:\\(?:[\s\t\n]+\\(?:nil\\|\"[^\"]*\"\\)\\)\
+\\(?:[\s\t\n]+\\(?:nil\\|\\(t\\)\\)\\)?\\)?)")
+
+(defun elx-required ()
+  (let (hard soft)
+    (save-excursion
+      (goto-char (point-min))
+      (while (re-search-forward elx-required-regexp nil t)
+        (let ((feature (intern (match-string 1))))
+          (cond ((save-match-data
+                   (or (nth 3 (syntax-ppss))    ; in string
+                       (nth 4 (syntax-ppss))))) ; in comment
+                ((match-string 2)
+                 (push feature soft))
+                (t
+                 (push feature hard))))))
+    (list hard soft)))
+
+;;; List Files
+
+(defun elx--byte-compile-source-p (file)
+  (string-match-p (format "\\.el%s\\'" (regexp-opt load-file-rep-suffixes))
+                  file))
+
+(defun elx--ignore-directory-p (directory)
+  (or (string-prefix-p "." (file-name-nondirectory
+                            (directory-file-name directory)))
+      (file-exists-p (expand-file-name ".nosearch" directory))))
+
+(defun elx-library-p (file)
+  "Return non-nil if FILE is an Emacs source library.
+Actually return the feature provided by FILE.
+
+An Emacs lisp file is considered to be a library if it provides
+the correct feature; that is a feature that matches its filename
+\(and possibly parts of the path leading to it)."
+  (and (let ((filename (file-name-nondirectory file)))
+         (save-match-data
+           (and (elx--byte-compile-source-p file)
+                (not (or (file-symlink-p file)
+                         (string-equal filename dir-locals-file)
+                         (auto-save-file-name-p filename))))))
+       (elx-library-feature file)))
+
+(defun elx-libraries (directory &optional full nonrecursive)
+  "Return a list of libraries that are part of PACKAGE located in DIRECTORY.
+DIRECTORY is assumed to contain the libraries belonging to a
+single package.
+
+If optional FULL is non-nil return absolute paths otherwise paths
+relative to DIRECTORY.
+
+If optional NONRECURSIVE only return libraries directly located
+in DIRECTORY."
+  (cl-mapcan (pcase-lambda (`(,library . ,feature))
+               (and feature
+                    (list (if full
+                              library
+                            (file-relative-name library directory)))))
+             (elx-libraries-1 directory nonrecursive)))
+
+(defun elx-libraries-1 (directory &optional nonrecursive)
+  "Return a list of Emacs lisp files DIRECTORY and its subdirectories.
+
+The return value has the form ((LIBRARY . FEATURE)...).  FEATURE
+is nil if LIBRARY does not provide a feature or only features
+that don't match the filename."
+  (let (libraries)
+    (dolist (f (directory-files directory t "^[^.]"))
+      (cond ((file-directory-p f)
+             (or nonrecursive
+                 (elx--ignore-directory-p f)
+                 (setq libraries (nconc (elx-libraries-1 f) libraries))))
+            ((elx--byte-compile-source-p f)
+             (push (cons f (elx-library-p f)) libraries))))
+    (nreverse libraries)))
+
+(defun elx-main-library (directory &optional package noerror nosingle)
+  "Return the main library from the package directory DIRECTORY.
+Optional PACKAGE is the name of the package; if it is nil the
+basename of DIRECTORY is used as the package name.
+
+Return the library whose basename matches the package name.  If
+that fails append \"-mode\" to the package name, respectively
+remove that substring, and try again.
+
+The library must provide the correct feature; that is the feature
+which matches the filename (and possibly parts of the path leading
+to it).
+
+Unless optional NOSINGLE is non-nil and if there is only a single
+Emacs lisp file return that even if it doesn't match the package
+name.
+
+If the main library cannot be found raise an error or if optional
+NOERROR is non-nil return nil."
+  (elx-main-library-1
+   (or package (file-name-nondirectory (directory-file-name directory)))
+   (elx-libraries-1 directory)
+   noerror nosingle))
+
+(defun elx-main-library-1 (package libraries &optional noerror nosingle)
+  "Return the main library among LIBRARIES of the package PACKAGE.
+PACKAGE is a package name, a string.  LIBRARIES is a list of full
+library filenames or an alist as returned by `elx-libraries-1'.
+In the latter case also ensure that the main library provides the
+correct feature.
+
+Return the library whose basename matches the package name.  If
+that fails append \"-mode\" to the package name, respectively
+remove that substring, and try again.
+
+Unless optional NOSINGLE is non-nil and if there is only a single
+Emacs lisp file return that even if it doesn't match the package
+name.
+
+If no library matches raise an error or if optional NOERROR is
+non-nil return nil."
+  (let ((match
+         (cond ((and (not nosingle)
+                     (not (cdr libraries)))
+                (car libraries))
+               ((elx-main-library-2 package libraries))
+               ((elx-main-library-2
+                 (if (string-suffix-p "-mode" package)
+                     (substring package 0 -5)
+                   (concat package "-mode"))
+                 libraries)))))
+    (cond ((and (not match)
+                (not noerror))
+           (error "Cannot determine main library of %s" package))
+          ((atom match)
+           match)
+          ((cdr match)
+           (car match))
+          ((not noerror)
+           (error "Main library %s provides no or wrong feature"
+                  (car match))))))
+
+(defun elx-main-library-2 (package libraries)
+  (cl-find-if (lambda (lib)
+                (equal (file-name-nondirectory
+                        (file-name-sans-extension
+                         (file-name-sans-extension
+                          (if (consp lib) (car lib) lib))))
+                       package))
+              libraries))
+
 ;;; Utilities
 
 (defun elx--header-multiline (header &optional extra)

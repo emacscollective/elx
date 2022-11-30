@@ -1400,6 +1400,7 @@ library.  If a file lacks an expected feature then loading it using
                             (directory-file-name directory)))
       (file-exists-p (expand-file-name ".nosearch" directory))))
 
+;;;###autoload
 (defun elx-library-p (file)
   "Return non-nil if FILE is an Emacs source library.
 Actually return the feature provided by FILE.

@@ -1119,7 +1119,7 @@ An effort is made to normalize the returned value."
                                    (error (error "licensee failed: %S"
                                                  (buffer-string)))))))
                     #'>
-                    :key (lambda (elt) (or (let-alist elt .matcher.confidence) 0))))))
+                    :key (##or (let-alist % .matcher.confidence) 0)))))
            (license (cdr (assq 'matched_license match))))
       (pcase license
         ('nil          nil)
@@ -1185,7 +1185,7 @@ the \"Updated\" or \"Last-Updated\" header keyword."
                                   (if (length= d 2) d (concat "0" d))))))))
 
 (defun elx--date-3 (string)
-  (let ((time (mapcar (lambda (e) (or e 0))
+  (let ((time (mapcar (##or % 0)
                       (butlast (ignore-errors (parse-time-string string))))))
     (and time
          (not (= (nth 5 time) 0))

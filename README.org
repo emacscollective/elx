@@ -7,3 +7,8 @@ tries to cope with that.
 
 It also defines some new extractors not available in ~lisp-mnt~,
 and some generalizations of extractors available in the latter.
+
+#+html: <br><br>
+#+html: <a href="https://github.com/emacscollective/elx/actions/workflows/compile.yml"><img alt="Compile" src="https://github.com/emacscollective/elx/actions/workflows/compile.yml/badge.svg"/></a>
+#+html: <a href="https://stable.melpa.org/#/elx"><img alt="MELPA Stable" src="https://stable.melpa.org/packages/elx-badge.svg"/></a>
+#+html: <a href="https://melpa.org/#/elx"><img alt="MELPA" src="https://melpa.org/packages/elx-badge.svg"/></a>

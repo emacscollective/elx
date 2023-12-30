@@ -173,9 +173,14 @@ single line, or the prefix used on continuation lines."
                (lm-with-file file
                  (elx--header-multiline "package-requires" t))))
     (and-let* ((lines lines)
-               (value (package--prepare-dependencies
-                       (package-read-from-string
-                        (mapconcat #'identity lines " ")))))
+               (value (funcall (cond
+                                ((fboundp 'lm--prepare-package-dependencies)
+                                 'lm--prepare-package-dependencies)
+                                ((fboundp 'package--prepare-dependencies)
+                                 'package--prepare-dependencies)
+                                ((error "elx-package-requires: BUG")))
+                               (package-read-from-string
+                                (mapconcat #'identity lines " ")))))
       (if extra (list value beg end indent) value))))
 
 (defun elx-update-package-requires (&optional file updates indent noerror)

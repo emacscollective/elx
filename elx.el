@@ -1,6 +1,6 @@
 ;;; elx.el --- Extract information from Emacs Lisp libraries  -*- lexical-binding:t -*-
 
-;; Copyright (C) 2008-2023 Jonas Bernoulli
+;; Copyright (C) 2008-2024 Jonas Bernoulli
 
 ;; Includes code from Emacs, which is
 ;; Copyright (C) 1985-2022 Free Software Foundation, Inc.

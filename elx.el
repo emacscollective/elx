@@ -5,7 +5,7 @@
 ;; Includes code from Emacs, which is
 ;; Copyright (C) 1985-2022 Free Software Foundation, Inc.
 
-;; Author: Jonas Bernoulli <jonas@bernoul.li>
+;; Author: Jonas Bernoulli <emacs.elx@jonas.bernoulli.dev>
 ;; Homepage: https://github.com/emacscollective/elx
 ;; Keywords: docs libraries packages
 

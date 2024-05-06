@@ -198,9 +198,8 @@ single line, or the prefix used on continuation lines."
         (if (not indent)
             (insert (mapconcat #'identity value " ") ")\n")
           (insert "\n")
-          (let (line)
-            (while (setq line (pop value))
-              (insert ";;" indent line (if value "\n" ")\n")))))))))
+          (while-let ((line (pop value)))
+            (insert ";;" indent line (if value "\n" ")\n"))))))))
 
 (defun elx--update-dependencies (value updates)
   (pcase-dolist (`(,pkg ,ver) updates)

@@ -180,7 +180,7 @@ single line, or the prefix used on continuation lines."
                                  'package--prepare-dependencies)
                                 ((error "elx-package-requires: BUG")))
                                (package-read-from-string
-                                (mapconcat #'identity lines " ")))))
+                                (string-join lines " ")))))
       (if extra (list value beg end indent) value))))
 
 (defun elx-update-package-requires (&optional file updates indent noerror)
@@ -196,7 +196,7 @@ single line, or the prefix used on continuation lines."
         (insert ";; Package-Requires: (")
         (setq value (mapcar (##format "%S" %) value))
         (if (not indent)
-            (insert (mapconcat #'identity value " ") ")\n")
+            (insert (string-join value " ") ")\n")
           (insert "\n")
           (while-let ((line (pop value)))
             (insert ";;" indent line (if value "\n" ")\n"))))))))

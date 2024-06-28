@@ -1550,13 +1550,13 @@ single line, or the prefix used on continuation lines."
           (end (1+ (line-end-position)))
           (indent nil))
       (when lines
-	(setq lines (list lines))
-	(forward-line 1)
-	(while (looking-at "^;+\\(\t\\|[\t\s]\\{2,\\}\\)\\(.+\\)")
-	  (push (match-string-no-properties 2) lines)
+        (setq lines (list lines))
+        (forward-line 1)
+        (while (looking-at "^;+\\(\t\\|[\t\s]\\{2,\\}\\)\\(.+\\)")
+          (push (match-string-no-properties 2) lines)
           (unless indent
             (setq indent (match-string-no-properties 1)))
-	  (forward-line 1)
+          (forward-line 1)
           (setq end (point)))
         (setq lines (nreverse lines))
         (if extra (list lines beg end indent) lines)))))

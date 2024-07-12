@@ -10,7 +10,7 @@
 ;; Keywords: docs libraries packages
 
 ;; Package-Version: 2.0.2
-;; Package-Requires: ((emacs "25.1") (compat "29.1.4.5") (llama "0.3.1"))
+;; Package-Requires: ((emacs "25.1") (compat "30.0.0.0") (llama "0.3.1"))
 
 ;; SPDX-License-Identifier: GPL-3.0-or-later
 

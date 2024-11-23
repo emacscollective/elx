@@ -1445,12 +1445,12 @@ relative to DIRECTORY.
 
 If optional NONRECURSIVE only return libraries directly located
 in DIRECTORY."
-  (cl-mapcan (pcase-lambda (`(,library . ,feature))
-               (and feature
-                    (list (if full
-                              library
-                            (file-relative-name library directory)))))
-             (elx-libraries-1 directory nonrecursive)))
+  (mapcan (pcase-lambda (`(,library . ,feature))
+            (and feature
+                 (list (if full
+                           library
+                         (file-relative-name library directory)))))
+          (elx-libraries-1 directory nonrecursive)))
 
 (defun elx-libraries-1 (directory &optional nonrecursive)
   "Return a list of Emacs lisp files DIRECTORY and its subdirectories.

@@ -1,6 +1,6 @@
 ;;; elx.el --- Extract information from Emacs Lisp libraries  -*- lexical-binding:t -*-
 
-;; Copyright (C) 2008-2024 Jonas Bernoulli
+;; Copyright (C) 2008-2025 Jonas Bernoulli
 
 ;; Includes code from Emacs, which is
 ;; Copyright (C) 1985-2022 Free Software Foundation, Inc.
@@ -9,8 +9,8 @@
 ;; Homepage: https://github.com/emacscollective/elx
 ;; Keywords: docs libraries packages
 
-;; Package-Version: 2.0.3
-;; Package-Requires: ((emacs "26.1") (compat "30.0.0.0") (llama "0.3.1"))
+;; Package-Version: 2.0.4
+;; Package-Requires: ((emacs "26.1") (compat "30.0.1.0") (llama "0.4.1"))
 
 ;; SPDX-License-Identifier: GPL-3.0-or-later
 

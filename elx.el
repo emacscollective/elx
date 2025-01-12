@@ -1415,9 +1415,12 @@ library.  If a file lacks an expected feature then loading it using
   (elx--library-sans-extensions (file-name-nondirectory file)))
 
 (defun elx--ignore-directory-p (directory)
-  (or (string-prefix-p "." (file-name-nondirectory
-                            (directory-file-name directory)))
-      (file-exists-p (expand-file-name ".nosearch" directory))))
+  (let ((name (file-name-nondirectory (directory-file-name directory))))
+    (or (string-prefix-p "." name)
+        (string-prefix-p "test" name)
+        (string-suffix-p "-test" name)
+        (string-suffix-p "-tests" name)
+        (file-exists-p (expand-file-name ".nosearch" directory)))))
 
 ;;;###autoload
 (defun elx-library-p (file)

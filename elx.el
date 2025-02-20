@@ -166,7 +166,7 @@ consisting only of whitespace are converted to empty lines."
 ;;; Extract and Update Package-Requires
 
 (defun elx-package-requires (&optional file extra)
-  "Extract the value of the Package-Requires header of the specified package
+  "Extract the value of the Package-Requires header of the specified package.
 If optional EXTRA is non-nil, then return (VALUE BEG END INDENT),
 where INDENT is either nil, if the value was specified on a
 single line, or the prefix used on continuation lines."
@@ -1121,7 +1121,7 @@ An effort is made to normalize the returned value."
                                      (json-false       nil)
                                      (json-null        nil))
                                  (condition-case nil (json-read)
-                                   (error (error "licensee failed: %S"
+                                   (error (error "`licensee' failed: %S"
                                                  (buffer-string)))))))
                     #'>
                     :key (##or (let-alist % .matcher.confidence) 0)))))
@@ -1301,7 +1301,7 @@ maintainer list then return the author list."
       (elx-authors file)))
 
 (defun elx-adapted-by (&optional file)
-  "Return the list of people who have adapted file FILE
+  "Return the list of people who have adapted file FILE.
 Or of the current buffer if FILE is equal to `buffer-file-name'
 or is nil.  Each element of the list is a cons; the car is the
 full name, the cdr is an email address."
@@ -1427,7 +1427,7 @@ library.  If a file lacks an expected feature then loading it using
   "Return non-nil if FILE is an Emacs source library.
 Actually return the feature provided by FILE.
 
-An Emacs lisp file is considered to be a library if it provides
+An Emacs Lisp file is considered to be a library if it provides
 the correct feature; that is a feature that matches its filename
 \(and possibly parts of the path leading to it)."
   (and (let ((filename (file-name-nondirectory file)))
@@ -1456,7 +1456,7 @@ in DIRECTORY."
           (elx-libraries-1 directory nonrecursive)))
 
 (defun elx-libraries-1 (directory &optional nonrecursive)
-  "Return a list of Emacs lisp files DIRECTORY and its subdirectories.
+  "Return a list of Emacs Lisp files DIRECTORY and its subdirectories.
 
 The return value has the form ((LIBRARY . FEATURE)...).  FEATURE
 is nil if LIBRARY does not provide a feature or only features

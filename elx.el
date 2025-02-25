@@ -1251,6 +1251,13 @@ The value is a cons of the form (FULLNAME . ADDRESS)."
            (setq name (match-string 1 x))
            (setq mail (concat (match-string 2 x) "@"
                               (match-string 3 x))))
+          ((string-match "\\`\\([^(]+\\) +(concat +\\([^)]+\\))\\'" x)
+           (setq name (match-string 1 x))
+           (when-let*
+               ((parts (match-string 2 x))
+                (parts (split-string parts " " t))
+                ((seq-every-p (##string-match-p "\\`\".+\"\\'" %) parts)))
+             (setq mail (mapconcat (##substring % 1 -1) parts ""))))
           ((string-match (concat "\\(\\S-+@\\S-+\\) "
                                  "[(<]\\(.*\\)[>)]") x)
            (setq name (match-string 2 x))

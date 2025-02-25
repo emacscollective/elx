@@ -1279,7 +1279,8 @@ The value is a cons of the form (FULLNAME . ADDRESS)."
 (defun elx-people (header file)
   (lm-with-file file
     (seq-keep #'elx-crack-address
-              (lm-header-multiline header))))
+              (mapcan (##split-string % ", *" t "[\s\t]")
+                      (lm-header-multiline header)))))
 
 (defun elx-authors (&optional file)
   "Return the author list of file FILE.

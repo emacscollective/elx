@@ -9,7 +9,7 @@
 ;; Homepage: https://github.com/emacscollective/elx
 ;; Keywords: docs libraries packages
 
-;; Package-Version: 2.1.0
+;; Package-Version: 2.2.0
 ;; Package-Requires: ((emacs "26.1") (compat "30.0.2.0") (llama "0.6.1"))
 
 ;; SPDX-License-Identifier: GPL-3.0-or-later

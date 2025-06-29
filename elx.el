@@ -987,7 +987,7 @@ is NAME, and the license that would be returned is FOUND, then
                                (const  :tag "No license"))
                        (string :tag "Substitute"))))
 
-(defcustom elx-license-use-licensee t
+(defcustom elx-license-use-licensee (and (executable-find "licensee") t)
   "Whether `elx-license' used the \"licensee\" executable."
   :group 'elx
   :type 'boolean)

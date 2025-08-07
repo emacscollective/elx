@@ -1260,7 +1260,7 @@ The value is a cons of the form (FULLNAME . ADDRESS)."
            (when-let*
                ((parts (match-string 2 x))
                 (parts (split-string parts " " t))
-                ((seq-every-p (##string-match-p "\\`\".+\"\\'" %) parts)))
+                (_(seq-every-p (##string-match-p "\\`\".+\"\\'" %) parts)))
              (setq mail (mapconcat (##substring % 1 -1) parts ""))))
           ((string-match (concat "\\(\\S-+@\\S-+\\) "
                                  "[(<]\\(.*\\)[>)]") x)

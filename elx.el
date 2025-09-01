@@ -11,10 +11,9 @@
 
 ;; Package-Version: 2.2.3
 ;; Package-Requires: (
-;;     (emacs "26.1")
+;;     (emacs  "29.1")
 ;;     (compat "30.1")
-;;     (llama "1.0")
-;;     (seq "2.24"))
+;;     (llama   "1.0"))
 
 ;; SPDX-License-Identifier: GPL-3.0-or-later
 
@@ -148,7 +147,7 @@ likewise leading \"\(\" is replaced with just \"(\".  Lines
 consisting only of whitespace are converted to empty lines."
   (lm-with-file file
     (and-let* ((start (lm-section-start lm-commentary-header t)))
-      (progn ; debbugs#31840
+      (progn
         (goto-char start)
         (let ((commentary (buffer-substring-no-properties
                            start (lm-commentary-end))))

@@ -7,7 +7,6 @@ ELCS  = $(ELS:.el=.elc)
 
 DEPS  = compat
 DEPS += llama
-DEPS += seq
 
 EMACS      ?= emacs
 EMACS_ARGS ?=

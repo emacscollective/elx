@@ -49,7 +49,6 @@
 (require 'llama)
 (require 'package)
 (require 'seq)
-(require 'subr-x)
 
 (defgroup elx nil
   "Extract information from Emacs Lisp libraries."

@@ -177,11 +177,11 @@ single line, or the prefix used on continuation lines."
                  (elx--header-multiline "package-requires" t))))
     (and-let* ((lines lines)
                (value (funcall (cond
-                                ((fboundp 'lm--prepare-package-dependencies)
-                                 'lm--prepare-package-dependencies)
-                                ((fboundp 'package--prepare-dependencies)
-                                 'package--prepare-dependencies)
-                                ((error "elx-package-requires: BUG")))
+                                 ((fboundp 'lm--prepare-package-dependencies)
+                                  'lm--prepare-package-dependencies)
+                                 ((fboundp 'package--prepare-dependencies)
+                                  'package--prepare-dependencies)
+                                 ((error "elx-package-requires: BUG")))
                                (package-read-from-string
                                 (string-join lines " ")))))
       (if extra (list value beg end indent) value))))
@@ -1576,5 +1576,6 @@ single line, or the prefix used on continuation lines."
 (provide 'elx)
 ;; Local Variables:
 ;; indent-tabs-mode: nil
+;; lisp-indent-local-overrides: ((cond . 0) (interactive . 0))
 ;; End:
 ;;; elx.el ends here

@@ -9,7 +9,7 @@
 ;; Homepage: https://github.com/emacscollective/elx
 ;; Keywords: docs libraries packages
 
-;; Package-Version: 2.3.1
+;; Package-Version: 2.3.2
 ;; Package-Requires: (
 ;;     (emacs  "29.1")
 ;;     (compat "30.1")

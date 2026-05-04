@@ -12,7 +12,7 @@
 ;; Package-Version: 2.3.2
 ;; Package-Requires: (
 ;;     (emacs  "29.1")
-;;     (compat "30.1")
+;;     (compat "31.0")
 ;;     (llama   "1.0"))
 
 ;; SPDX-License-Identifier: GPL-3.0-or-later
@@ -126,7 +126,7 @@ else as strings."
               (setq keyword (cadr remap)))
             (when (and keyword (string-match elx-keywords-regexp keyword))
               (push keyword keywords)))))
-      (setq keywords (delete-dups (sort keywords 'string<)))
+      (setq keywords (delete-dups (sort keywords #'string<)))
       (if symbols (mapcar #'intern keywords) keywords))))
 
 ;;; Extract Commentary
@@ -209,15 +209,15 @@ single line, or the prefix used on continuation lines."
     (when (alist-get pkg value)
       (setf (alist-get pkg value)
             (list ver))))
-  (cl-sort value
-           (lambda (a b)
-             (pcase (list a b)
-               (`(emacs ,_) t)
-               (`(,_ emacs) nil)
-               (`(compat ,_) t)
-               (`(,_ compat) nil)
-               (_ (string< a b))))
-           :key #'car))
+  (compat-call sort value
+               (lambda (a b)
+                 (pcase (list a b)
+                   (`(emacs ,_) t)
+                   (`(,_ emacs) nil)
+                   (`(compat ,_) t)
+                   (`(,_ compat) nil)
+                   (_ (string< a b))))
+               :lessp '< :key #'car))
 
 ;;; Extract Pages
 
@@ -1051,12 +1051,12 @@ An effort is made to normalize the returned value."
                                    (re-search-forward re nil t))
                                  elx-permission-statement-alist)))))
       (set-text-properties 0 (length license) nil license)
-      (or (cl-some (pcase-lambda (`(,pkg ,src ,dst))
-                     (and (or (not pkg)
-                              (equal package-name pkg))
-                          (equal license src)
-                          dst))
-                   elx-license-substitutions)
+      (or (any (pcase-lambda (`(,pkg ,src ,dst))
+                 (and (or (not pkg)
+                          (equal package-name pkg))
+                      (equal license src)
+                      dst))
+               elx-license-substitutions)
           license))))
 
 (defun elx--header-license (regexp &optional list-or-alist gnu-suffix-style gnu-require-spdx)
@@ -1115,7 +1115,8 @@ An effort is made to normalize the returned value."
               (save-excursion
                 (call-process "licensee" nil '(t nil) nil "detect" "--json"
                               (or directory-or-file default-directory)))
-              (car (cl-sort
+              (car (compat-call
+                    sort
                     (cdr (assq 'matched_files
                                (let ((json-object-type 'alist)
                                      (json-array-type  'list)
@@ -1125,7 +1126,7 @@ An effort is made to normalize the returned value."
                                  (condition-case nil (json-read)
                                    (error (error "`licensee' failed: %S"
                                                  (buffer-string)))))))
-                    #'>
+                    :lessp #'< :reverse t
                     :key (##or (let-alist % .matcher.confidence) 0)))))
            (license (cdr (assq 'matched_license match))))
       (pcase license
@@ -1258,7 +1259,7 @@ The value is a cons of the form (FULLNAME . ADDRESS)."
            (when-let*
                ((parts (match-string 2 x))
                 (parts (split-string parts " " t))
-                (_(seq-every-p (##string-match-p "\\`\".+\"\\'" %) parts)))
+                (_(all (##string-match-p "\\`\".+\"\\'" %) parts)))
              (setq mail (mapconcat (##substring % 1 -1) parts ""))))
           ((string-match (concat "\\(\\S-+@\\S-+\\) "
                                  "[(<]\\(.*\\)[>)]") x)

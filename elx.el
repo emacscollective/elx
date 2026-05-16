@@ -1206,7 +1206,7 @@ the \"Updated\" or \"Last-Updated\" header keyword."
                                (setcar (nthcdr 3 time) 1)
                                (setcar (nthcdr 4 time) 1)
                                "%Y")
-                             (apply 'encode-time time)
+                             (apply #'encode-time time)
                              t))))
 
 ;; FIXME implement range extraction in lm-crack-copyright

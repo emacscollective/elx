@@ -159,10 +159,9 @@ consisting only of whitespace are converted to empty lines."
                   ("^[\n\t\s]\n$" . "\n")
                   ("\\`[\n\t\s]*" . "")
                   ("[\n\t\s]*\\'" . "")))
-          (if (string-blank-p str)
-              (setq str nil)
-            (setq str (concat str "\n"))))
-        str))))
+          (setq str (concat str "\n")))
+        (and (not (string-blank-p str))
+             str)))))
 
 ;;; Extract and Update Package-Requires
 

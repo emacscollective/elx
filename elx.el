@@ -144,28 +144,25 @@ If optional SANITIZE is non-nil cleanup the returned string.
 Leading and trailing whitespace is removed from the returned
 value but it always ends with exactly one newline.  On each line
 the leading semicolons and exactly one space are removed,
-likewise leading \"\(\" is replaced with just \"(\".  Lines
+likewise leading \"\\(\" is replaced with just \"(\".  Lines
 consisting only of whitespace are converted to empty lines."
   (lm-with-file file
     (and-let ((start (lm-section-start lm-commentary-header t)))
-      (progn
-        (goto-char start)
-        (let ((commentary (buffer-substring-no-properties
-                           start (lm-commentary-end))))
-          (when sanitize
-            (mapc (lambda (elt)
-                    (setq commentary (replace-regexp-in-string
-                                      (car elt) (cdr elt) commentary)))
-                  '(("^;+ ?"        . "")
-                    ("^\\\\("       . "(")
-                    ("^\n"        . "")
-                    ("^[\n\t\s]\n$" . "\n")
-                    ("\\`[\n\t\s]*" . "")
-                    ("[\n\t\s]*\\'" . "")))
-            (setq commentary
-                  (and (string-match "[^\s\t\n]" commentary)
-                       (concat commentary "\n"))))
-          commentary)))))
+      (let ((str (buffer-substring-no-properties
+                  (goto-char start)
+                  (lm-commentary-end))))
+        (when sanitize
+          (mapc (##setq str (replace-regexp-in-string (car %) (cdr %) str))
+                '(("^;+ ?"        . "")
+                  ("^\\\\("       . "(")
+                  ("^\n"        . "")
+                  ("^[\n\t\s]\n$" . "\n")
+                  ("\\`[\n\t\s]*" . "")
+                  ("[\n\t\s]*\\'" . "")))
+          (if (string-blank-p str)
+              (setq str nil)
+            (setq str (concat str "\n"))))
+        str))))
 
 ;;; Extract and Update Package-Requires
 

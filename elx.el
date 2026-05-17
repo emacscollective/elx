@@ -11,9 +11,10 @@
 
 ;; Package-Version: 2.3.2
 ;; Package-Requires: (
-;;     (emacs  "29.1")
-;;     (compat "31.0")
-;;     (llama   "1.0"))
+;;     (emacs    "29.1")
+;;     (compat   "31.0")
+;;     (cond-let  "1.1")
+;;     (llama     "1.0"))
 
 ;; SPDX-License-Identifier: GPL-3.0-or-later
 
@@ -44,6 +45,7 @@
 ;;; Code:
 
 (require 'compat)
+(require 'cond-let)
 (require 'json)
 (require 'lisp-mnt)
 (require 'llama)
@@ -145,7 +147,7 @@ the leading semicolons and exactly one space are removed,
 likewise leading \"\(\" is replaced with just \"(\".  Lines
 consisting only of whitespace are converted to empty lines."
   (lm-with-file file
-    (and-let* ((start (lm-section-start lm-commentary-header t)))
+    (and-let ((start (lm-section-start lm-commentary-header t)))
       (progn
         (goto-char start)
         (let ((commentary (buffer-substring-no-properties
@@ -175,15 +177,15 @@ single line, or the prefix used on continuation lines."
   (pcase-let ((`(,lines ,beg ,end ,indent)
                (lm-with-file file
                  (elx--header-multiline "package-requires" t))))
-    (and-let* ((lines lines)
-               (value (funcall (cond
-                                 ((fboundp 'lm--prepare-package-dependencies)
-                                  'lm--prepare-package-dependencies)
-                                 ((fboundp 'package--prepare-dependencies)
-                                  'package--prepare-dependencies)
-                                 ((error "elx-package-requires: BUG")))
-                               (package-read-from-string
-                                (string-join lines " ")))))
+    (and-let ((_ lines)
+              (value (funcall (cond
+                                ((fboundp 'lm--prepare-package-dependencies)
+                                 'lm--prepare-package-dependencies)
+                                ((fboundp 'package--prepare-dependencies)
+                                 'package--prepare-dependencies)
+                                ((error "elx-package-requires: BUG")))
+                              (package-read-from-string
+                               (string-join lines " ")))))
       (if extra (list value beg end indent) value))))
 
 (defun elx-update-package-requires (&optional file updates indent noerror)
@@ -1578,5 +1580,17 @@ single line, or the prefix used on continuation lines."
 ;; Local Variables:
 ;; indent-tabs-mode: nil
 ;; lisp-indent-local-overrides: ((cond . 0) (interactive . 0))
+;; read-symbol-shorthands: (
+;;   ("and$"       . "cond-let--and$")
+;;   ("thread$"    . "cond-let--thread$")
+;;   ("when$"      . "cond-let--when$")
+;;   ("and-let*"   . "cond-let--and-let*")
+;;   ("and-let"    . "cond-let--and-let")
+;;   ("if-let*"    . "cond-let--if-let*")
+;;   ("if-let"     . "cond-let--if-let")
+;;   ("when-let*"  . "cond-let--when-let*")
+;;   ("when-let"   . "cond-let--when-let")
+;;   ("while-let*" . "cond-let--while-let*")
+;;   ("while-let"  . "cond-let--while-let"))
 ;; End:
 ;;; elx.el ends here

@@ -6,6 +6,7 @@ ELS   = $(PKG).el
 ELCS  = $(ELS:.el=.elc)
 
 DEPS  = compat
+DEPS += cond-let
 DEPS += llama
 
 LOAD_PATH ?= $(addprefix -L ../,$(DEPS))

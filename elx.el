@@ -50,7 +50,6 @@
 (require 'lisp-mnt)
 (require 'llama)
 (require 'package)
-(require 'seq)
 
 (defgroup elx nil
   "Extract information from Emacs Lisp libraries."

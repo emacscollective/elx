@@ -12,3 +12,4 @@ and some generalizations of extractors available in the latter.
 #+html: <a href="https://github.com/emacscollective/elx/actions/workflows/compile.yml"><img alt="Compile" src="https://github.com/emacscollective/elx/actions/workflows/compile.yml/badge.svg"/></a>
 #+html: <a href="https://snapshots.melpa.org/#/elx"><img alt="MELPA Snapshots" src="https://snapshots.melpa.org/packages/elx-badge.svg"/></a>
 #+html: <a href="https://releases.melpa.org/#/elx"><img alt="MELPA Releases" src="https://releases.melpa.org/packages/elx-badge.svg"/></a>
+#+html: <a href="https://emacsair.me/human"><img alt="human made" src="https://emacsair.me/assets/badges/human.svg"/></a>

@@ -11,7 +11,7 @@
 
 ;; Package-Version: 2.3.4
 ;; Package-Requires: (
-;;     (emacs    "29.1")
+;;     (emacs    "30.1")
 ;;     (compat   "31.1")
 ;;     (cond-let  "1.1")
 ;;     (llama     "1.0"))
@@ -127,7 +127,7 @@ else as strings."
               (setq keyword (cadr remap)))
             (when (and keyword (string-match elx-keywords-regexp keyword))
               (push keyword keywords)))))
-      (setq keywords (delete-dups (sort keywords #'string<)))
+      (setq keywords (delete-dups (sort keywords)))
       (if symbols (mapcar #'intern keywords) keywords))))
 
 ;;; Extract Commentary
